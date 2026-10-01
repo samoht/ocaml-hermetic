@@ -36,8 +36,10 @@ let cmd =
         "$(cmd) reads the $(b,.cmt) file of each unit of a library meant to be \
          hermetic and prints one line per reason to refuse it: a unit compiled \
          without $(b,-open Hermetic) (or a module $(b,--open) names), a unit \
-         under which the $(b,ambient) alert is not an error, and each \
-         $(b,external) declaration, which names a C primitive no prelude can \
+         under which the $(b,ambient) alert is not an error, an $(b,[@alert]) \
+         attribute under which it stops being one, a unit of the standard \
+         library named by its own name ($(b,Stdlib__Sys)), and an \
+         $(b,external) declaration, which names a primitive no prelude can \
          shadow.";
       `S Manpage.s_exit_status;
       `P "0 when every unit is hermetic.";
