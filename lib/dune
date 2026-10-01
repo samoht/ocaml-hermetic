@@ -1,0 +1,4 @@
+(library
+ (name hermetic)
+ (public_name hermetic)
+ (libraries fmt))

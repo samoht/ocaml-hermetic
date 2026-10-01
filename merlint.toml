@@ -1,0 +1,3 @@
+# The prelude restates modules of the standard library under the names the
+# standard library gives them, since shadowing a module needs its own name.
+allowed_words = ["MakeSeeded", "MoreLabels", "CamlinternalMod", "CamlinternalOO"]

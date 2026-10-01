@@ -1,0 +1,5 @@
+(executable
+ (name main)
+ (public_name hermetic-check)
+ (package hermetic)
+ (libraries cmdliner compiler-libs.common fmt))

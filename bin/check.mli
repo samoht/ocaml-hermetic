@@ -1,0 +1,41 @@
+(*---------------------------------------------------------------------------
+  Copyright (c) 2026 Thomas Gazagnaire. All rights reserved.
+  SPDX-License-Identifier: ISC
+  ---------------------------------------------------------------------------*)
+
+(** Whether a compiled unit was compiled hermetic.
+
+    A unit is read from its [.cmt] file, which records the compiler's command
+    line and the typed tree. *)
+
+type finding =
+  | Not_opened of string
+      (** [Not_opened m]: the command line does not open [m] with [-open]. *)
+  | Not_fatal
+      (** The [ambient] alert is not an error under the command line's [-alert]
+          options, replayed in order by the compiler's own parser. *)
+  | Silenced of { loc : Location.t; spec : string }
+      (** An [[@alert spec]] attribute, at [loc], under which the [ambient]
+          alert is no longer an error. *)
+  | Stdlib_unit of { loc : Location.t; unit : string }
+      (** A reference, at [loc], to [unit], a unit of the standard library named
+          by its own name ([Stdlib__Sys]) rather than through the prelude. *)
+  | External of { loc : Location.t; name : string; primitive : string }
+      (** An [external] declaration of [name], at [loc], naming [primitive]. *)
+  | Unreadable of string
+      (** The file is not the [.cmt] of an implementation; the string says why.
+      *)
+
+type report = { name : string; findings : finding list }
+(** The type for the verdict on one unit: the source file the unit was compiled
+    from, or the path read when it names none, and what refuses it. *)
+
+val unit : opens:string list -> string -> report
+(** [unit ~opens path] is the verdict on the unit whose [.cmt] is [path]. Its
+    findings are each module of [opens] the command line does not open, the
+    [ambient] alert left non-fatal, then each silencing attribute, reference to
+    a standard library unit and [external] declaration of the typed tree, in
+    source order. They are [[]] for a hermetic unit. *)
+
+val pp_finding : finding Fmt.t
+(** [pp_finding] prints a finding as one line naming what it refuses. *)
