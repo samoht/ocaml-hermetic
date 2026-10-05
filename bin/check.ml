@@ -9,6 +9,7 @@ type finding =
   | Silenced of { loc : Location.t; spec : string }
   | Stdlib_unit of { loc : Location.t; unit : string }
   | External of { loc : Location.t; name : string; primitive : string }
+  | Import of string
   | Unreadable of string
 
 type report = { name : string; findings : finding list }
@@ -77,7 +78,7 @@ let stdlib_unit path =
     Some name
   else None
 
-let walk structure =
+let walk ~externals structure =
   let found = ref [] in
   let add f = found := f :: !found in
   let default = Tast_iterator.default_iterator in
@@ -106,6 +107,7 @@ let walk structure =
   let value_description sub (vd : Typedtree.value_description) =
     (match vd.val_prim with
     | [] -> ()
+    | _ :: _ when not externals -> ()
     | primitive :: _ ->
         add (External { loc = vd.val_loc; name = vd.val_name.txt; primitive }));
     default.value_description sub vd
@@ -120,7 +122,7 @@ let walk structure =
   let line = function
     | Silenced { loc; _ } | Stdlib_unit { loc; _ } | External { loc; _ } ->
         (loc.loc_start.pos_lnum, loc.loc_start.pos_cnum)
-    | Not_opened _ | Not_fatal | Unreadable _ -> (0, 0)
+    | Not_opened _ | Not_fatal | Import _ | Unreadable _ -> (0, 0)
   in
   List.stable_sort (fun a b -> compare (line a) (line b)) (List.rev !found)
 
@@ -133,7 +135,7 @@ let read path =
       | Cmi_format.Error _ | End_of_file | Failure _ ) ->
       Error "not a .cmt file of this compiler"
 
-let unit ~opens path =
+let unit ?(imports = []) ?(externals = true) ~opens path =
   match read path with
   | Error msg -> { name = path; findings = [ Unreadable msg ] }
   | Ok cmt ->
@@ -147,15 +149,21 @@ let unit ~opens path =
       let fatal =
         if fatal_after ~base:[] (alert_options args) then [] else [ Not_fatal ]
       in
+      let imported =
+        List.filter_map
+          (fun (m, _) -> if List.mem m imports then Some (Import m) else None)
+          cmt.cmt_imports
+        |> List.sort compare
+      in
       let body =
         match cmt.cmt_annots with
-        | Implementation structure -> walk structure
+        | Implementation structure -> walk ~externals structure
         | Interface _ | Packed _ | Partial_implementation _
         | Partial_interface _ ->
             [ Unreadable "not the .cmt of an implementation" ]
       in
       let name = Option.value cmt.cmt_sourcefile ~default:path in
-      { name; findings = missing @ fatal @ body }
+      { name; findings = missing @ fatal @ imported @ body }
 
 let pp_finding ppf = function
   | Not_opened m -> Fmt.pf ppf "compiled without -open %s" m
@@ -170,4 +178,6 @@ let pp_finding ppf = function
   | External { loc; name; primitive } ->
       Fmt.pf ppf "line %d: external %s declares the primitive %S"
         loc.loc_start.pos_lnum name primitive
+  | Import m ->
+      Fmt.pf ppf "imports %s, which reaches the system past an Eio capability" m
   | Unreadable msg -> Fmt.pf ppf "unreadable: %s" msg

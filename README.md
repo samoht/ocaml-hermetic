@@ -127,6 +127,57 @@ A library that also hides the ambient values of a dependency in a prelude of
 its own opens that prelude after `Hermetic` and names it with `--open`, so
 that dropping it from the stanza is refused too.
 
+## Libraries that do their I/O through Eio
+
+A library that talks to the system through Eio capabilities is not hermetic,
+but it should reach the system only through the capabilities it is handed.
+The `hermetic.eio` library holds the prelude for it, `Hermetic_eio`, opened the
+same way:
+
+<!-- $MDX skip -->
+```
+(library
+ (name store)
+ (libraries eio hermetic.eio)
+ (flags (:standard -open Hermetic_eio -alert @ambient)))
+```
+
+It keeps the standard library an Eio program uses, hash table iteration,
+`Random`, `Atomic`, `Domain` and the standard formatters included, and refuses
+each access that bypasses a capability with a message naming the Eio call to
+make instead:
+
+- the file system: `open_in*`, `open_out*`, the openers of `In_channel` and
+  `Out_channel`, the file functions of `Sys` (`file_exists`, `is_directory`,
+  `readdir`, `remove`, `rename`, `mkdir`, `rmdir`), the temporary files of
+  `Filename` and the digests of a file;
+- the process: `exit`, `at_exit`, `Sys.command`, `Sys.signal`,
+  `Sys.set_signal`, `Sys.catch_break`, `Sys.getcwd`, `Sys.chdir`, `Sys.argv`
+  and `Sys.executable_name`;
+- the clock: `Sys.time`;
+- the process environment: `Sys.getenv` and `Sys.getenv_opt`, which no Eio
+  capability holds, so the value is taken as an input, as under `Hermetic`;
+- `Mutex`, `Condition` and `Semaphore`, which block the domain under every
+  fiber, are refused as a whole.
+
+`hermetic-check --eio` reads the units against that prelude and also refuses
+a unit that imports `Unix`, `UnixLabels`, `Thread` or `Event`. The standard
+library's `Mutex`, `Condition` and `Semaphore` are the prelude's to refuse:
+Eio's own interfaces name `Mutex.t`, so every unit typed against Eio imports
+them. The rule beside the library reads its units:
+
+<!-- $MDX skip -->
+```
+(rule
+ (alias runtest)
+ (deps (glob_files .store.objs/byte/*.cmt))
+ (action (run %{bin:hermetic-check} --eio %{deps})))
+```
+
+A library that is the boundary between Eio and the system, and so binds the
+system calls Eio lacks, says so in its own stanza with `--eio --boundary`,
+which allows those imports and its `external` declarations.
+
 ## What it does not cover
 
 A dependency is outside its reach. A function of another library that reads

@@ -22,6 +22,9 @@ type finding =
           by its own name ([Stdlib__Sys]) rather than through the prelude. *)
   | External of { loc : Location.t; name : string; primitive : string }
       (** An [external] declaration of [name], at [loc], naming [primitive]. *)
+  | Import of string
+      (** [Import m]: the unit imports the compilation unit [m], one of the
+          units refused to it. *)
   | Unreadable of string
       (** The file is not the [.cmt] of an implementation; the string says why.
       *)
@@ -30,12 +33,19 @@ type report = { name : string; findings : finding list }
 (** The type for the verdict on one unit: the source file the unit was compiled
     from, or the path read when it names none, and what refuses it. *)
 
-val unit : opens:string list -> string -> report
+val unit :
+  ?imports:string list ->
+  ?externals:bool ->
+  opens:string list ->
+  string ->
+  report
 (** [unit ~opens path] is the verdict on the unit whose [.cmt] is [path]. Its
     findings are each module of [opens] the command line does not open, the
-    [ambient] alert left non-fatal, then each silencing attribute, reference to
-    a standard library unit and [external] declaration of the typed tree, in
-    source order. They are [[]] for a hermetic unit. *)
+    [ambient] alert left non-fatal, each unit of [imports] (default [[]]) the
+    unit imports, in alphabetical order, then each silencing attribute,
+    reference to a standard library unit and, when [externals] is [true] (the
+    default), [external] declaration of the typed tree, in source order. They
+    are [[]] for a hermetic unit. *)
 
 val pp_finding : finding Fmt.t
 (** [pp_finding] prints a finding as one line naming what it refuses. *)

@@ -1,0 +1,3 @@
+(library
+ (name hermetic_eio)
+ (public_name hermetic.eio))

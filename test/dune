@@ -1,4 +1,4 @@
 (test
  (name test)
  (package hermetic)
- (libraries hermetic alcotest fmt))
+ (libraries hermetic hermetic.eio alcotest fmt))

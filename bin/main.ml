@@ -5,15 +5,48 @@
 
 open Cmdliner
 
-let check opens paths =
-  let opens = "Hermetic" :: opens in
-  let reports = List.map (Check.unit ~opens) paths in
-  List.iter
-    (fun { Check.name; findings } ->
-      List.iter (fun f -> Fmt.pr "%s: %a@." name Check.pp_finding f) findings)
-    reports;
-  if List.for_all (fun (r : Check.report) -> r.findings = []) reports then 0
-  else 1
+(* The units through which a library reaches the system past Eio: the Unix
+   binding and the threads library. The standard library's Mutex, Condition
+   and Semaphore are refused by the prelude, not here: Eio's own interfaces
+   name Mutex.t, so every unit typed against Eio imports Stdlib__Mutex. *)
+let past_eio = [ "Unix"; "UnixLabels"; "Thread"; "Event" ]
+
+type mode = Eio | Boundary
+
+let check modes opens paths =
+  let eio = List.mem Eio modes and boundary = List.mem Boundary modes in
+  if boundary && not eio then `Error (true, "--boundary needs --eio")
+  else
+    let prelude = if eio then "Hermetic_eio" else "Hermetic" in
+    let opens = prelude :: opens in
+    let imports = if eio && not boundary then past_eio else [] in
+    let externals = not boundary in
+    let reports = List.map (Check.unit ~imports ~externals ~opens) paths in
+    List.iter
+      (fun { Check.name; findings } ->
+        List.iter (fun f -> Fmt.pr "%s: %a@." name Check.pp_finding f) findings)
+      reports;
+    if List.for_all (fun (r : Check.report) -> r.findings = []) reports then
+      `Ok 0
+    else `Ok 1
+
+let eio =
+  let doc =
+    "Check a library that does its I/O through Eio: require $(b,-open \
+     Hermetic_eio) in place of $(b,-open Hermetic), and refuse a unit that \
+     imports Unix, UnixLabels, Thread or Event."
+  in
+  (Eio, Arg.info [ "eio" ] ~doc)
+
+let boundary =
+  let doc =
+    "With $(b,--eio), the library is a sanctioned boundary between Eio and the \
+     system: its imports past Eio and its $(b,external) declarations are \
+     allowed. A library declares it in its own stanza."
+  in
+  (Boundary, Arg.info [ "boundary" ] ~doc)
+
+let modes = Arg.(value & vflag_all [] [ eio; boundary ])
 
 let opens =
   let doc =
@@ -41,6 +74,10 @@ let cmd =
          library named by its own name ($(b,Stdlib__Sys)), and an \
          $(b,external) declaration, which names a primitive no prelude can \
          shadow.";
+      `P
+        "With $(b,--eio), it checks a library that does its I/O through Eio \
+         against the $(b,Hermetic_eio) prelude instead, and also refuses a \
+         unit that imports the Unix binding or the threads library.";
       `S Manpage.s_exit_status;
       `P "0 when every unit is hermetic.";
       `P "1 when a unit is refused or a file cannot be read as a $(b,.cmt).";
@@ -49,6 +86,6 @@ let cmd =
   in
   Cmd.v
     (Cmd.info "hermetic-check" ~doc ~man ~exits:[])
-    Term.(const check $ opens $ paths)
+    Term.(ret (const check $ modes $ opens $ paths))
 
 let () = exit (Cmd.eval' cmd)
