@@ -8,6 +8,7 @@ module Package = Project_index.Package
 
 let boundary_tag = "hermetic:eio-boundary"
 let prelude = "Hermetic_eio"
+let some_str fmt = Fmt.kstr (fun s -> Some s) fmt
 
 let eio_name = function
   | None -> false
@@ -19,13 +20,34 @@ let selected l =
   && String.capitalize_ascii (Library.local_name l) <> prelude
   && (eio_name (Library.public_name l) || List.mem "eio" (Library.deps l))
 
+let prelude_library = "hermetic.eio"
+
+let adopted l =
+  if List.mem prelude_library (Library.deps l) then
+    List.sort_uniq String.compare [ Library.name l; Library.local_name l ]
+  else []
+
+let mdx ~adopted ~dune ms =
+  List.concat_map
+    (fun m ->
+      let libs = Dune.File.Mdx.libraries m in
+      if List.mem prelude_library libs then []
+      else
+        List.filter_map
+          (fun lib ->
+            if List.mem lib adopted then
+              some_str "%s: an mdx stanza names %s, which opens %s, and not %s"
+                dune lib prelude prelude_library
+            else None)
+          libs)
+    ms
+
 type ratchet = string list
 
 let err_twice n lib =
   Fmt.kstr (fun s -> Error s) "line %d: %s is listed twice" n lib
 
 let err_one n = Fmt.kstr (fun s -> Error s) "line %d: expected one library" n
-let some_str fmt = Fmt.kstr (fun s -> Some s) fmt
 
 let ratchet_of_string s =
   let line (n, acc) l =

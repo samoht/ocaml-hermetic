@@ -21,6 +21,7 @@ depends: [
   "fmt" {>= "0.9"}
   "fpath"
   "hermetic" {= version}
+  "nox-dune"
   "project-index"
   "odoc" {with-doc}
 ]

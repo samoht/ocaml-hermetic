@@ -50,4 +50,5 @@ libraries still allowed to violate, which may only shrink.")
   (fmt (>= 0.9))
   fpath
   (hermetic (= :version))
+  nox-dune
   project-index))

@@ -35,6 +35,27 @@ let run root build ratchet summary =
             String.compare a.library b.library)
       in
       let lines, clean, listed = Tree.judge ratchet verdicts in
+      let adopted =
+        Project_index.source_package_list index
+        |> List.concat_map Project_index.package_libraries
+        |> List.concat_map Tree.adopted
+      in
+      let mdx dir =
+        let file = Fpath.(dir / "dune") in
+        let dune =
+          match Fpath.relativize ~root file with
+          | Some r -> Fpath.to_string r
+          | None -> Fpath.to_string file
+        in
+        match Dune.File.of_file (Fpath.to_string file) with
+        | Error e -> [ Fmt.str "%s: %a" dune Dune.Error.pp e ]
+        | Ok f -> Tree.mdx ~adopted ~dune (Dune.File.mdx_stanzas f)
+      in
+      let lines =
+        lines
+        @ List.concat_map mdx
+            (List.sort Fpath.compare (Project_index.dune_dirs index))
+      in
       List.iter (Fmt.pr "%s@.") lines;
       if summary || lines <> [] then
         Fmt.pr "%d Eio libraries: %d hermetic, %d in the ratchet@."

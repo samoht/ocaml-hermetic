@@ -16,6 +16,19 @@ val selected : Project_index.Library.t -> bool
     [.eio], or it names [eio] among its libraries. The library defining the
     prelude, [Hermetic_eio], is not. *)
 
+val adopted : Project_index.Library.t -> string list
+(** [adopted l] is the names an [(mdx)] stanza may give [l], its dune name and
+    its local name, when [l] names [hermetic.eio] among its libraries, and [[]]
+    otherwise. *)
+
+val mdx :
+  adopted:string list -> dune:string -> Dune.File.Mdx.t list -> string list
+(** [mdx ~adopted ~dune ms] is a line for each library of [adopted] that a
+    stanza of [ms], the [(mdx)] stanzas of the dune file [dune], names without
+    naming [hermetic.eio]. The adopted library's interface names the prelude's
+    types, and a toplevel that loads it without the prelude's compiled interface
+    sees them abstract. *)
+
 type ratchet
 (** The type for the libraries allowed to violate. *)
 
