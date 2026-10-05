@@ -448,6 +448,21 @@ module Stdlib : sig
   end
 end
 
+(** The standard library's types are not restated: an adopted library's
+    interface names {!Stdlib.result} and the others under their own path, so a
+    toplevel without this module's compiled interface still sees their
+    definitions and prints their constructors unqualified. *)
+
 include module type of struct
-  include Stdlib
-end
+    include Stdlib
+  end
+  with type fpclass := Stdlib.fpclass
+   and type in_channel := Stdlib.in_channel
+   and type out_channel := Stdlib.out_channel
+   and type open_flag := Stdlib.open_flag
+   and type 'a ref := 'a Stdlib.ref
+   and type ('a, 'b) result := ('a, 'b) Stdlib.result
+   and type ('a, 'b, 'c, 'd, 'e, 'f) format6 :=
+    ('a, 'b, 'c, 'd, 'e, 'f) Stdlib.format6
+   and type ('a, 'b, 'c, 'd) format4 := ('a, 'b, 'c, 'd) Stdlib.format4
+   and type ('a, 'b, 'c) format := ('a, 'b, 'c) Stdlib.format
