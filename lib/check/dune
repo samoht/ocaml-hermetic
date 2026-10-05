@@ -1,0 +1,4 @@
+(library
+ (name hermetic_check)
+ (public_name hermetic.check)
+ (libraries compiler-libs.common fmt))

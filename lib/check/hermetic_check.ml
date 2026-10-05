@@ -181,3 +181,12 @@ let pp_finding ppf = function
   | Import m ->
       Fmt.pf ppf "imports %s, which reaches the system past an Eio capability" m
   | Unreadable msg -> Fmt.pf ppf "unreadable: %s" msg
+
+(* The standard library's Mutex, Condition and Semaphore are refused by the
+   prelude, not here: Eio's own interfaces name Mutex.t, so every unit typed
+   against Eio imports Stdlib__Mutex. *)
+let past_eio = [ "Unix"; "UnixLabels"; "Thread"; "Event" ]
+
+let eio ?(boundary = false) path =
+  let imports = if boundary then [] else past_eio in
+  unit ~imports ~externals:(not boundary) ~opens:[ "Hermetic_eio" ] path

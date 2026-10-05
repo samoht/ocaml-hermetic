@@ -32,3 +32,22 @@ declares an external primitive, which no prelude can shadow.")
   (ocaml (>= 5.4))
   (cmdliner (>= 1.3.0))
   (fmt (>= 0.9))))
+
+(package
+ (name hermetic-tree)
+ (synopsis "Check every Eio library of a source tree against hermetic.eio")
+ (tags (org:blacksun test))
+ (description
+  "The hermetic-tree command indexes a source tree, selects each library that
+does its I/O through Eio, by its name or by its dependency on eio, and checks
+its compiled units as hermetic-check --eio does, against a ratchet file of the
+libraries still allowed to violate, which may only shrink.")
+ (depends
+  (ocaml (>= 5.4))
+  (cmdliner (>= 1.3.0))
+  eio
+  eio_main
+  (fmt (>= 0.9))
+  fpath
+  (hermetic (= :version))
+  project-index))

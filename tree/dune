@@ -1,0 +1,5 @@
+(executable
+ (name main)
+ (public_name hermetic-tree)
+ (package hermetic-tree)
+ (libraries cmdliner eio eio_main fmt fpath hermetic.check project-index))

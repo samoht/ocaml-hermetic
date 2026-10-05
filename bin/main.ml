@@ -4,12 +4,7 @@
   ---------------------------------------------------------------------------*)
 
 open Cmdliner
-
-(* The units through which a library reaches the system past Eio: the Unix
-   binding and the threads library. The standard library's Mutex, Condition
-   and Semaphore are refused by the prelude, not here: Eio's own interfaces
-   name Mutex.t, so every unit typed against Eio imports Stdlib__Mutex. *)
-let past_eio = [ "Unix"; "UnixLabels"; "Thread"; "Event" ]
+module Check = Hermetic_check
 
 type mode = Eio | Boundary
 
@@ -19,7 +14,7 @@ let check modes opens paths =
   else
     let prelude = if eio then "Hermetic_eio" else "Hermetic" in
     let opens = prelude :: opens in
-    let imports = if eio && not boundary then past_eio else [] in
+    let imports = if eio && not boundary then Check.past_eio else [] in
     let externals = not boundary in
     let reports = List.map (Check.unit ~imports ~externals ~opens) paths in
     List.iter

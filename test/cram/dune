@@ -3,3 +3,9 @@
   %{bin:dune}
   %{bin:hermetic-check}
   (package hermetic)))
+
+(cram
+ (applies_to tree)
+ (deps
+  %{bin:hermetic-tree}
+  (package hermetic-tree)))

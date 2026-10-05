@@ -175,8 +175,41 @@ them. The rule beside the library reads its units:
 ```
 
 A library that is the boundary between Eio and the system, and so binds the
-system calls Eio lacks, says so in its own stanza with `--eio --boundary`,
-which allows those imports and its `external` declarations.
+system calls Eio lacks, is checked with `--eio --boundary`, which allows those
+imports and its `external` declarations.
+
+## Every Eio library of a tree
+
+In a tree of many projects, `-alert @ambient` belongs once in the env of the
+`dune-workspace`, for every profile. A library then adopts the prelude with one
+change to its stanza:
+
+<!-- $MDX skip -->
+```
+ (libraries eio hermetic.eio)
+ (flags (:standard -open Hermetic_eio))
+```
+
+The `hermetic-tree` command, of the `hermetic-tree` package, checks the whole
+tree in one rule. It indexes the source tree, selects each library whose public
+name ends with `-eio` or `.eio` or that names `eio` among its libraries, and
+reads its units as `hermetic-check --eio` does. A package whose `dune-project`
+carries the tag `hermetic:eio-boundary` is checked as `--boundary`. A ratchet
+file lists the libraries still allowed to violate, one library name per line,
+and the check refuses a listed library that has become hermetic, so the list
+only shrinks:
+
+<!-- $MDX skip -->
+```
+(rule
+ (alias runtest)
+ (deps hermetic.ratchet (glob_files_rec dune) (glob_files_rec dune-project)
+  (glob_files_rec *.opam) (alias_rec check))
+ (action (run %{bin:hermetic-tree} --ratchet hermetic.ratchet)))
+```
+
+The rule's project sets `(expand_aliases_in_sandbox)`, so that the compiled
+units of `(alias_rec check)` are in the rule's sandbox.
 
 ## What it does not cover
 

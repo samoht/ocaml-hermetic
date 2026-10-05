@@ -49,3 +49,14 @@ val unit :
 
 val pp_finding : finding Fmt.t
 (** [pp_finding] prints a finding as one line naming what it refuses. *)
+
+val past_eio : string list
+(** [past_eio] is the units through which a library reaches the system past Eio:
+    the Unix binding and the threads library. *)
+
+val eio : ?boundary:bool -> string -> report
+(** [eio path] is the verdict on a unit of a library that does its I/O through
+    Eio: {!unit} with [Hermetic_eio] to open and {!past_eio} refused. With
+    [~boundary:true] (default [false]) the library is a sanctioned boundary
+    between Eio and the system, and its imports past Eio and its [external]
+    declarations pass. *)

@@ -2,4 +2,4 @@
  (name main)
  (public_name hermetic-check)
  (package hermetic)
- (libraries cmdliner compiler-libs.common fmt))
+ (libraries cmdliner fmt hermetic.check))
