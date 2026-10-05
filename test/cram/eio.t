@@ -83,3 +83,50 @@ A sanctioned boundary may import Unix; it still needs the prelude.
          [OPTION]… CMT…
   hermetic-check: --boundary needs --eio
   exit 124
+
+A type the prelude keeps is the standard library's own, so a library compiled
+under the prelude exports no type of it. A consumer that holds only the
+library's compiled interface, as an mdx toplevel does, uses its values with the
+standard library's constructors and functions.
+
+  $ unit typed "" "-open Hermetic_eio -alert @ambient" <<EOF
+  > let result : (int, string) result = Ok 1
+  > let cell : int ref = ref 0
+  > let table : (string, int) Hashtbl.t = Hashtbl.create 1
+  > let items : int list = [ 1 ]
+  > let buffer : Buffer.t = Buffer.create 1
+  > let input : in_channel = stdin
+  > let output : out_channel = stdout
+  > let flags : open_flag list = [ Open_rdonly ]
+  > let kind : fpclass = classify_float 1.
+  > let message : (unit, Format.formatter, unit) format = "done"
+  > EOF
+  $ dune build --root . --display quiet ./typed; echo "exit $?"
+  exit 0
+  $ cat > consumer.ml <<EOF
+  > let () = match Typed.result with Ok _ | Error _ -> ()
+  > let () = incr Typed.cell
+  > let () = Hashtbl.replace Typed.table "a" 1
+  > let _ = List.length Typed.items
+  > let _ = Buffer.contents Typed.buffer
+  > let _ = In_channel.input_all Typed.input
+  > let () = output_string Typed.output ""
+  > let _ = List.mem Open_rdonly Typed.flags
+  > let _ = Typed.kind = FP_normal
+  > let () = Format.printf Typed.message
+  > EOF
+  $ ocamlc -c -I _build/default/typed/.typed.objs/byte consumer.ml; echo "exit $?"
+  exit 0
+
+A module the prelude changes is its own, and so are its types: a consumer of a
+library that exports a Digest.t needs hermetic.eio as well.
+
+  $ unit digested "" "-open Hermetic_eio -alert @ambient" <<EOF
+  > let digest : Digest.t = Digest.string ""
+  > EOF
+  $ dune build --root . --display quiet ./digested; echo "exit $?"
+  exit 0
+  $ echo 'let _ = Digest.to_hex Digested.digest' > digest_consumer.ml
+  $ ocamlc -c -I _build/default/digested/.digested.objs/byte digest_consumer.ml 2>&1 |
+  >   grep -o 'Hermetic_eio.Digest.t is abstract'
+  Hermetic_eio.Digest.t is abstract
