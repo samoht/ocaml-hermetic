@@ -119,3 +119,34 @@ prelude.
   plain-eio: plain-eio/plain_eio.ml: imports Unix, which reaches the system past an Eio capability
   4 Eio libraries: 2 hermetic, 1 in the ratchet
   exit 1
+
+An adopted library's interface names the prelude's types, so a toplevel that
+loads the library without the prelude's compiled interface sees them
+abstract: under (implicit_transitive_deps false) an mdx stanza reaches only
+the libraries it names. An mdx stanza naming an adopted library, by its public
+or its local name, names hermetic.eio too.
+
+  $ echo "(mdx (files README.md) (libraries named-eio fmt))" >> named-eio/dune
+  $ echo "(mdx (files local.md) (libraries named_eio))" >> uses/dune
+  $ echo "(mdx (files other.md) (libraries uses))" >> other/dune
+  $ check --ratchet ratchet
+  plain-eio: plain-eio/plain_eio.ml: imports Unix, which reaches the system past an Eio capability
+  named-eio/dune: an mdx stanza names named-eio, which opens Hermetic_eio, and not hermetic.eio
+  uses/dune: an mdx stanza names named_eio, which opens Hermetic_eio, and not hermetic.eio
+  4 Eio libraries: 2 hermetic, 1 in the ratchet
+  exit 1
+
+Naming the prelude satisfies it.
+
+  $ printf '(mdx (files README.md) (libraries named-eio hermetic.eio))\n' > named-eio/mdx.inc
+  $ lib named-eio named-eio hermetic.eio "$adopt" <<EOF
+  > let x = 1
+  > EOF
+  $ echo "(include mdx.inc)" >> named-eio/dune
+  $ echo "(mdx (files local.md) (libraries named_eio hermetic.eio))" > uses/mdx.inc
+  $ sed '/^(mdx/d' uses/dune > uses/dune.new && mv uses/dune.new uses/dune
+  $ echo "(include mdx.inc)" >> uses/dune
+  $ check --ratchet ratchet
+  plain-eio: plain-eio/plain_eio.ml: imports Unix, which reaches the system past an Eio capability
+  4 Eio libraries: 2 hermetic, 1 in the ratchet
+  exit 1
