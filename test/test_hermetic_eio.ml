@@ -8,17 +8,17 @@ let same name kept original =
   Alcotest.(check bool) (name ^ " is the original") true (kept == original)
 
 let test_kept_values_are_the_originals () =
-  same "List.map" Hermetic_eio.List.map Stdlib.List.map;
-  same "Hashtbl.iter" Hermetic_eio.Hashtbl.iter Stdlib.Hashtbl.iter;
-  same "Atomic.make" Hermetic_eio.Atomic.make Stdlib.Atomic.make;
-  same "Random.int" Hermetic_eio.Random.int Stdlib.Random.int;
+  same "List.map" Hermetic_eio.Stdlib.List.map Stdlib.List.map;
+  same "Hashtbl.iter" Hermetic_eio.Stdlib.Hashtbl.iter Stdlib.Hashtbl.iter;
+  same "Atomic.make" Hermetic_eio.Stdlib.Atomic.make Stdlib.Atomic.make;
+  same "Random.int" Hermetic_eio.Stdlib.Random.int Stdlib.Random.int;
   same "Filename.concat" Hermetic_eio.Filename.concat Stdlib.Filename.concat;
   same "In_channel.input_all" Hermetic_eio.In_channel.input_all
     Stdlib.In_channel.input_all;
   same "Out_channel.output_string" Hermetic_eio.Out_channel.output_string
     Stdlib.Out_channel.output_string;
   same "Digest.string" Hermetic_eio.Digest.string Stdlib.Digest.string;
-  same "Buffer.add_string" Hermetic_eio.Buffer.add_string
+  same "Buffer.add_string" Hermetic_eio.Stdlib.Buffer.add_string
     Stdlib.Buffer.add_string
 
 let test_kept_constants_are_the_originals () =

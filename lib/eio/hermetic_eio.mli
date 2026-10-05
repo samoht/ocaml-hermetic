@@ -30,6 +30,9 @@
     the sanctioned boundary between Eio and the system passes [--boundary],
     which allows the imports and the externals. *)
 
+(* The original standard library, which the opened names below restate. *)
+module Ocaml_stdlib := Stdlib
+
 (** {1:stdlib The standard library} *)
 
 (** The standard library, with its accesses past a capability refused. A path
@@ -448,21 +451,82 @@ module Stdlib : sig
   end
 end
 
-(** The standard library's types are not restated: an adopted library's
-    interface names {!Stdlib.result} and the others under their own path, so a
-    toplevel without this module's compiled interface still sees their
-    definitions and prints their constructors unqualified. *)
+(** {1:opened The opened names} *)
 
+(** The names {!Stdlib} refuses or changes, which [-open Hermetic_eio] puts in
+    scope. Every other name, a type such as [result] or a module such as
+    [Hashtbl], stays the standard library's own, so the interface of a library
+    compiled under the prelude names the standard library's types and its
+    consumers do not read this module. A type of a module the prelude changes,
+    such as [Digest.t], is the prelude's. *)
 include module type of struct
     include Stdlib
   end
-  with type fpclass := Stdlib.fpclass
-   and type in_channel := Stdlib.in_channel
-   and type out_channel := Stdlib.out_channel
-   and type open_flag := Stdlib.open_flag
-   and type 'a ref := 'a Stdlib.ref
-   and type ('a, 'b) result := ('a, 'b) Stdlib.result
+  with type fpclass := Ocaml_stdlib.fpclass
+   and type in_channel := Ocaml_stdlib.in_channel
+   and type out_channel := Ocaml_stdlib.out_channel
+   and type open_flag := Ocaml_stdlib.open_flag
+   and type 'a ref := 'a Ocaml_stdlib.ref
+   and type ('a, 'b) result := ('a, 'b) Ocaml_stdlib.result
    and type ('a, 'b, 'c, 'd, 'e, 'f) format6 :=
-    ('a, 'b, 'c, 'd, 'e, 'f) Stdlib.format6
-   and type ('a, 'b, 'c, 'd) format4 := ('a, 'b, 'c, 'd) Stdlib.format4
-   and type ('a, 'b, 'c) format := ('a, 'b, 'c) Stdlib.format
+    ('a, 'b, 'c, 'd, 'e, 'f) Ocaml_stdlib.format6
+   and type ('a, 'b, 'c, 'd) format4 := ('a, 'b, 'c, 'd) Ocaml_stdlib.format4
+   and type ('a, 'b, 'c) format := ('a, 'b, 'c) Ocaml_stdlib.format
+   and module LargeFile := Ocaml_stdlib.LargeFile
+   and module Arg := Ocaml_stdlib.Arg
+   and module Array := Ocaml_stdlib.Array
+   and module ArrayLabels := Ocaml_stdlib.ArrayLabels
+   and module Atomic := Ocaml_stdlib.Atomic
+   and module Bigarray := Ocaml_stdlib.Bigarray
+   and module Bool := Ocaml_stdlib.Bool
+   and module Buffer := Ocaml_stdlib.Buffer
+   and module Bytes := Ocaml_stdlib.Bytes
+   and module BytesLabels := Ocaml_stdlib.BytesLabels
+   and module Callback := Ocaml_stdlib.Callback
+   and module Char := Ocaml_stdlib.Char
+   and module Complex := Ocaml_stdlib.Complex
+   and module Domain := Ocaml_stdlib.Domain
+   and module Dynarray := Ocaml_stdlib.Dynarray
+   and module Pqueue := Ocaml_stdlib.Pqueue
+   and module Effect := Ocaml_stdlib.Effect
+   and module Either := Ocaml_stdlib.Either
+   and module Ephemeron := Ocaml_stdlib.Ephemeron
+   and module Float := Ocaml_stdlib.Float
+   and module Format := Ocaml_stdlib.Format
+   and module Fun := Ocaml_stdlib.Fun
+   and module Gc := Ocaml_stdlib.Gc
+   and module Hashtbl := Ocaml_stdlib.Hashtbl
+   and module Iarray := Ocaml_stdlib.Iarray
+   and module Int := Ocaml_stdlib.Int
+   and module Int32 := Ocaml_stdlib.Int32
+   and module Int64 := Ocaml_stdlib.Int64
+   and module Lazy := Ocaml_stdlib.Lazy
+   and module Lexing := Ocaml_stdlib.Lexing
+   and module List := Ocaml_stdlib.List
+   and module ListLabels := Ocaml_stdlib.ListLabels
+   and module Map := Ocaml_stdlib.Map
+   and module Marshal := Ocaml_stdlib.Marshal
+   and module MoreLabels := Ocaml_stdlib.MoreLabels
+   and module Nativeint := Ocaml_stdlib.Nativeint
+   and module Obj := Ocaml_stdlib.Obj
+   and module Oo := Ocaml_stdlib.Oo
+   and module Option := Ocaml_stdlib.Option
+   and module Pair := Ocaml_stdlib.Pair
+   and module Parsing := Ocaml_stdlib.Parsing
+   and module Printexc := Ocaml_stdlib.Printexc
+   and module Printf := Ocaml_stdlib.Printf
+   and module Queue := Ocaml_stdlib.Queue
+   and module Random := Ocaml_stdlib.Random
+   and module Result := Ocaml_stdlib.Result
+   and module Repr := Ocaml_stdlib.Repr
+   and module Scanf := Ocaml_stdlib.Scanf
+   and module Seq := Ocaml_stdlib.Seq
+   and module Set := Ocaml_stdlib.Set
+   and module Stack := Ocaml_stdlib.Stack
+   and module StdLabels := Ocaml_stdlib.StdLabels
+   and module String := Ocaml_stdlib.String
+   and module StringLabels := Ocaml_stdlib.StringLabels
+   and module Type := Ocaml_stdlib.Type
+   and module Uchar := Ocaml_stdlib.Uchar
+   and module Unit := Ocaml_stdlib.Unit
+   and module Weak := Ocaml_stdlib.Weak
