@@ -1,0 +1,18 @@
+(library
+ (name fx_good)
+ (modules fx_good)
+ (libraries hermetic.eio)
+ (flags
+  (:standard -open Hermetic_eio -alert @ambient)))
+
+(library
+ (name fx_plain)
+ (modules fx_plain)
+ (libraries hermetic.eio))
+
+(library
+ (name fx_unix)
+ (modules fx_unix)
+ (libraries hermetic.eio unix)
+ (flags
+  (:standard -open Hermetic_eio -alert @ambient)))

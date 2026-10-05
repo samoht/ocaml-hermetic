@@ -21,6 +21,12 @@ let selected l =
 
 type ratchet = string list
 
+let err_twice n lib =
+  Fmt.kstr (fun s -> Error s) "line %d: %s is listed twice" n lib
+
+let err_one n = Fmt.kstr (fun s -> Error s) "line %d: expected one library" n
+let some_str fmt = Fmt.kstr (fun s -> Some s) fmt
+
 let ratchet_of_string s =
   let line (n, acc) l =
     let l =
@@ -29,10 +35,8 @@ let ratchet_of_string s =
     match String.split_on_char ' ' l |> List.filter (( <> ) "") with
     | [] -> Ok (n + 1, acc)
     | [ lib ] ->
-        if List.mem lib acc then
-          Error (Fmt.str "line %d: %s is listed twice" n lib)
-        else Ok (n + 1, lib :: acc)
-    | _ -> Error (Fmt.str "line %d: expected one library" n)
+        if List.mem lib acc then err_twice n lib else Ok (n + 1, lib :: acc)
+    | _ -> err_one n
   in
   List.fold_left
     (fun acc l -> Result.bind acc (fun acc -> line acc l))
@@ -110,8 +114,7 @@ let judge ratchet verdicts =
       (fun lib ->
         if List.exists (fun v -> v.library = lib) verdicts then None
         else
-          Some
-            (Fmt.str "%s: in the ratchet but not an Eio library of the tree" lib))
+          some_str "%s: in the ratchet but not an Eio library of the tree" lib)
       ratchet
   in
   let clean = List.length (List.filter hermetic verdicts) in

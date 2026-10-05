@@ -1,4 +1,8 @@
 (test
  (name test)
  (package hermetic)
- (libraries hermetic hermetic.eio alcotest fmt))
+ (deps
+  check_fixtures/.fx_good.objs/byte/fx_good.cmt
+  check_fixtures/.fx_plain.objs/byte/fx_plain.cmt
+  check_fixtures/.fx_unix.objs/byte/fx_unix.cmt)
+ (libraries hermetic hermetic.eio hermetic.check alcotest fmt))
