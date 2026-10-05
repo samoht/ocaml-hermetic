@@ -88,9 +88,11 @@ module.
   > let m = (module Stdlib__Sys : W)
   > EOF
 
-Everything builds, the unit where the alert is a warning included.
+Everything builds, the unit where the alert is a warning included. The build
+has a cache of its own: a unit restored from a cache is not compiled, so it
+prints no alert.
 
-  $ dune build --root . --display quiet --profile release 2> build.log; echo "exit $?"
+  $ DUNE_CACHE_ROOT="$PWD/_cache" dune build --root . --display quiet --profile release 2> build.log; echo "exit $?"
   exit 0
   $ grep '^Alert' build.log | sort -u
   Alert ambient: Hermetic.Sys.getenv
