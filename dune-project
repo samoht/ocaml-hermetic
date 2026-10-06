@@ -15,7 +15,7 @@
 (package
  (name hermetic)
  (synopsis "The OCaml standard library with the ambient world refused")
- (tags (org:blacksun test))
+ (tags (org:blacksun test area:static_analysis))
  (description
   "A library whose decisions must be functions of their inputs (a protocol
 state machine, a codec, the model of a tool) can still read the process

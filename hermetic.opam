@@ -16,7 +16,7 @@ declares an external primitive, which no prelude can shadow."""
 maintainer: ["Thomas Gazagnaire <thomas@gazagnaire.org>"]
 authors: ["Thomas Gazagnaire <thomas@gazagnaire.org>"]
 license: "ISC"
-tags: ["org:blacksun" "test"]
+tags: ["org:blacksun" "test" "area:static_analysis"]
 homepage: "https://tangled.org/gazagnaire.org/ocaml-hermetic"
 bug-reports: "https://tangled.org/gazagnaire.org/ocaml-hermetic/issues"
 depends: [
