@@ -104,7 +104,7 @@ The refusal follows the declaration, however the name is spelled: through
 Stdlib, through a module alias, an open, an include, a functor argument, a
 signature constraint, a first-class module, or a partial application. A unit
 of the standard library named by its own name, Stdlib__Sys, is past the
-prelude; check.t shows hermetic-check refusing it.
+prelude; hermetic-check.t shows hermetic-check refusing it.
 
   $ put via_stdlib 'let home = Stdlib.Sys.getenv "HOME"'
   $ put via_alias 'module S = Sys let home = S.getenv "HOME"'
