@@ -36,7 +36,7 @@ declares an external primitive, which no prelude can shadow.")
 (package
  (name hermetic-tree)
  (synopsis "Check every Eio library of a source tree against hermetic.eio")
- (tags (org:blacksun test))
+ (tags (org:blacksun test area:static_analysis))
  (description
   "The hermetic-tree command indexes a source tree, selects each library that
 does its I/O through Eio, by its name or by its dependency on eio, and checks
