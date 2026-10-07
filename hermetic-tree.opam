@@ -9,7 +9,7 @@ libraries still allowed to violate, which may only shrink."""
 maintainer: ["Thomas Gazagnaire <thomas@gazagnaire.org>"]
 authors: ["Thomas Gazagnaire <thomas@gazagnaire.org>"]
 license: "ISC"
-tags: ["org:blacksun" "test" "area:static_analysis"]
+tags: ["org:blacksun" "test" "area:10011000"]
 homepage: "https://tangled.org/gazagnaire.org/ocaml-hermetic"
 bug-reports: "https://tangled.org/gazagnaire.org/ocaml-hermetic/issues"
 depends: [

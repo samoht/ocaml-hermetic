@@ -15,7 +15,7 @@
 (package
  (name hermetic)
  (synopsis "The OCaml standard library with the ambient world refused")
- (tags (org:blacksun test area:static_analysis))
+ (tags (org:blacksun test area:10011000))
  (description
   "A library whose decisions must be functions of their inputs (a protocol
 state machine, a codec, the model of a tool) can still read the process
@@ -36,7 +36,7 @@ declares an external primitive, which no prelude can shadow.")
 (package
  (name hermetic-tree)
  (synopsis "Check every Eio library of a source tree against hermetic.eio")
- (tags (org:blacksun test area:static_analysis))
+ (tags (org:blacksun test area:10011000))
  (description
   "The hermetic-tree command indexes a source tree, selects each library that
 does its I/O through Eio, by its name or by its dependency on eio, and checks
