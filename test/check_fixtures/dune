@@ -16,3 +16,25 @@
  (libraries hermetic.eio unix)
  (flags
   (:standard -open Hermetic_eio -alert @ambient)))
+
+; Two modules and no main one: dune generates the alias module fx_pair, which
+; it compiles without the library's flags.
+
+(library
+ (name fx_pair)
+ (modules fx_pair_a fx_pair_b)
+ (libraries hermetic.eio)
+ (flags
+  (:standard -open Hermetic_eio -alert @ambient)))
+
+(library
+ (name fx_alias)
+ (modules fx_alias)
+ (libraries hermetic.eio))
+
+; A main module beside the alias module fx_mixed__ dune generates.
+
+(library
+ (name fx_mixed)
+ (modules fx_mixed fx_mixed_x)
+ (libraries hermetic.eio))

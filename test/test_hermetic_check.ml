@@ -36,6 +36,30 @@ let test_boundary_still_requires_open () =
     "Not_opened" true
     (List.mem (Hermetic_check.Not_opened "Hermetic_eio") (findings r))
 
+(* dune compiles the alias module of a library of several modules with none
+   of the library's flags; it holds only aliases to the library's own units. *)
+let test_generated_alias_passes () =
+  List.iter
+    (fun (dir, unit) ->
+      let path = Fmt.str "check_fixtures/.%s.objs/byte/%s.cmt" dir unit in
+      Alcotest.(check (list string))
+        (unit ^ ": no finding") []
+        (strings (findings (Hermetic_check.eio path))))
+    [ ("fx_pair", "fx_pair"); ("fx_mixed", "fx_mixed__") ]
+
+let test_alias_past_library_refused () =
+  let r = Hermetic_check.eio (cmt "fx_alias") in
+  Alcotest.(check bool)
+    "Not_opened" true
+    (List.mem (Hermetic_check.Not_opened "Hermetic_eio") (findings r))
+
+let test_alias_and_value_refused () =
+  let path = "check_fixtures/.fx_mixed.objs/byte/fx_mixed.cmt" in
+  let r = Hermetic_check.eio path in
+  Alcotest.(check bool)
+    "Not_opened" true
+    (List.mem (Hermetic_check.Not_opened "Hermetic_eio") (findings r))
+
 let test_missing_file_unreadable () =
   let r = Hermetic_check.eio (cmt "absent") in
   match findings r with
@@ -53,6 +77,12 @@ let suite =
       Alcotest.test_case "boundary allows Unix" `Quick test_boundary_allows_unix;
       Alcotest.test_case "boundary still requires the open" `Quick
         test_boundary_still_requires_open;
+      Alcotest.test_case "the alias module dune generates passes" `Quick
+        test_generated_alias_passes;
+      Alcotest.test_case "an alias past the library is refused" `Quick
+        test_alias_past_library_refused;
+      Alcotest.test_case "an alias beside a value is refused" `Quick
+        test_alias_and_value_refused;
       Alcotest.test_case "missing file is unreadable" `Quick
         test_missing_file_unreadable;
     ] )
