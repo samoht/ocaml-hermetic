@@ -45,7 +45,9 @@ val unit :
     unit imports, in alphabetical order, then each silencing attribute,
     reference to a standard library unit and, when [externals] is [true] (the
     default), [external] declaration of the typed tree, in source order. They
-    are [[]] for a hermetic unit. *)
+    are [[]] for a hermetic unit. The command line is not read for a unit that
+    holds only aliases to units of its own library, as the alias module dune
+    generates does. *)
 
 val pp_finding : finding Fmt.t
 (** [pp_finding] prints a finding as one line naming what it refuses. *)

@@ -135,19 +135,55 @@ let read path =
       | Cmi_format.Error _ | End_of_file | Failure _ ) ->
       Error "not a .cmt file of this compiler"
 
+(* The alias module dune generates for a library of several modules, [Lib] or
+   [Lib__], compiled without the library's flags: nothing but [module X =
+   Lib__X], each a unit of the same library, which is checked on its own, and
+   in [Lib__] an empty [module Lib__ = struct end] that shadows itself. An
+   alias to anything else would hand its users that module past the prelude. *)
+let own_aliases (cmt : Cmt_format.cmt_infos) =
+  let modname = cmt.cmt_modname in
+  let lib =
+    if String.ends_with ~suffix:"__" modname then
+      String.sub modname 0 (String.length modname - 2)
+    else modname
+  in
+  let own path =
+    let head = Path.head path in
+    Ident.persistent head
+    && String.starts_with ~prefix:(lib ^ "__") (Ident.name head)
+  in
+  let item (i : Typedtree.structure_item) =
+    match i.str_desc with
+    | Tstr_module { mb_expr = { mod_desc = Tmod_ident (path, _); _ }; _ } ->
+        own path
+    | Tstr_module
+        { mb_expr = { mod_desc = Tmod_structure { str_items = []; _ }; _ }; _ }
+      ->
+        true
+    | Tstr_attribute _ -> true
+    | _ -> false
+  in
+  match cmt.cmt_annots with
+  | Implementation { str_items = _ :: _ as items; _ } -> List.for_all item items
+  | _ -> false
+
 let unit ?(imports = []) ?(externals = true) ~opens path =
   match read path with
   | Error msg -> { name = path; findings = [ Unreadable msg ] }
   | Ok cmt ->
       let args = Array.to_list cmt.cmt_args in
       let opened = opened args in
+      let flagged = not (own_aliases cmt) in
       let missing =
         List.filter_map
-          (fun m -> if List.mem m opened then None else Some (Not_opened m))
+          (fun m ->
+            if (not flagged) || List.mem m opened then None
+            else Some (Not_opened m))
           opens
       in
       let fatal =
-        if fatal_after ~base:[] (alert_options args) then [] else [ Not_fatal ]
+        if (not flagged) || fatal_after ~base:[] (alert_options args) then []
+        else [ Not_fatal ]
       in
       let imported =
         List.filter_map

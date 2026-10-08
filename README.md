@@ -123,6 +123,13 @@ the unit, then exits 1:
   first-class module;
 - it declares an `external`, at any depth, with the primitive it names.
 
+The first two do not apply to the alias module dune generates for a library of
+several modules, which it compiles without the library's flags: a unit that
+holds only `module X = Lib__X` aliases to units of its own library, each
+checked by itself, has nothing in it to refuse. An alias to any other module
+is refused as before, since it would hand that module to its users past the
+prelude.
+
 A library that also hides the ambient values of a dependency in a prelude of
 its own opens that prelude after `Hermetic` and names it with `--open`, so
 that dropping it from the stanza is refused too.
