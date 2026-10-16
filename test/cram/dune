@@ -12,4 +12,4 @@
 
 (cram
  (applies_to stdlib-types)
- (deps (package hermetic)))
+ (deps %{bin:ocamlc} %{bin:ocamlfind} (package hermetic)))

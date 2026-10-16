@@ -34,36 +34,7 @@ the compiler's standard library.
   $ for source in consumer/*.ml; do
   >   if "$OCAMLC" -I producer -c "$source" 2>&1; then echo 'consumer exit: 0'; else echo "consumer exit: $?"; fi
   > done
-  File "consumer/input.ml", line 1, characters 49-51:
-  1 | let read (ic : in_channel) = Produced_input.read ic
-                                                       ^^
-  Error: The value ic has type in_channel
-         but an expression was expected of type Hermetic.in_channel
-         Type Hermetic.in_channel is abstract because no corresponding cmi file
-         was found in path.
-  consumer exit: 2
-  File "consumer/output.ml", line 1, characters 53-55:
-  1 | let write (oc : out_channel) = Produced_output.write oc
-                                                           ^^
-  Error: The value oc has type out_channel
-         but an expression was expected of type Hermetic.out_channel
-         Type Hermetic.out_channel is abstract because no corresponding
-         cmi file was found in path.
-  consumer exit: 2
-  File "consumer/ref_value.ml", line 1, characters 14-32:
-  1 | let () = incr Produced_ref.value
-                    ^^^^^^^^^^^^^^^^^^
-  Error: The value Produced_ref.value has type int Hermetic.ref
-         but an expression was expected of type int ref
-         Type Hermetic.ref is abstract because no corresponding cmi file
-         was found in path.
-  consumer exit: 2
-  File "consumer/result.ml", line 1, characters 45-49:
-  1 | let value = match Produced_result.value with Ok _ -> true | Error _ -> false
-                                                   ^^^^
-  Error: This pattern matches values of type ('a, 'b) result
-         but a pattern was expected which matches values of type
-           (int, string) Hermetic.result
-         Type Hermetic.result is abstract because no corresponding cmi file
-         was found in path.
-  consumer exit: 2
+  consumer exit: 0
+  consumer exit: 0
+  consumer exit: 0
+  consumer exit: 0
