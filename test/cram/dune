@@ -9,3 +9,7 @@
  (deps
   %{bin:hermetic-tree}
   (package hermetic-tree)))
+
+(cram
+ (applies_to stdlib-types)
+ (deps (package hermetic)))
