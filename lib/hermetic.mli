@@ -40,6 +40,8 @@
     library is compiled hermetic too. {!Fmt}, whose printers every library here
     uses, is restated. *)
 
+module Ocaml_stdlib := Stdlib
+
 (** {1:stdlib The standard library} *)
 
 (** The standard library, with its ambient values refused. A path through
@@ -1739,8 +1741,12 @@ module Stdlib : sig
 end
 
 include module type of struct
-  include Stdlib
-end
+    include Stdlib
+  end
+  with type in_channel := Ocaml_stdlib.in_channel
+   and type out_channel := Ocaml_stdlib.out_channel
+   and type 'a ref := 'a Ocaml_stdlib.ref
+   and type ('a, 'b) result := ('a, 'b) Ocaml_stdlib.result
 
 (** {1:internals The compiler's runtime support} *)
 
