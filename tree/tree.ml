@@ -8,7 +8,6 @@ module Package = Project_index.Package
 
 let boundary_tag = "hermetic:eio-boundary"
 let prelude = "Hermetic_eio"
-let some_str fmt = Fmt.kstr (fun s -> Some s) fmt
 
 let eio_name = function
   | None -> false
@@ -27,6 +26,14 @@ let adopted l =
     List.sort_uniq String.compare [ Library.name l; Library.local_name l ]
   else []
 
+type finding = { file : string; line : int; text : string }
+
+let pp_finding ppf f =
+  Fmt.pf ppf "File \"%s\", line %d, characters 0-0:@\nError: %s" f.file f.line
+    f.text
+
+let finding ~file ~line fmt = Fmt.kstr (fun text -> { file; line; text }) fmt
+
 let mdx ~adopted ~dune ms =
   List.concat_map
     (fun m ->
@@ -36,20 +43,22 @@ let mdx ~adopted ~dune ms =
         List.filter_map
           (fun lib ->
             if List.mem lib adopted then
-              some_str "%s: an mdx stanza names %s, which opens %s, and not %s"
-                dune lib prelude prelude_library
+              Some
+                (finding ~file:dune ~line:1
+                   "an mdx stanza names %s, which opens %s, and not %s" lib
+                   prelude prelude_library)
             else None)
           libs)
     ms
 
-type ratchet = string list
+type ratchet = { file : string; libraries : (string * int) list }
 
 let err_twice n lib =
   Fmt.kstr (fun s -> Error s) "line %d: %s is listed twice" n lib
 
 let err_one n = Fmt.kstr (fun s -> Error s) "line %d: expected one library" n
 
-let ratchet_of_string s =
+let ratchet_of_string ~file s =
   let line (n, acc) l =
     let l =
       match String.index_opt l '#' with Some i -> String.sub l 0 i | None -> l
@@ -57,32 +66,37 @@ let ratchet_of_string s =
     match String.split_on_char ' ' l |> List.filter (( <> ) "") with
     | [] -> Ok (n + 1, acc)
     | [ lib ] ->
-        if List.mem lib acc then err_twice n lib else Ok (n + 1, lib :: acc)
+        if List.mem_assoc lib acc then err_twice n lib
+        else Ok (n + 1, (lib, n) :: acc)
     | _ -> err_one n
   in
   List.fold_left
     (fun acc l -> Result.bind acc (fun acc -> line acc l))
     (Ok (1, []))
     (String.split_on_char '\n' s)
-  |> Result.map (fun (_, acc) -> List.rev acc)
+  |> Result.map (fun (_, acc) -> { file; libraries = List.rev acc })
 
 type verdict = {
   library : string;
+  dune : string;
   boundary : bool;
   reports : Hermetic_check.report list;
 }
 
-let objs ~root ~build l =
-  let dir =
-    match Library.source_dir l with
-    | None -> Fpath.v "."
-    | Some d -> ( match Fpath.relativize ~root d with Some r -> r | None -> d)
-  in
+(* The source directory of [l], relative to [root]. *)
+let source_dir ~root l =
+  match Library.source_dir l with
+  | None -> Fpath.v "."
+  | Some d -> ( match Fpath.relativize ~root d with Some r -> r | None -> d)
+
+let objs ~build dir l =
   Fpath.(build // dir / ("." ^ Library.local_name l ^ ".objs") / "byte")
 
 let verdict ~root ~build l =
   let boundary = List.mem boundary_tag (Package.tags (Library.package l)) in
-  let dir = objs ~root ~build l in
+  let source = source_dir ~root l in
+  let dune = Fpath.(to_string (normalize (source / "dune"))) in
+  let dir = objs ~build source l in
   let cmts =
     match Sys.readdir (Fpath.to_string dir) with
     | names ->
@@ -100,6 +114,7 @@ let verdict ~root ~build l =
       Some
         {
           library;
+          dune;
           boundary;
           reports =
             [ { Hermetic_check.name = library; findings = [ Unreadable why ] } ];
@@ -108,6 +123,7 @@ let verdict ~root ~build l =
       Some
         {
           library;
+          dune;
           boundary;
           reports = List.map (Hermetic_check.eio ~boundary) cmts;
         }
@@ -115,29 +131,47 @@ let verdict ~root ~build l =
 let hermetic v =
   List.for_all (fun (r : Hermetic_check.report) -> r.findings = []) v.reports
 
+(* Where the finding [f] on the unit of [r], of the verdict [v], lies: the
+   unit's source file, or [v]'s dune file when the unit names none. *)
+let located v (r : Hermetic_check.report) (f : Hermetic_check.finding) =
+  let file =
+    match f with
+    | Unreadable _ -> v.dune
+    | _ when r.name = v.library || Filename.check_suffix r.name ".cmt" -> v.dune
+    | _ -> r.name
+  in
+  let line =
+    match f with
+    | Silenced { loc; _ } | Stdlib_unit { loc; _ } | External { loc; _ } ->
+        loc.loc_start.pos_lnum
+    | Not_opened _ | Not_fatal | Import _ | Unreadable _ -> 1
+  in
+  finding ~file ~line "%s: %a" v.library Hermetic_check.pp_finding f
+
 let judge ratchet verdicts =
+  let at lib = List.assoc lib ratchet.libraries in
   let refuse v =
-    match (hermetic v, List.mem v.library ratchet) with
+    match (hermetic v, List.mem_assoc v.library ratchet.libraries) with
     | true, false | false, true -> []
     | true, true ->
-        [ Fmt.str "%s: hermetic, remove it from the ratchet" v.library ]
+        [
+          finding ~file:ratchet.file ~line:(at v.library)
+            "%s: hermetic, remove it from the ratchet" v.library;
+        ]
     | false, false ->
         List.concat_map
-          (fun (r : Hermetic_check.report) ->
-            List.map
-              (fun f ->
-                Fmt.str "%s: %s: %a" v.library r.name Hermetic_check.pp_finding
-                  f)
-              r.findings)
+          (fun (r : Hermetic_check.report) -> List.map (located v r) r.findings)
           v.reports
   in
   let stale =
     List.filter_map
-      (fun lib ->
+      (fun (lib, line) ->
         if List.exists (fun v -> v.library = lib) verdicts then None
         else
-          some_str "%s: in the ratchet but not an Eio library of the tree" lib)
-      ratchet
+          Some
+            (finding ~file:ratchet.file ~line
+               "%s: in the ratchet but not an Eio library of the tree" lib))
+      ratchet.libraries
   in
   let clean = List.length (List.filter hermetic verdicts) in
-  (List.concat_map refuse verdicts @ stale, clean, List.length ratchet)
+  (List.concat_map refuse verdicts @ stale, clean, List.length ratchet.libraries)

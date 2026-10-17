@@ -14,9 +14,10 @@ let run root build ratchet summary =
   let build = match build with None -> root | Some b -> absolute b in
   let ratchet =
     match ratchet with
-    | None -> Tree.ratchet_of_string ""
+    | None -> Tree.ratchet_of_string ~file:"" ""
     | Some f ->
-        Tree.ratchet_of_string (In_channel.with_open_bin f In_channel.input_all)
+        Tree.ratchet_of_string ~file:f
+          (In_channel.with_open_bin f In_channel.input_all)
   in
   match ratchet with
   | Error e -> `Error (false, e)
@@ -48,7 +49,14 @@ let run root build ratchet summary =
           | None -> Fpath.to_string file
         in
         match Dune.File.of_file (Fpath.to_string file) with
-        | Error e -> [ Fmt.str "%s: %a" dune Dune.Error.pp e ]
+        | Error e ->
+            [
+              {
+                Tree.file = dune;
+                line = 1;
+                text = Fmt.str "%a" Dune.Error.pp e;
+              };
+            ]
         | Ok f -> Tree.mdx ~adopted ~dune (Dune.File.mdx_stanzas f)
       in
       let lines =
@@ -56,7 +64,7 @@ let run root build ratchet summary =
         @ List.concat_map mdx
             (List.sort Fpath.compare (Project_index.dune_dirs index))
       in
-      List.iter (Fmt.pr "%s@.") lines;
+      List.iter (Fmt.pr "%a@." Tree.pp_finding) lines;
       if summary || lines <> [] then
         Fmt.pr "%d Eio libraries: %d hermetic, %d in the ratchet@."
           (List.length verdicts) clean listed;
