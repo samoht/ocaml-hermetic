@@ -21,10 +21,30 @@ let selected l =
 
 let prelude_library = "hermetic.eio"
 
-let adopted l =
-  if List.mem prelude_library (Library.deps l) then
-    List.sort_uniq String.compare [ Library.name l; Library.local_name l ]
-  else []
+(* The dune and local names of the libraries of [t]'s source packages that
+   satisfy [f]. *)
+let names_of f t =
+  Project_index.source_package_list t
+  |> List.concat_map Project_index.package_libraries
+  |> List.filter f
+  |> List.concat_map (fun l -> [ Library.name l; Library.local_name l ])
+  |> List.sort_uniq String.compare
+
+let names = names_of (fun _ -> true)
+let adopted = names_of (fun l -> List.mem prelude_library (Library.deps l))
+
+let relative ~root p =
+  match Fpath.relativize ~root p with
+  | Some r -> Fpath.normalize r
+  | None -> Fpath.normalize p
+
+let owner ~root t dir =
+  match Project_index.packages_of_path t dir with
+  | [] -> Fpath.v "./"
+  | p :: _ -> (
+      match Package.source_dir p with
+      | Some d -> relative ~root (Fpath.to_dir_path d)
+      | None -> Fpath.v "./")
 
 type finding = { file : string; line : int; text : string }
 
@@ -34,22 +54,33 @@ let pp_finding ppf f =
 
 let finding ~file ~line fmt = Fmt.kstr (fun text -> { file; line; text }) fmt
 
-let mdx ~adopted ~dune ms =
+let mdx_names ms =
   List.concat_map
     (fun m ->
       let libs = Dune.File.Mdx.libraries m in
-      if List.mem prelude_library libs then []
-      else
-        List.filter_map
-          (fun lib ->
-            if List.mem lib adopted then
-              Some
-                (finding ~file:dune ~line:1
-                   "an mdx stanza names %s, which opens %s, and not %s" lib
-                   prelude prelude_library)
-            else None)
-          libs)
+      if List.mem prelude_library libs then [] else libs)
     ms
+
+let mdx_libraries ms =
+  List.concat_map Dune.File.Mdx.libraries ms
+  |> List.filter (( <> ) prelude_library)
+
+let mdx ~adopted ~known ~dune ms =
+  List.filter_map
+    (fun lib ->
+      if List.mem lib adopted then
+        Some
+          (finding ~file:dune ~line:1
+             "an mdx stanza names %s, which opens %s, and not %s" lib prelude
+             prelude_library)
+      else if not (known lib) then
+        Some
+          (finding ~file:dune ~line:1
+             "an mdx stanza names %s, which the rule of its package does not \
+              read: regenerate the rules hermetic-tree --include prints"
+             lib)
+      else None)
+    (mdx_names ms)
 
 type ratchet = { file : string; libraries : (string * int) list }
 
@@ -83,20 +114,19 @@ type verdict = {
   reports : Hermetic_check.report list;
 }
 
-(* The source directory of [l], relative to [root]. *)
 let source_dir ~root l =
   match Library.source_dir l with
-  | None -> Fpath.v "."
-  | Some d -> ( match Fpath.relativize ~root d with Some r -> r | None -> d)
+  | None -> Fpath.v "./"
+  | Some d -> relative ~root (Fpath.to_dir_path d)
 
-let objs ~build dir l =
-  Fpath.(build // dir / ("." ^ Library.local_name l ^ ".objs") / "byte")
+let objs l = Fpath.(v ("." ^ Library.local_name l ^ ".objs") / "byte")
 
-let verdict ~root ~build l =
+let verdict ~root ~build ~scoped l =
   let boundary = List.mem boundary_tag (Package.tags (Library.package l)) in
   let source = source_dir ~root l in
   let dune = Fpath.(to_string (normalize (source / "dune"))) in
-  let dir = objs ~build source l in
+  let units = Fpath.(source // objs l) in
+  let dir = Fpath.(build // units) in
   let cmts =
     match Sys.readdir (Fpath.to_string dir) with
     | names ->
@@ -110,7 +140,14 @@ let verdict ~root ~build l =
   match cmts with
   | [] when Library.gated l -> None
   | [] ->
-      let why = Fmt.str "no compiled units in %a" Fpath.pp dir in
+      let why =
+        if scoped then
+          Fmt.str
+            "no compiled units in %a: the rule of its package names none, \
+             regenerate the rules hermetic-tree --include prints"
+            Fpath.pp units
+        else Fmt.str "no compiled units in %a" Fpath.pp units
+      in
       Some
         {
           library;
@@ -148,10 +185,29 @@ let located v (r : Hermetic_check.report) (f : Hermetic_check.finding) =
   in
   finding ~file ~line "%s: %a" v.library Hermetic_check.pp_finding f
 
-let judge ratchet verdicts =
+let unreadable (r : Hermetic_check.report) =
+  List.filter
+    (function Hermetic_check.Unreadable _ -> true | _ -> false)
+    r.findings
+
+let stale ratchet libraries =
+  List.filter_map
+    (fun (lib, line) ->
+      if List.mem lib libraries then None
+      else
+        Some
+          (finding ~file:ratchet.file ~line
+             "%s: in the ratchet but not an Eio library of the tree" lib))
+    ratchet.libraries
+
+let judge ~owns ratchet verdicts =
   let at lib = List.assoc lib ratchet.libraries in
   let refuse v =
     match (hermetic v, List.mem_assoc v.library ratchet.libraries) with
+    | false, true when List.exists (fun r -> unreadable r <> []) v.reports ->
+        List.concat_map
+          (fun r -> List.map (located v r) (unreadable r))
+          v.reports
     | true, false | false, true -> []
     | true, true ->
         [
@@ -163,15 +219,64 @@ let judge ratchet verdicts =
           (fun (r : Hermetic_check.report) -> List.map (located v r) r.findings)
           v.reports
   in
-  let stale =
-    List.filter_map
-      (fun (lib, line) ->
-        if List.exists (fun v -> v.library = lib) verdicts then None
-        else
-          Some
-            (finding ~file:ratchet.file ~line
-               "%s: in the ratchet but not an Eio library of the tree" lib))
-      ratchet.libraries
+  let libraries = List.map (fun v -> v.library) verdicts in
+  let judged =
+    {
+      ratchet with
+      libraries =
+        List.filter
+          (fun (lib, _) -> owns lib || List.mem lib libraries)
+          ratchet.libraries;
+    }
   in
   let clean = List.length (List.filter hermetic verdicts) in
-  (List.concat_map refuse verdicts @ stale, clean, List.length ratchet.libraries)
+  ( List.concat_map refuse verdicts @ stale judged libraries,
+    clean,
+    List.length judged.libraries )
+
+let path p = Fpath.to_string (Fpath.rem_empty_seg (Fpath.normalize p))
+let sources = [ "dune"; "dune-project"; "*.opam"; "*.inc" ]
+
+type scope = {
+  dir : Fpath.t;
+  units : Fpath.t list;
+  reads : Fpath.t list;
+  outside : string list;
+}
+
+let rule ~ratchet s =
+  let dir = path s.dir in
+  let up =
+    String.concat "" (List.map (fun _ -> "../") (Fpath.segs (Fpath.v dir)))
+  in
+  let globs base = List.map (Fmt.str "(glob_files_rec %s%s)" base) sources in
+  let deps =
+    (("(sandbox always)" :: Option.to_list (Option.map (( ^ ) up) ratchet))
+    @ [ up ^ "dune"; up ^ "dune-project" ]
+    @ globs ""
+    @ List.concat_map (fun r -> globs (up ^ path r ^ "/")) s.reads)
+    @ List.map (fun u -> Fmt.str "(glob_files %s/*.cmt)" (path u)) s.units
+  in
+  let last = List.length deps - 1 in
+  let list flag = function
+    | [] -> ""
+    | xs -> Fmt.str " %s %s" flag (String.concat "," xs)
+  in
+  String.concat "\n"
+    ([ "(subdir " ^ dir; " (rule"; "  (alias runtest)"; "  (deps" ]
+    @ List.mapi (fun i d -> "   " ^ d ^ if i = last then ")" else "") deps
+    @ [
+        "  (action";
+        "   (chdir";
+        "    %{workspace_root}";
+        Fmt.str "    (run %%{bin:hermetic-tree} --scope %s%s%s%s)))))" dir
+          (match ratchet with None -> "" | Some r -> " --ratchet " ^ r)
+          (list "--reads" (List.map path s.reads))
+          (list "--outside" s.outside);
+      ])
+
+let rules ~ratchet scopes =
+  String.concat "\n\n"
+    ("; Written by hermetic-tree --include: do not edit."
+    :: List.map (rule ~ratchet) scopes)
+  ^ "\n"

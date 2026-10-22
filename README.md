@@ -197,26 +197,46 @@ change to its stanza:
  (flags (:standard -open Hermetic_eio))
 ```
 
-The `hermetic-tree` command, of the `hermetic-tree` package, checks the whole
-tree in one rule. It indexes the source tree, selects each library whose public
-name ends with `-eio` or `.eio` or that names `eio` among its libraries, and
-reads its units as `hermetic-check --eio` does. A package whose `dune-project`
-carries the tag `hermetic:eio-boundary` is checked as `--boundary`. A ratchet
-file lists the libraries still allowed to violate, one library name per line,
-and the check refuses a listed library that has become hermetic, so the list
-only shrinks:
+The `hermetic-tree` command, of the `hermetic-tree` package, checks such a
+tree. It indexes the source tree, selects each library whose public name ends
+with `-eio` or `.eio` or that names `eio` among its libraries, and reads its
+units as `hermetic-check --eio` does. A package whose `dune-project` carries
+the tag `hermetic:eio-boundary` is checked as `--boundary`. An `mdx` stanza
+that names an adopted library names `hermetic.eio` too, or its toplevel sees
+the prelude's types abstract. A ratchet file lists the libraries still allowed
+to violate, one library name per line, and the check refuses a listed library
+that has become hermetic, so the list only shrinks.
+
+Each package directory is checked in its own `runtest`, so that testing the
+packages a change touches checks them, and nothing else is built.
+`hermetic-tree --include --ratchet hermetic.ratchet` prints those rules, one
+`(subdir DIR ...)` stanza for each package directory, for an `(include)` of
+the root's dune file. Each depends on the compiled units of the directory's
+selected libraries and on the dune files of the packages its `mdx` stanzas
+read, and runs `hermetic-tree --scope DIR`. The root keeps one rule that
+prints them again and fails on a difference, which `--auto-promote` takes, and
+on a library of the ratchet the tree no longer selects:
 
 <!-- $MDX skip -->
 ```
+(include hermetic.inc)
+
+(rule
+ (deps (sandbox always) hermetic.ratchet (glob_files_rec dune)
+  (glob_files_rec dune-project) (glob_files_rec *.opam) (glob_files_rec *.inc))
+ (action
+  (with-stdout-to hermetic.inc.gen
+   (run %{bin:hermetic-tree} --include --ratchet hermetic.ratchet))))
+
 (rule
  (alias runtest)
- (deps hermetic.ratchet (glob_files_rec dune) (glob_files_rec dune-project)
-  (glob_files_rec *.opam) (alias_rec check))
- (action (run %{bin:hermetic-tree} --ratchet hermetic.ratchet)))
+ (action (diff hermetic.inc hermetic.inc.gen)))
 ```
 
-The rule's project sets `(expand_aliases_in_sandbox)`, so that the compiled
-units of `(alias_rec check)` are in the rule's sandbox.
+A library added to a package after the rules were printed has no compiled
+unit in its rule's sandbox, and an `mdx` stanza that names a library its rule
+does not read is refused the same way: both say to print the rules again. A
+new package has no rule until they are.
 
 ## What it does not cover
 
