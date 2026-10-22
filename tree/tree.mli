@@ -135,13 +135,13 @@ type scope = {
 
 val rules : ratchet:string option -> scope list -> string
 (** [rules ~ratchet scopes] is a dune file for the tree's root that checks each
-    scope in the runtest alias of its [dir], as
-    [hermetic-tree --scope dir --reads ... --outside ...] with the ratchet file
-    [ratchet], relative to the root. Each rule is a [(subdir dir ...)] stanza,
-    sandboxed, that depends on the ratchet, the root's [dune] and
-    [dune-project], the [dune], [dune-project], [.opam] and [.inc] files under
-    [dir] and under each of [reads], which the index and the dune files'
-    includes read, and the [.cmt] files of each of [units]. A selected library
-    of [dir] that none of [units] names reads as having no compiled unit. No
-    rule reads the whole tree, so that building one package's runtest loads the
-    dune files of the packages it reads and no other. *)
+    scope in the runtest alias of its {!field-dir}, as
+    [hermetic-tree --scope DIR --reads ... --outside ...] with the ratchet file
+    [ratchet], relative to the root. Each rule is a [(subdir DIR ...)] stanza,
+    sandboxed, that depends on the ratchet, the root's dune and dune-project
+    files, the dune, dune-project, .opam and .inc files under {!field-dir} and
+    under each of {!field-reads}, which the index and the dune files' includes
+    read, and the .cmt files of each of {!field-units}. A selected library of
+    {!field-dir} that none of {!field-units} names reads as having no compiled
+    unit. No rule reads the whole tree, so that building one package's runtest
+    loads the dune files of the packages it reads and no other. *)
