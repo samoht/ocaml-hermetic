@@ -69,9 +69,13 @@ compile: the workspace's flag makes the alert an error.
   exit 0
 
 Without a ratchet, the unadopted Eio library is refused and the others pass.
+Each finding is an error at a location, as the compiler writes one, so what
+reads a build's output, an editor or a merge queue, names the file it lies in
+and tells one finding from another.
 
   $ check
-  uses: uses/uses.ml: compiled without -open Hermetic_eio
+  File "uses/uses.ml", line 1, characters 0-0:
+  Error: uses: compiled without -open Hermetic_eio
   2 Eio libraries: 1 hermetic, 0 in the ratchet
   exit 1
 
@@ -88,8 +92,10 @@ is a listed library the tree does not select.
   $ echo "named-eio" >> ratchet
   $ echo "other" >> ratchet
   $ check --ratchet ratchet
-  named-eio: hermetic, remove it from the ratchet
-  other: in the ratchet but not an Eio library of the tree
+  File "ratchet", line 2, characters 0-0:
+  Error: named-eio: hermetic, remove it from the ratchet
+  File "ratchet", line 3, characters 0-0:
+  Error: other: in the ratchet but not an Eio library of the tree
   2 Eio libraries: 1 hermetic, 3 in the ratchet
   exit 1
 
@@ -116,7 +122,8 @@ prelude.
   exit 0
   $ echo "uses" > ratchet
   $ check --ratchet ratchet
-  plain-eio: plain-eio/plain_eio.ml: imports Unix, which reaches the system past an Eio capability
+  File "plain-eio/plain_eio.ml", line 1, characters 0-0:
+  Error: plain-eio: imports Unix, which reaches the system past an Eio capability
   4 Eio libraries: 2 hermetic, 1 in the ratchet
   exit 1
 
@@ -130,9 +137,12 @@ or its local name, names hermetic.eio too.
   $ echo "(mdx (files local.md) (libraries named_eio))" >> uses/dune
   $ echo "(mdx (files other.md) (libraries uses))" >> other/dune
   $ check --ratchet ratchet
-  plain-eio: plain-eio/plain_eio.ml: imports Unix, which reaches the system past an Eio capability
-  named-eio/dune: an mdx stanza names named-eio, which opens Hermetic_eio, and not hermetic.eio
-  uses/dune: an mdx stanza names named_eio, which opens Hermetic_eio, and not hermetic.eio
+  File "plain-eio/plain_eio.ml", line 1, characters 0-0:
+  Error: plain-eio: imports Unix, which reaches the system past an Eio capability
+  File "named-eio/dune", line 1, characters 0-0:
+  Error: an mdx stanza names named-eio, which opens Hermetic_eio, and not hermetic.eio
+  File "uses/dune", line 1, characters 0-0:
+  Error: an mdx stanza names named_eio, which opens Hermetic_eio, and not hermetic.eio
   4 Eio libraries: 2 hermetic, 1 in the ratchet
   exit 1
 
@@ -147,6 +157,7 @@ Naming the prelude satisfies it.
   $ sed '/^(mdx/d' uses/dune > uses/dune.new && mv uses/dune.new uses/dune
   $ echo "(include mdx.inc)" >> uses/dune
   $ check --ratchet ratchet
-  plain-eio: plain-eio/plain_eio.ml: imports Unix, which reaches the system past an Eio capability
+  File "plain-eio/plain_eio.ml", line 1, characters 0-0:
+  Error: plain-eio: imports Unix, which reaches the system past an Eio capability
   4 Eio libraries: 2 hermetic, 1 in the ratchet
   exit 1
