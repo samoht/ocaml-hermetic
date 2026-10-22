@@ -161,3 +161,142 @@ Naming the prelude satisfies it.
   Error: plain-eio: imports Unix, which reaches the system past an Eio capability
   4 Eio libraries: 2 hermetic, 1 in the ratchet
   exit 1
+
+A package's own runtest checks that package alone, so a merge queue that
+tests the packages a change touches runs it. --scope judges the selected
+libraries and the mdx stanzas of the directories the packages of one directory
+own. A library of the ratchet outside the scope is another scope's. Whether a
+library an mdx stanza names has adopted is read from the dune files of the
+packages --reads names; the libraries no package of the tree provides are
+listed with --outside, and a stanza naming any other library is refused, as a
+rule written for an older tree.
+
+  $ scoped () {
+  >   check --ratchet ratchet --scope "$@"
+  > }
+  $ echo "(mdx (files named.md) (libraries named-eio fmt))" >> other/dune
+  $ scoped other --reads named-eio,uses --outside fmt
+  File "other/dune", line 1, characters 0-0:
+  Error: an mdx stanza names named-eio, which opens Hermetic_eio, and not hermetic.eio
+  0 Eio libraries: 0 hermetic, 0 in the ratchet
+  exit 1
+  $ scoped other --reads uses --outside fmt
+  File "other/dune", line 1, characters 0-0:
+  Error: an mdx stanza names named-eio, which the rule of its package does not read: regenerate the rules hermetic-tree --include prints
+  0 Eio libraries: 0 hermetic, 0 in the ratchet
+  exit 1
+  $ scoped plain-eio
+  File "plain-eio/plain_eio.ml", line 1, characters 0-0:
+  Error: plain-eio: imports Unix, which reaches the system past an Eio capability
+  1 Eio libraries: 0 hermetic, 0 in the ratchet
+  exit 1
+  $ scoped uses
+  1 Eio libraries: 0 hermetic, 1 in the ratchet
+  exit 0
+
+A scope still refuses a library of the ratchet that has become hermetic, and
+one its packages would install, by the first segment of its name, that the
+tree no longer selects.
+
+  $ echo "named-eio" >> ratchet
+  $ echo "named-eio.gone" >> ratchet
+  $ scoped named-eio
+  File "ratchet", line 2, characters 0-0:
+  Error: named-eio: hermetic, remove it from the ratchet
+  File "ratchet", line 3, characters 0-0:
+  Error: named-eio.gone: in the ratchet but not an Eio library of the tree
+  1 Eio libraries: 1 hermetic, 2 in the ratchet
+  exit 1
+  $ echo "uses" > ratchet
+
+A scope's rule names the compiled units of its package's libraries, so a
+library added since the rules were written has none, ratchet or not.
+
+  $ mkdir named-eio/extra
+  $ lib named-eio/extra named-eio.extra "eio hermetic.eio" "$adopt" <<EOF
+  > let z = 3
+  > EOF
+  $ echo "named-eio.extra" >> ratchet
+  $ scoped named-eio
+  File "named-eio/extra/dune", line 1, characters 0-0:
+  Error: named-eio.extra: unreadable: no compiled units in named-eio/extra/.named_eio_extra.objs/byte: the rule of its package names none, regenerate the rules hermetic-tree --include prints
+  2 Eio libraries: 1 hermetic, 1 in the ratchet
+  exit 1
+  $ rm -r named-eio/extra
+  $ echo "uses" > ratchet
+
+--include prints the rules for an (include) of the root's dune file, one in
+each package directory's runtest, which depends on the compiled units of its
+selected libraries and on the dune files of the packages its mdx stanzas read.
+It refuses a library of the ratchet the tree no longer selects.
+
+  $ hermetic-tree --root . --include --ratchet ratchet > hermetic.inc
+  $ grep -c '^(subdir' hermetic.inc
+  6
+  $ sed -n -e '/^(subdir other/,/^$/p' -e '/^(subdir plain-eio/,/^$/p' hermetic.inc
+  (subdir other
+   (rule
+    (alias runtest)
+    (deps
+     (sandbox always)
+     ../ratchet
+     ../dune
+     ../dune-project
+     (glob_files_rec dune)
+     (glob_files_rec dune-project)
+     (glob_files_rec *.opam)
+     (glob_files_rec *.inc)
+     (glob_files_rec ../named-eio/dune)
+     (glob_files_rec ../named-eio/dune-project)
+     (glob_files_rec ../named-eio/*.opam)
+     (glob_files_rec ../named-eio/*.inc)
+     (glob_files_rec ../uses/dune)
+     (glob_files_rec ../uses/dune-project)
+     (glob_files_rec ../uses/*.opam)
+     (glob_files_rec ../uses/*.inc))
+    (action
+     (chdir
+      %{workspace_root}
+      (run %{bin:hermetic-tree} --scope other --ratchet ratchet --reads named-eio,uses --outside fmt)))))
+  
+  (subdir plain-eio
+   (rule
+    (alias runtest)
+    (deps
+     (sandbox always)
+     ../ratchet
+     ../dune
+     ../dune-project
+     (glob_files_rec dune)
+     (glob_files_rec dune-project)
+     (glob_files_rec *.opam)
+     (glob_files_rec *.inc)
+     (glob_files .plain_eio.objs/byte/*.cmt))
+    (action
+     (chdir
+      %{workspace_root}
+      (run %{bin:hermetic-tree} --scope plain-eio --ratchet ratchet)))))
+  
+  $ echo gone >> ratchet
+  $ hermetic-tree --root . --include --ratchet ratchet > /dev/null
+  File "ratchet", line 2, characters 0-0:
+  Error: gone: in the ratchet but not an Eio library of the tree
+  [1]
+  $ echo "uses" > ratchet
+
+With the rules included, building a package's runtest builds its libraries
+and runs its check alone: plain-eio's is red on its violation, and named-eio's
+is green. The scratch projects do not enable mdx, so their stanzas go first.
+
+  $ for d in named-eio uses other; do
+  >   grep -v mdx $d/dune > $d/dune.new && mv $d/dune.new $d/dune
+  > done
+  $ rm named-eio/mdx.inc uses/mdx.inc
+  $ hermetic-tree --root . --include --ratchet ratchet > hermetic.inc
+  $ echo "(include hermetic.inc)" > dune
+  $ rm -r _build
+  $ dune build --root . --display quiet @plain-eio/runtest 2>&1 | grep -E '^(File "plain|Error)'
+  File "plain-eio/plain_eio.ml", line 1, characters 0-0:
+  Error: plain-eio: imports Unix, which reaches the system past an Eio capability
+  $ dune build --root . --display quiet @named-eio/runtest; echo "exit $?"
+  exit 0
