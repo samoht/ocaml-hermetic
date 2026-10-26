@@ -29,6 +29,7 @@ argument or a signature constraint alike. The hermetic-check command reads the
 library's compiled units and refuses one that was not compiled that way or that
 declares an external primitive, which no prelude can shadow.")
  (depends
+  (alcotest :with-test)
   (ocaml (>= 5.4))
   (cmdliner (>= 1.3.0))
   (fmt (>= 0.9))))

@@ -21,6 +21,7 @@ homepage: "https://tangled.org/gazagnaire.org/ocaml-hermetic"
 bug-reports: "https://tangled.org/gazagnaire.org/ocaml-hermetic/issues"
 depends: [
   "dune" {>= "3.21"}
+  "alcotest" {with-test}
   "ocaml" {>= "5.4"}
   "cmdliner" {>= "1.3.0"}
   "fmt" {>= "0.9"}
