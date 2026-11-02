@@ -83,6 +83,8 @@ data through a sink the code is handed.
   $ put output_format 'let () = Format.printf "x"'
   $ put output_std_formatter 'let () = Format.fprintf Format.std_formatter "x"'
   $ put output_format_print 'let () = Format.print_string "x"'
+  $ put output_format_out_functions 'let () = let o = Format.get_formatter_out_functions () in o.out_string "x" 0 1'
+  $ put output_format_output_functions 'let () = let out, _ = Format.get_formatter_output_functions () in out "x" 0 1'
   $ put output_flush 'let () = flush_all ()'
 
 The process: its exit, its commands, its signals, its command line and its
@@ -182,6 +184,8 @@ profile as in the development one.
   named: Hermetic.Sys.getenv (builds)
   output_flush: Hermetic.flush_all (ambient)
   output_format: Hermetic.Format.printf (ambient)
+  output_format_out_functions: Hermetic.Format.get_formatter_out_functions (ambient)
+  output_format_output_functions: Hermetic.Format.get_formatter_output_functions (ambient)
   output_format_print: Hermetic.Format.print_string (ambient)
   output_prerr: Hermetic.prerr_endline (ambient)
   output_print: Hermetic.print_endline (ambient)
