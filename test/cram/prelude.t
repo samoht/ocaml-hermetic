@@ -79,6 +79,7 @@ data through a sink the code is handed.
   $ put output_format_output_functions 'let () = let out, _ = Format.get_formatter_output_functions () in out "x" 0 1'
   $ put output_format_stag_functions 'let () = let f = Format.get_formatter_stag_functions () in f.print_open_stag (Format.String_tag "x")'
   $ put output_flush 'let () = flush_all ()'
+  $ put output_runtime_warnings 'let () = Sys.enable_runtime_warnings true'
 
 A child process and a domain, which Eio's process and domain managers hand
 out, and what parses the command line or ends the process by printing on the
@@ -178,6 +179,7 @@ profile as in the development one.
   output_prerr: Hermetic.prerr_endline (ambient)
   output_print: Hermetic.print_endline (ambient)
   output_printf: Hermetic.Printf.printf (ambient)
+  output_runtime_warnings: Hermetic.Sys.enable_runtime_warnings (ambient)
   output_std_formatter: Hermetic.Format.std_formatter (ambient)
   output_stdout: Hermetic.stdout (ambient)
   past_eio_main: module Hermetic.Eio_main (error)
@@ -296,6 +298,20 @@ registered printers, backtraces, the process's counters and synchronisation.
   > let marshal x = Marshal.to_string x []
   > EOF
   $ dune build --root . --display quiet --profile dev ./lib; echo "exit $?"
+  exit 0
+
+Gc.set stays, but leaves the runtime's verbosity as it is: a verbose garbage
+collector would write on the standard error.
+
+  $ mkdir verbose
+  $ echo '(executable (name main) (libraries hermetic))' > verbose/dune
+  $ cat > verbose/main.ml <<'EOF'
+  > open! Hermetic
+  > let () = Gc.set { (Gc.get ()) with verbose = 0x01 }; Gc.full_major ()
+  > let () = exit (Gc.get ()).verbose
+  > EOF
+  $ dune build --root . --display quiet --profile dev ./verbose/main.exe
+  $ ./_build/default/verbose/main.exe; echo "exit $?"
   exit 0
 
 -unsafe compiles a.(i) to Array.unsafe_get, which the prelude refuses, so a
