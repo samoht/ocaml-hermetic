@@ -132,7 +132,8 @@ let stdin =
 
 let writes channel =
   "Writes the process's standard " ^ channel
-  ^ ": log with Logs, or take an Eio sink or a formatter as an argument."
+  ^ ": log with Logs or Eio.traceln, or take an Eio sink or a formatter as an \
+     argument."
 
 let process = "the process is the caller's."
 let signal = "Changes how the process handles a signal: " ^ process
@@ -223,13 +224,14 @@ let std_formatter names =
       ( "Format." ^ n,
         ambient
           (Printf.sprintf
-             "Writes the process's standard output: log with Logs, or use \
-              pp_%s on a formatter you are given."
+             "Writes the process's standard output: log with Logs or \
+              Eio.traceln, or use pp_%s on a formatter you are given."
              n) ))
     (words names)
 
 (* Library code does not write to the process's standard channels:
-   diagnostics go through Logs, data through a sink it is handed. *)
+   diagnostics go through Logs or Eio.traceln, data through a sink it is
+   handed. *)
 let standard_output =
   each ""
     "stdout print_char print_string print_bytes print_int print_float \
@@ -447,9 +449,9 @@ let doc =
    whose message says why it is refused and, when it can, what to take as an \
    argument instead.\n\n\
    Library code does not write to the process's standard channels: diagnostics \
-   go through Logs, data through a sink the code is handed. Every type of the \
-   standard library stays, so an interface, which does not open the prelude, \
-   names the standard library's own types."
+   go through Logs or Eio's traceln, data through a sink the code is handed. \
+   Every type of the standard library stays, so an interface, which does not \
+   open the prelude, names the standard library's own types."
 
 let unreviewed path =
   {
