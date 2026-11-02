@@ -1,254 +1,291 @@
 # hermetic
 
-The OCaml standard library with the ambient world refused.
+A standard library prelude that refuses ambient authority.
 
-A protocol state machine, a codec or the model of a tool is meant to decide
-from its inputs alone, so that the same inputs give the same outputs and a
-test can replay any run. The build can refuse it Unix, Eio or a clock library
-with dune's `forbidden_libraries`, but the standard library reads the world
-outside the program too: `Sys.getenv`, `Sys.time`, `open_in`, `In_channel`,
-`Random.self_init` and `exit` link with nothing extra. A model that calls
-them builds and passes its tests, and a run then depends on the machine it ran
-on.
+With `Hermetic`, the only way to reach the world is through the capabilities
+Eio's `env` hands you. A source file that opens the prelude cannot read the
+process environment, the clock or the file system by name, cannot read the
+standard input or write the standard output, cannot spawn a process or a
+domain, and cannot end the process: the standard library values that do so
+are refused at compile time, and their alerts name the `Eio.Stdenv`
+capability to take as an argument instead. The libraries that reach the
+system past Eio's capabilities, `Unix` and `Eio_main` among them, are refused
+by name. A pure core, such as a protocol state machine or a codec, is the
+case where no capability is handed in at all.
 
-`hermetic` makes those calls compile errors. Its `Hermetic` module restates
-the standard library with every value that reaches the world without being
-handed it marked by an `ambient` alert, and a library opens it before it is
-typed:
+What this buys is that a library compiled under the prelude touches only what
+it is handed, so a test can hand it an in-memory file system, a mock clock or
+a recorded network, and a review can read its authority from its arguments.
+
+`hermetic` also refuses what could forge what it was not handed: `Obj`, the
+readers of `Marshal`, and the accessors that skip a bounds check.
+
+## What it guards against
+
+`hermetic` guards against accidents: an author who reaches for `Sys.getenv`
+or `open_in` out of habit, or a refactoring that moves a call to the clock
+into the wrong library. It does not guard against an author who is trying to
+cheat. It is not a sandbox: the standard library without refusals is one
+module away, as `Hermetic.Stdlib_original`, and an `external` declaration
+names a primitive directly. It does not check dependencies either: a function
+of another library that reads the environment in its own code is refused only
+when that library is itself compiled under the prelude.
+
+## Installation
+
+<!-- $MDX skip -->
+```sh
+$ opam install hermetic
+```
+
+It supports OCaml 5.3, 5.4 and 5.5. It does not depend on Eio, nor on any
+library it refuses: they are named in its messages only.
+
+## Setup
+
+Each source file of the library opens the prelude on its first line, with
+`open!`, and the library names `hermetic` among its libraries:
 
 <!-- $MDX skip -->
 ```
 (library
  (name model)
- (libraries hermetic)
- (flags (:standard -open Hermetic -alert @ambient)))
+ (libraries hermetic))
 ```
+
+A refused value keeps its name but has one of three types: `Hermetic.ambient`
+when it reaches the world without being handed it, `Hermetic.unsafe` when it
+can forge memory or a value of any type, and `Hermetic.unreviewed` when this
+version of `hermetic` has not reviewed it. Each type is abstract and nothing
+in the prelude consumes it: a refused value cannot be applied or used at its
+original type, so such a use is a type error, in every build profile. Passing
+it to a polymorphic function such as `ignore` compiles and does nothing. The
+value also carries an alert named after its type, which the compiler prints
+beside the error to say why it is refused and, when it can, what to take as
+an argument instead. This source file of the library:
+
+<!-- $MDX skip -->
+```
+open! Hermetic
+
+let home () = Sys.getenv "HOME"
+```
+
+does not build:
 
 <!-- $MDX skip -->
 ```
 File "lib/machine.ml", line 3, characters 14-24:
 3 | let home () = Sys.getenv "HOME"
                   ^^^^^^^^^^
-Error (alert ambient): Hermetic.Sys.getenv
-Reads the process environment: take the value as an input.
+Alert ambient: Hermetic.Sys.getenv
+Reads the process environment: take the value as an argument.
+
+File "lib/machine.ml", line 3, characters 14-24:
+3 | let home () = Sys.getenv "HOME"
+                  ^^^^^^^^^^
+Error: This expression has type ambient
+       This is not a function; it cannot be applied.
 ```
 
-The `hermetic-check` command then reads the library's compiled units and
-refuses what the prelude cannot see: a unit compiled without the two flags, an
-attribute that makes the alert a warning again, a unit of the standard library
-named by its own name, and an `external` declaration, which names a primitive
-directly.
+Silencing the alert hides the message but not the error. A refused value can
+still be named, with the alert as a warning, but not used.
 
-It needs OCaml 5.4 or later.
+The refusal follows the declaration, not the spelling: `Stdlib.Sys.getenv`,
+`Stdlib__Sys.getenv`, a module alias of `Sys`, `open Stdlib` and
+`include Sys` all reach the value the prelude declares, and a functor, a
+signature constraint or a first-class module type that expects the original
+`Sys` does not accept this one. `-unsafe` turns `a.(i)` into
+`Array.unsafe_get`, which the prelude refuses, so a file that opens it cannot
+be compiled with `-unsafe`.
 
-## Installation
+Some details of this setup matter:
 
-<!-- $MDX skip -->
-```sh
-$ opam repo add samoht https://tangled.org/gazagnaire.org/opam-overlay.git
-$ opam install hermetic
-```
+- The open is spelled `open!`. A plain `open` that leaves nothing used is
+  warning 33, an error in dune's development profile up to
+  `(lang dune 3.20)`, and one that shadows a name of the standard library is
+  warning 44, which `-w +a` enables.
+- Code above the open is outside the prelude, so the open is the first line.
+  Nothing catches a file that forgets it: there is no checker.
+- The interfaces do not open the prelude, so they name the standard library's
+  own types, and a consumer of the library needs nothing of `hermetic` to use
+  them. Give each source file an interface. A source file without one exports
+  the types of its values: a type it infers is the standard library's, but a
+  type, a constructor or a record field it names through a module the prelude
+  restates, such as `Digest.t`, is the prelude's, and its consumer needs
+  `hermetic` in its path. Such a file can also export a refused value it
+  merely names, which then fails only in its consumer.
+- A module that extends one of the standard library, with
+  `include module type of String` in its interface and `include String` in
+  its source file, includes the prelude's `String` in the source file, whose
+  refused values do not match the interface. Include `Stdlib_original.String`
+  there instead.
+- The prelude is a module of aliases, and each module it restates is a unit
+  of its own, so a program links only the units it uses.
 
-## What it refuses
+## Escaping the prelude
 
-A refused value carries the alert, so the error names the value and says
-what to pass in instead. A module refused as a whole is empty, and the three
-mutable globals of the standard library (`Sys.argv`, `Sys.interactive` and the
-domain's exit actions) are `()`, so that no use of them compiles even where
-the alert is silenced. A channel, a formatter or a buffer the caller hands in
-is an input: the functions that use one stay, and `Format.fprintf`,
-`output_string oc` and `In_channel.input_all ic` compile.
+`Hermetic.Stdlib_original` is `Stdlib` without refusals. Name it only for an
+audited use, as in `Stdlib_original.Bytes.unsafe_get b i`: `grep
+Stdlib_original` finds each one.
 
-- The process environment and the process's own facts: `Sys.getenv`,
-  `Sys.argv`, `Sys.executable_name`, `Sys.getcwd`, `Sys.runtime_parameters`.
-- The clock: `Sys.time`.
-- Randomness: `Random.self_init`, `Random.State.make_self_init`, and every
-  function of the generator the whole process shares (`Random.int` and the
-  rest). A `Random.State.t` made with `Random.State.make` from a seed the
-  caller passes stays.
-- The order of a generic hash table, which `OCAMLRUNPARAM=R` seeds from the
-  system: `Hashtbl.iter`, `fold`, `to_seq` and the rest of what observes it,
-  `Hashtbl.randomize` and `Hashtbl.MakeSeeded`. Lookups stay, and so do the
-  tables of `Hashtbl.Make`, which never randomise.
-- The standard channels and the files: `stdin`, `stdout`, `stderr`,
-  `print_*`, `prerr_*`, `read_*`, `open_in*`, `open_out*`, `flush_all`, the
-  openers and standard channels of `In_channel` and `Out_channel`, the file
-  functions of `Sys`, `Filename.temp_file`, `Digest.file`, `Printf.printf`,
-  `Scanf.scanf` and the files of `Scanf.Scanning`, and the standard
-  formatters of `Format` with every function that writes or sets them
-  implicitly.
-- The process: `exit`, `at_exit`, `Sys.command`, `Sys.signal`,
-  `Sys.catch_break`, `Arg`, `Callback`.
-- State the whole process shares: `Domain`, `Mutex`, `Condition`,
-  `Semaphore`, `Atomic`, `Gc`, `Weak`, `Ephemeron`, `Oo`, and the printers
-  and backtraces of `Printexc` (`Printexc.to_string_default` stays).
-- The escapes from the type system: `Obj`, `Marshal`, `input_value`,
-  `unsafe_really_input`, `CamlinternalMod`, `CamlinternalOO`.
-- In `Fmt`: `Fmt.stdout`, `Fmt.stderr`, `Fmt.pr`, `Fmt.epr`, and `Fmt.exn`,
-  which renders through the printers the process registered.
+## Other ways to apply it
 
-The refusal follows the declaration, not the spelling. `Stdlib.Sys.getenv`,
-a module alias of `Sys`, `open Stdlib`, `include Sys`, a functor applied to
-`Sys`, a signature constraint over it and a first-class module packing it are
-all refused: each reaches the value through a declaration of `Hermetic`, and
-the compiler checks the alert on a signature inclusion as it does on a use.
-`Stdlib__Sys.getenv` names the standard library's own unit, which no prelude
-can shadow without defining a module of that name; `hermetic-check` refuses
-it.
-
-## Checking the compiled units
-
-<!-- $MDX skip -->
-```
-(rule
- (alias runtest)
- (deps (glob_files ../lib/.model.objs/byte/model__*.cmt))
- (action (run %{bin:hermetic-check} %{deps})))
-```
-
-`hermetic-check` reads each `.cmt` and prints one line per reason to refuse
-the unit, then exits 1:
-
-- the command line that compiled it does not open `Hermetic`, or a module
-  given with `--open`;
-- the `ambient` alert is not an error under its `-alert` options, which are
-  replayed in order through the compiler's own parser, so a later
-  `-alert -ambient` undoes an earlier `-alert @ambient`;
-- an `[@alert "..."]` attribute, on the file, an item or an expression, under
-  which the `ambient` alert stops being an error (`"-ambient"`, `"--ambient"`,
-  `"-all"`); an attribute that keeps it an error, or one that declares an
-  alert of the library's own, passes;
-- it names a unit of the standard library by its own name, `Stdlib__Sys` or
-  any other, in a value, an alias, an `open`, a functor argument or a
-  first-class module;
-- it declares an `external`, at any depth, with the primitive it names.
-
-The first two do not apply to the alias module dune generates for a library of
-several modules, which it compiles without the library's flags: a unit that
-holds only `module X = Lib__X` aliases to units of its own library, each
-checked by itself, has nothing in it to refuse. An alias to any other module
-is refused as before, since it would hand that module to its users past the
-prelude.
-
-A library that also hides the ambient values of a dependency in a prelude of
-its own opens that prelude after `Hermetic` and names it with `--open`, so
-that dropping it from the stanza is refused too.
-
-## Libraries that do their I/O through Eio
-
-A library that talks to the system through Eio capabilities is not hermetic,
-but it should reach the system only through the capabilities it is handed.
-The `hermetic.eio` library holds the prelude for it, `Hermetic_eio`, opened the
-same way:
+The prelude can be opened for every file of a library by a flag:
 
 <!-- $MDX skip -->
 ```
 (library
- (name store)
- (libraries eio hermetic.eio)
- (flags (:standard -open Hermetic_eio -alert @ambient)))
+ (name model)
+ (libraries hermetic)
+ (flags (:standard -open Hermetic)))
 ```
 
-It keeps the standard library an Eio program uses, hash table iteration,
-`Random`, `Atomic`, `Domain` and the standard formatters included, and refuses
-each access that bypasses a capability with a message naming the Eio call to
-make instead:
+The flag opens it in the interfaces too, so a type an interface names through
+a module the prelude restates is the prelude's, and a consumer needs
+`hermetic` in its path to use it. The open at the top of each source file
+avoids this, and is the recommended setup.
 
-- the file system: `open_in*`, `open_out*`, the openers of `In_channel` and
-  `Out_channel`, the file functions of `Sys` (`file_exists`, `is_directory`,
-  `readdir`, `remove`, `rename`, `mkdir`, `rmdir`), the temporary files of
-  `Filename` and the digests of a file;
-- the process: `exit`, `at_exit`, `Sys.command`, `Sys.signal`,
-  `Sys.set_signal`, `Sys.catch_break`, `Sys.getcwd`, `Sys.chdir`, `Sys.argv`
-  and `Sys.executable_name`;
-- the clock: `Sys.time`;
-- the process environment: `Sys.getenv` and `Sys.getenv_opt`, which no Eio
-  capability holds, so the value is taken as an input, as under `Hermetic`;
-- `Mutex`, `Condition` and `Semaphore`, which block the domain under every
-  fiber, are refused as a whole.
-
-`hermetic-check --eio` reads the units against that prelude and also refuses
-a unit that imports `Unix`, `UnixLabels`, `Thread` or `Event`. The standard
-library's `Mutex`, `Condition` and `Semaphore` are the prelude's to refuse:
-Eio's own interfaces name `Mutex.t`, so every unit typed against Eio imports
-them. The rule beside the library reads its units:
+A library can also ship without `hermetic` and be checked against the prelude
+in another directory only. A library stanza there compiles a copy of every
+source file of the library with the flag; `copy_files#` keeps the line
+directives, so an error points at the original file. A library stanza
+compiles each of its modules, where a test stanza would compile only those
+its executable reaches:
 
 <!-- $MDX skip -->
 ```
-(rule
- (alias runtest)
- (deps (glob_files .store.objs/byte/*.cmt))
- (action (run %{bin:hermetic-check} --eio %{deps})))
+(copy_files# (files ../lib/*.ml))
+
+(library
+ (name model_hermetic)
+ (libraries hermetic)
+ (flags (:standard -open Hermetic)))
 ```
 
-A library that is the boundary between Eio and the system, and so binds the
-system calls Eio lacks, is checked with `--eio --boundary`, which allows those
-imports and its `external` declarations.
+The code `ocamllex` generates calls `Lexing.engine`, and the code `ocamlyacc`
+and `menhir` generate calls `Parsing.peek_val`, `Parsing.yyparse` or
+`Obj.magic`: all of them can forge, and the prelude refuses them. Keep a
+generated lexer or parser outside the prelude, in a library of its own, or
+leave it out of the files a flag opens the prelude in.
 
-## Every Eio library of a tree
+## What it refuses
 
-In a tree of many projects, `-alert @ambient` belongs once in the env of the
-`dune-workspace`, for every profile. A library then adopts the prelude with one
-change to its stanza:
+As `ambient`, what reaches the world without being handed it:
 
-<!-- $MDX skip -->
-```
- (libraries eio hermetic.eio)
- (flags (:standard -open Hermetic_eio))
-```
+- the process environment and the process's own facts: `Sys.getenv`,
+  `Sys.argv`, `Sys.executable_name`, `Sys.getcwd`, `Sys.chdir`,
+  `Sys.runtime_parameters` and the rest;
+- the processor time: `Sys.time`;
+- the file system, reached by name: `open_in*`, `open_out*`, the openers of
+  `In_channel` and `Out_channel`, the file functions of `Sys`, the temporary
+  files of `Filename`, `Digest.file`, the files of `Scanf.Scanning`, and
+  `Arg.read_arg` and `Arg.write_arg`;
+- the standard input, which the code was not handed: `stdin`, `read_*`,
+  `In_channel.stdin`, `Scanf.scanf` and `Scanf.Scanning.stdin`;
+- the standard output and error: `stdout`, `stderr`, `print_*`, `prerr_*`,
+  `flush_all`, `Out_channel.stdout` and `Out_channel.stderr`,
+  `Printf.printf` and `Printf.eprintf`, the standard formatters of `Format`
+  and every function that prints to them, `Printexc.print` and `Arg.usage`.
+  Library code does not write to the process's standard channels:
+  diagnostics go through Logs, data through a sink the code is handed;
+- the process's lifecycle: `exit`, `at_exit`, `do_at_exit`, `Domain.at_exit`,
+  `Domain.spawn`, `Sys.command`, the signals of `Sys`, `Printexc.catch` and
+  `Printexc.set_uncaught_exception_handler`, and `Arg.parse` and the rest of
+  what reads the command line;
+- the system's entropy: `Random.self_init`, `Random.State.make_self_init`,
+  `Hashtbl.randomize` and `Hashtbl.is_randomized`, and the `?random`
+  argument of every `create` that has one (`Hashtbl`, `MoreLabels.Hashtbl`,
+  their `MakeSeeded`, and the `MakeSeeded` of `Ephemeron`). Those are
+  restated without it, and every table the prelude makes, `of_seq` and
+  `rebuild` included, is made with `~random:false`, so that `OCAMLRUNPARAM=R`
+  does not seed it either. Passing `~random` to one, even
+  `~random:false`, is then a type error about an argument the function
+  does not expect, and no alert explains it;
+- the libraries that reach the system past Eio's capabilities: `Unix`,
+  `UnixLabels`, `Thread`, `Event`, `Runtime_events`, `Dynlink`, `Eio_unix`,
+  `Eio_posix`, `Eio_linux`, `Eio_windows` and `Eio_main`, which the prelude
+  declares empty.
 
-The `hermetic-tree` command, of the `hermetic-tree` package, checks such a
-tree. It indexes the source tree, selects each library whose public name ends
-with `-eio` or `.eio` or that names `eio` among its libraries, and reads its
-units as `hermetic-check --eio` does. A package whose `dune-project` carries
-the tag `hermetic:eio-boundary` is checked as `--boundary`. An `mdx` stanza
-that names an adopted library names `hermetic.eio` too, or its toplevel sees
-the prelude's types abstract. A ratchet file lists the libraries still allowed
-to violate, one library name per line, and the check refuses a listed library
-that has become hermetic, so the list only shrinks.
+As `unsafe`, what can forge memory or a value of any type: `Obj`,
+`CamlinternalMod`, `CamlinternalOO`, the readers of `Marshal` and
+`input_value`, `Lexing.engine` and `Lexing.new_engine`, `Parsing.peek_val`
+and `Parsing.yyparse`, and every accessor that skips the check its safe
+version makes (the `unsafe_` functions of `Array`, `Bytes`, `String`,
+`Bigarray`, `Char`, `Uchar`, `Float.Array`, `Iarray` and `Dynarray`, their
+labelled versions, and `unsafe_really_input`).
 
-Each package directory is checked in its own `runtest`, so that testing the
-packages a change touches checks them, and nothing else is built.
-`hermetic-tree --include --ratchet hermetic.ratchet` prints those rules, one
-`(subdir DIR ...)` stanza for each package directory, for an `(include)` of
-the root's dune file. Each depends on the compiled units of the directory's
-selected libraries and on the dune files of the packages its `mdx` stanzas
-read, and runs `hermetic-tree --scope DIR`. The root keeps one rule that
-prints them again and fails on a difference, which `--auto-promote` takes, and
-on a library of the ratchet the tree no longer selects:
+`Arg.parse_argv` and `Arg.parse_argv_dynamic` are restated with `~current`
+required, so that the position in the command line is handed in.
 
-<!-- $MDX skip -->
-```
-(include hermetic.inc)
+The complete list, one refusal per line, is
+[test/refusals/hermetic.txt](test/refusals/hermetic.txt).
 
-(rule
- (deps (sandbox always) hermetic.ratchet (glob_files_rec dune)
-  (glob_files_rec dune-project) (glob_files_rec *.opam) (glob_files_rec *.inc))
- (action
-  (with-stdout-to hermetic.inc.gen
-   (run %{bin:hermetic-tree} --include --ratchet hermetic.ratchet))))
+## What it keeps, and why
 
-(rule
- (alias runtest)
- (action (diff hermetic.inc hermetic.inc.gen)))
-```
+What works on what it is handed stays: a channel, a formatter, a buffer, a
+table, `isatty` on a channel, the writers of `Marshal` and `output_value`.
 
-A library added to a package after the rules were printed has no compiled
-unit in its rule's sandbox, and an `mdx` stanza that names a library its rule
-does not read is refused the same way: both say to print the rules again. A
-new package has no rule until they are.
+State the whole process shares but that reaches no world stays too, since
+the prelude's concern is authority, not determinism: the default generator of
+`Random`, which OCaml 5 makes domain-local and seeds deterministically, and
+`Random.State`; the iteration order of a hash table; registered printers and
+backtraces; `Callback`, `Gc`, `Weak` and `Ephemeron`; the counters behind
+`Oo.id`, `Type.Id.uid` and `Printexc.exn_slot_id`; call stacks; `Atomic`,
+`Mutex`, `Condition`, `Semaphore`, `Lazy.Mutexed` and the domain-local state
+of `Domain`; `Arg.current`; and the switches of `Sys`, `Parsing` and
+`Printexc`.
+
+## Eio code
+
+A function that takes Eio's whole `env` holds all of its authority. Take the
+narrowest capability that does the job instead: a directory, such as
+`Eio.Stdenv.cwd` or one `Eio.Path.open_dir` returns, rather than
+`Eio.Stdenv.fs`; a clock rather than the environment; a sink rather than
+`Eio.Stdenv.stdout`. The executable, which calls `Eio_main.run` outside the
+prelude, hands each library what it needs.
+
+## Versions and compatibility
+
+The prelude is generated when `hermetic` is built, from the installed
+compiler's standard library and a policy that does not depend on the
+compiler's version. The policy names every value and module it has reviewed,
+at any depth. A value or a module a new compiler adds and the policy has not
+reviewed is refused as `unreviewed`, and the modules above it are restated to
+refuse it. A module whose contents the generator cannot open, such as a
+generative functor, is removed and reported as unreviewed. The package's
+upper bound on the compiler moves with each release, after a review. The test
+suite runs the generator with `--strict` in the development profile, which
+fails instead and lists the names to review.
+
+Adding a refusal can break a library that builds today, so it is a breaking
+change. Keeping a value the prelude refused, or widening the bound on the
+compiler, is not.
 
 ## What it does not cover
 
-A dependency is outside its reach. A function of another library that reads
-the environment in its own code is refused only when that library is itself
-compiled hermetic. A dependency's ambient values can be shadowed the same way,
-by a module that restates it with the `ambient` alert, opened after
-`Hermetic`, as the `probe.hermetic` library of the `probe` package does for
-`Probe`. A top-level `ref` of the library's own is state the whole process shares,
-and no name of the prelude can refuse it. An `OCAMLPARAM` in the environment
-of the build can add compiler options the recorded command line does not
-show.
+A dependency is outside its reach, and so is a file that forgets the open. A
+top-level `ref` of the library's own is state the whole process shares, and
+no name of the prelude can refuse it. An `OCAMLPARAM` in the environment of
+the build can add compiler options the build files do not show.
+
+Some values carry an identity the process gives them: an object, the
+constructor of a local exception, a type identifier, a channel and a closure.
+`Hashtbl.hash` on such a value sees an address or a counter the whole process
+shares, and so does `compare` on an object or an exception, so a library that
+hashes or orders them depends on what ran before. The garbage collector's
+timing shows through `==` on a lazy value once it has been forced.
+
+`Bytes.create`, `Array.create_float`, `Float.Array.create` and the `create`
+of each `Bigarray` module return memory the standard library leaves
+uninitialised, whose contents depend on what the process did before; the
+prelude keeps them as they are.
+
+The limits of the process are not inputs either: how deep a recursion goes
+before `Stack_overflow` depends on the stack the process was given, and an
+allocation can fail. The constants of `Sys` (`os_type`, `word_size`,
+`big_endian` and the rest) are the platform's, fixed when the program is
+built.
 
 ## Licence
 

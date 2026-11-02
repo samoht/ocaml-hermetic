@@ -1,3 +1,9 @@
-# The prelude restates modules of the standard library under the names the
-# standard library gives them, since shadowing a module needs its own name.
-allowed_words = ["MakeSeeded", "MoreLabels", "CamlinternalMod", "CamlinternalOO"]
+# The generator's policy and its table of reviewed names spell the modules of
+# the standard library by their own names.
+allowed_words = ["MakeSeeded", "MoreLabels", "CamlinternalMod", "CamlinternalOO", "ArrayLabels", "BytesLabels", "StdLabels", "StringLabels", "Floatarray"]
+
+# The generator runs at build time with compiler-libs alone, so that the
+# package depends on nothing but the compiler: it formats with Printf, not Fmt.
+[[rules]]
+files = ["lib/gen/*.ml"]
+exclude = ["E205"]

@@ -1,18 +1,18 @@
 (cram
  (deps
   %{bin:dune}
-  %{bin:hermetic-check}
   (package hermetic)))
 
 (cram
- (applies_to tree)
- (deps
-  %{bin:hermetic-tree}
-  (package hermetic-tree)))
+ (applies_to link)
+ (deps %{bin:ocamlobjinfo}))
+
+(cram
+ (applies_to link-native)
+ (enabled_if
+  (<> %{ocaml-config:architecture} none))
+ (deps %{bin:nm}))
 
 (cram
  (applies_to stdlib-types)
- (deps
-  %{bin:ocamlc}
-  %{bin:ocamlfind}
-  (package hermetic)))
+ (deps %{bin:ocamlc} %{bin:ocamlfind}))

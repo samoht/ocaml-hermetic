@@ -2,11 +2,11 @@
  (name test)
  (package hermetic)
  (deps
-  check_fixtures/.fx_good.objs/byte/fx_good.cmt
-  check_fixtures/.fx_plain.objs/byte/fx_plain.cmt
-  check_fixtures/.fx_unix.objs/byte/fx_unix.cmt
-  check_fixtures/.fx_pair.objs/byte/fx_pair.cmt
-  check_fixtures/.fx_alias.objs/byte/fx_alias.cmt
-  check_fixtures/.fx_mixed.objs/byte/fx_mixed.cmt
-  check_fixtures/.fx_mixed.objs/byte/fx_mixed__.cmt)
- (libraries hermetic hermetic.eio hermetic.check alcotest fmt))
+  %{bin:ocamlc}
+  (glob_files fake/*.cmi))
+ (action
+  (setenv
+   OCAMLC
+   %{bin:ocamlc}
+   (run %{test})))
+ (libraries hermetic hermetic_gen alcotest))

@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+# merlint is pinned at one commit, so that the lint job checks every commit
+# with the same merlint.
+env:
+  MERLINT_PIN: https://github.com/samoht/merlint.git#109b871c4b4c5dc3a97e9e7ce757f7d3052ea4be
+
+jobs:
+  # The preludes are generated from the installed compiler's standard library,
+  # so each supported compiler builds and tests its own.
+  build:
+    name: Build and test
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        ocaml-compiler: ['5.3', '5.4', '5.5']
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+
+      - run: opam install . --deps-only --with-test
+      - run: opam exec -- dune build
+      - run: opam exec -- dune test
+
+  release:
+    name: Release build
+    strategy:
+      fail-fast: false
+      matrix:
+        ocaml-compiler: ['5.3', '5.4', '5.5']
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+
+      - run: opam install . --deps-only
+      - run: opam exec -- dune build -p hermetic @install
+
+  doc:
+    name: Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: '5.4'
+
+      - run: opam install . --deps-only --with-doc
+      - run: opam install odoc
+      - run: opam exec -- dune build @doc
+
+  lint-fmt:
+    name: Format
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: '5.4'
+
+      - uses: ocaml/setup-ocaml/lint-fmt@v3
+
+  # merlint is not on opam yet and its dependencies come from a private
+  # overlay, so this job reports without blocking until merlint is released.
+  merlint:
+    name: Lint (merlint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: '5.4'
+
+      - run: opam repo add samoht https://tangled.org/gazagnaire.org/opam-overlay.git
+      - run: opam pin add -n merlint "$MERLINT_PIN"
+      - run: opam install . --deps-only --with-test
+      - run: opam install merlint
+      - run: opam exec -- merlint --build

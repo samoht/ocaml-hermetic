@@ -1,0 +1,30 @@
+; Every refusal of the prelude, one per line, as the policy states it: a
+; change to the policy shows in the diff. A path the installed compiler lacks
+; is listed too, since the list does not depend on the compiler.
+
+(rule
+ (with-stdout-to
+  hermetic.out
+  (run %{exe:../../lib/gen/gen.exe} --list)))
+
+(rule
+ (alias runtest)
+ (package hermetic)
+ (action
+  (diff hermetic.txt hermetic.out)))
+
+; The policy has reviewed every name of the installed standard library, and
+; refuses nothing that no supported compiler has. On a newer compiler this
+; lists the names to review; the prelude refuses them meanwhile. It runs in
+; the development profile only, so that installing hermetic with its tests on
+; a newer compiler does not fail.
+
+(rule
+ (alias runtest)
+ (package hermetic)
+ (enabled_if
+  (= %{profile} dev))
+ (deps
+  (glob_files %{ocaml_where}/*.cmi))
+ (action
+  (run %{exe:../../lib/gen/gen.exe} --strict %{ocaml_where})))

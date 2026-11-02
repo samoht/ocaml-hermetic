@@ -1,4 +1,22 @@
+; The prelude's units are generated from the installed compiler's standard
+; library and the policy in gen/policy.ml. The library is not wrapped: each
+; unit is named Hermetic__X already, and Hermetic is a module of aliases to
+; them, so that a program links only the units it uses.
+
 (library
  (name hermetic)
  (public_name hermetic)
- (libraries fmt))
+ (wrapped false))
+
+(include dune.inc)
+
+(rule
+ (with-stdout-to
+  dune.inc.gen
+  (run %{exe:gen/gen.exe} --dune)))
+
+(rule
+ (alias runtest)
+ (package hermetic)
+ (action
+  (diff dune.inc dune.inc.gen)))

@@ -10,46 +10,28 @@
 (authors "Thomas Gazagnaire <thomas@gazagnaire.org>")
 (maintainers "Thomas Gazagnaire <thomas@gazagnaire.org>")
 
-(source (tangled gazagnaire.org/ocaml-hermetic))
+(source (github samoht/ocaml-hermetic))
 
 (package
  (name hermetic)
- (synopsis "The OCaml standard library with the ambient world refused")
- (tags (org:blacksun test area:10011000))
+ (synopsis "A standard library prelude that refuses ambient authority")
+ (tags (stdlib prelude capability))
  (description
-  "A library whose decisions must be functions of their inputs (a protocol
-state machine, a codec, the model of a tool) can still read the process
-environment, the clock, the file system or a randomly seeded generator through
-the standard library, which the build never notices. Hermetic is a prelude
-opened before the library is typed. It restates the standard library with
-every value that reads or writes the world outside the program marked by an
-ambient alert, so that compiled with -alert @ambient such a use is a compile
-error naming the value, through a qualified path, a module alias, a functor
-argument or a signature constraint alike. The hermetic-check command reads the
-library's compiled units and refuses one that was not compiled that way or that
-declares an external primitive, which no prelude can shadow.")
+  "With Hermetic, the only way to reach the world is through the capabilities
+Eio's env hands you. A source file that starts with open! Hermetic cannot read
+the process environment, the clock or the file system by name, cannot read
+the standard input or write the standard output, cannot spawn a process or a
+domain, and cannot end the process: the standard library values that do so
+get a type nothing consumes, so a use of one is a type error, and an alert
+names the capability to take as an argument instead. The libraries that
+reach the system past Eio's capabilities, Unix and Eio_main among them, are
+refused by name, and so are the values that can forge memory or a value of
+any type. A pure core is the case where no capability is handed in. The
+prelude is generated from the installed compiler's standard library, and a
+value a new compiler adds is refused until it is reviewed. It guards against
+accidents, not against an author trying to cheat, and it does not check
+dependencies.")
  (depends
-  (alcotest :with-test)
-  (ocaml (>= 5.4))
-  (cmdliner (>= 1.3.0))
-  (fmt (>= 0.9))))
-
-(package
- (name hermetic-tree)
- (synopsis "Check every Eio library of a source tree against hermetic.eio")
- (tags (org:blacksun test area:10011000))
- (description
-  "The hermetic-tree command indexes a source tree, selects each library that
-does its I/O through Eio, by its name or by its dependency on eio, and checks
-its compiled units as hermetic-check --eio does, against a ratchet file of the
-libraries still allowed to violate, which may only shrink.")
- (depends
-  (ocaml (>= 5.4))
-  (cmdliner (>= 1.3.0))
-  eio
-  eio_main
-  (fmt (>= 0.9))
-  fpath
-  (hermetic (= :version))
-  nox-dune
-  project-index))
+  (ocaml (and (>= 5.3) (< 5.6)))
+  (alcotest (and :with-test (>= 1.7.0)))
+  (ocamlfind :with-test)))

@@ -1,0 +1,13 @@
+; The generator reads the installed compiler's standard library at build time,
+; so compiler-libs is a dependency of the generator only, never of the prelude
+; it generates.
+
+(library
+ (name hermetic_gen)
+ (modules stdlib_tree policy reviewed plan doc emit)
+ (libraries compiler-libs.common))
+
+(executable
+ (name gen)
+ (modules gen)
+ (libraries hermetic_gen compiler-libs.common))

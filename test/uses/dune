@@ -1,0 +1,21 @@
+; A use of each value the prelude refuses on the installed compiler fails to
+; compile, on the type of its refusal.
+
+(rule
+ (deps
+  (glob_files %{ocaml_where}/*.cmi))
+ (action
+  (with-stdout-to
+   uses.txt
+   (run %{exe:../../lib/gen/gen.exe} --uses %{ocaml_where}))))
+
+(rule
+ (alias runtest)
+ (package hermetic)
+ (deps
+  uses.sh
+  uses.txt
+  %{bin:ocamlc}
+  (glob_files ../../lib/.hermetic.objs/byte/*.cmi))
+ (action
+  (run sh uses.sh ../../lib/.hermetic.objs/byte uses.txt)))
