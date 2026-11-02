@@ -241,7 +241,9 @@ As `ambient`, what reaches an Eio capability without being handed it:
   and `Scanf.Scanning.stdin`;
 - the standard output and error: `stdout`, `stderr`, `print_*`, `prerr_*`,
   `flush_all`, `do_at_exit`, which flushes them and runs every `at_exit`
-  function early, `Out_channel.stdout` and `Out_channel.stderr`,
+  function early, `do_domain_local_at_exit`, which runs every
+  `Domain.at_exit` function early, the flush of the standard formatters
+  among them, `Out_channel.stdout` and `Out_channel.stderr`,
   `Printf.printf` and `Printf.eprintf`, the standard formatters of `Format`,
   every function that prints to them, and every function that changes or
   reads the standard formatter's state, which the executable prints with,

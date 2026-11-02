@@ -444,6 +444,7 @@ UnixLabels.utimes: ambient
 UnixLabels.wait: ambient
 UnixLabels.waitpid: ambient
 do_at_exit: ambient
+do_domain_local_at_exit: ambient
 flush_all: ambient
 input_value: unsafe
 open_in: ambient

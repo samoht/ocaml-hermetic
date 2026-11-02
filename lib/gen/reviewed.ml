@@ -189,7 +189,7 @@ let kept =
        seek_out set_binary_mode_in set_binary_mode_out sin sinh snd sqrt \
        string_of_bool string_of_float string_of_format string_of_int succ tan \
        tanh truncate valid_float_lexem" );
-    ("", "process", "at_exit do_domain_local_at_exit exit");
+    ("", "process", "at_exit exit");
     ( "Arg",
       "given",
       "align current parse_and_expand_argv_dynamic parse_argv \

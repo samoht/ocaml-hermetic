@@ -247,6 +247,12 @@ let standard_output =
           "Flushes the process's standard output and error, and runs every \
            at_exit function now: take Eio.Stdenv.stdout as an argument, and \
            leave the exit to the executable." );
+      ( "do_domain_local_at_exit",
+        ambient
+          "Runs every Domain.at_exit function of the domain now, the flush of \
+           the standard formatters among them, and replacing it disables them: \
+           take Eio.Stdenv.stdout as an argument, and leave the exit to the \
+           executable." );
     ]
   @ each ""
       "stderr prerr_char prerr_string prerr_bytes prerr_int prerr_float \
