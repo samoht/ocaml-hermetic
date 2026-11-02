@@ -289,9 +289,11 @@ As `ambient`, what reaches an Eio capability without being handed it:
   `Console__`; the units that re-export the standard library without
   refusals, `Obj.magic` or a fork of `Format` (see
   [Escaping the prelude](#escaping-the-prelude)); and the units of Eio's
-  core that reach the standard error past
-  the executable's `Eio.traceln`, `Eio__core__Debug` and
-  `Eio__core__Cancel`, with `Eio__core__`, which names them. The units are
+  core that reach the standard error past the executable's `Eio.traceln`
+  by their own names, `Eio__core__Debug` and `Eio__core__Cancel`, with
+  `Eio__core__`, which names them. Eio itself gives the same through
+  `Eio.Private`, which the prelude cannot refuse (see
+  [What it does not cover](#what-it-does-not-cover)). The units are
   those of Eio 1.6 and of Eio's main branch, which adds
   `Eio_unix__System_info` and `Eio_windows__Process`, and of the iomux
   Eio builds with. Their types are refused
@@ -469,21 +471,34 @@ to use instead:
   the standard output and error: `Cmd.eval_value ~help ~err`;
 - Yojson's readers and writers by file name, such as `from_file` and
   `to_file`: read the contents through an `Eio.Path` and use `from_string`;
-- `Base`'s re-exports of the standard library, such as `Base.Obj.magic`,
-  `Base.open_out`, `Base.print_endline` and `Base.Marshal`, which carry only
-  a `deprecated` alert, `Base.Random.self_init` and
-  `Base.Random.State.make_self_init`, which read the system's entropy, and
-  `Base.Exn.handle_uncaught`, which prints on the standard error: Base's own
-  modules and the prelude's;
 - Stdio's `stdout`, `stderr`, `print_*` and readers and writers by file
   name: take the channel or an `Eio.Path`;
 - console-eio's `Console_eio.run` without `~ppf`, and `Console_eio.print`
   and `Console_eio.with_output` outside a run, which write on the standard
   error, and `Console_eio.run`, which records in the file `CONSOLE_CAST`
   names: pass `~ppf`, and leave the recording to the executable;
-- `Eio.Private.Debug.default_traceln`, which writes on the standard error:
-  `Eio.traceln`; and `Eio.Exn.register_pp`, which installs a printer for the
-  whole process: leave it to the executable.
+- `Eio.Private.Debug.default_traceln`, which writes on the standard error,
+  and `Eio.Private.Fiber_context.make_root` with `Eio.Private.Effects.Fork`,
+  which runs a function in an empty fiber context, where `Eio.traceln`
+  writes on the standard error: `Eio.traceln` in the caller's own context;
+  and `Eio.Exn.register_pp`, which installs a printer for the whole process:
+  leave it to the executable.
+
+Base hands out `Obj.magic` with no alert at all, as
+`Base.Exported_for_specific_uses.Obj_local.magic`, so a library that
+depends on Base is outside what the prelude contains. The prelude declares
+`Base__Obj_local` empty, but cannot declare `Base` itself. Base also
+re-exports values of the standard library the prelude refuses, such as
+`Base.Obj.magic`, `Base.open_out`, `Base.print_endline` and `Base.Marshal`,
+with only a `deprecated` alert; `Base.Sys.enable_runtime_warnings`, from
+`Base__Sys0`, makes the runtime write on the standard error;
+`Base.Random.self_init` and `Base.Random.State.make_self_init` read the
+system's entropy; and `Base.Exn.handle_uncaught` prints on the standard
+error. ocamlformat's `Ocamlformat_stdlib`, an extension of the whole
+standard library, re-exports its `Format` and its `Filename`, whose
+`temp_file` creates a file, and Odoc's `Odoc_document` names
+`Odoc_document__Compat` as `Odoc_document.Compat`: the prelude declares
+neither main module.
 
 Dependencies also use `unsafe_` accessors, `Obj` and `Marshal`: the prelude
 refuses them only in a file that opens it. It declares empty the units of
@@ -510,7 +525,9 @@ the temporary files of `Misc`.
 An exception left uncaught in a thread that `Thread.create` starts is
 printed on the standard error by the threads library. A writable descriptor
 or file the code is handed gives the time in its times after a write, read
-with `Unix.fstat` or `Eio.File.stat`.
+with `Unix.fstat` or `Eio.File.stat`, and so does the socket `Unix.accept`
+returns from a listening socket the code is handed: on Linux its times are
+those of its creation.
 
 Authority is not always readable from arguments. A top-level reference or
 table can hold a capability the code was handed, and a function that reads
