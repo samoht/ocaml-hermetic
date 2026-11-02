@@ -443,6 +443,11 @@ UnixLabels.unsafe_getenv: kept
 UnixLabels.utimes: ambient
 UnixLabels.wait: ambient
 UnixLabels.waitpid: ambient
+Uring: ambient, declared empty
+Uring__: ambient, declared empty
+Uring__Config: ambient, declared empty
+Uring__Heap: ambient, declared empty
+Uring__Region: ambient, declared empty
 do_at_exit: ambient
 do_domain_local_at_exit: ambient
 flush_all: ambient

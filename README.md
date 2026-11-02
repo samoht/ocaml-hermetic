@@ -278,7 +278,8 @@ As `ambient`, what reaches an Eio capability without being handed it:
 - the libraries, and the units of libraries, that reach the system past
   Eio's capabilities, which the prelude declares empty: `Runtime_events`,
   `Dynlink`; `Eio_unix`, `Eio_posix`, `Eio_linux`, `Eio_windows`,
-  `Eio_main` and `Iomux`, which `Eio_posix` polls with, each with every unit
+  `Eio_main`, `Iomux`, which `Eio_posix` polls with, and `Uring`, which
+  `Eio_linux` submits its requests with, each with every unit
   of its library, such as `Eio_posix__Fs`, and the module of aliases dune
   makes for it, such as `Eio_unix__`, which names each unit by a short name;
   the clocks `Mtime_clock` and `Ptime_clock`; `Bytesrw_sysrandom`, which
@@ -295,8 +296,8 @@ As `ambient`, what reaches an Eio capability without being handed it:
   `Eio.Private`, which the prelude cannot refuse (see
   [What it does not cover](#what-it-does-not-cover)). The units are
   those of Eio 1.6 and of Eio's main branch, which adds
-  `Eio_unix__System_info` and `Eio_windows__Process`, and of the iomux
-  Eio builds with. Their types are refused
+  `Eio_unix__System_info` and `Eio_windows__Process`, and of iomux and
+  uring 2.15.0, which Eio's backends build with. Their types are refused
   with them, only because `hermetic` depends on none of them and so cannot
   restate them. A name is declared whether its library is installed or not.
   Only the clock of mtime is refused: a library that depends on mtime still
@@ -502,8 +503,8 @@ neither main module.
 
 Dependencies also use `unsafe_` accessors, `Obj` and `Marshal`: the prelude
 refuses them only in a file that opens it. It declares empty the units of
-Eio 1.6, of Eio's main branch at 1fa7762 and of iomux; a unit another
-version adds is not covered.
+Eio 1.6, of Eio's main branch at 1fa7762, of iomux and of uring 2.15.0; a
+unit another version adds is not covered.
 
 Eio 1.6's `Eio.Resource.get` and `Eio.Resource.get_opt` can cast a value to
 any type: `Eio.Time.Pi.Clock` leaves the type of its time free, and a

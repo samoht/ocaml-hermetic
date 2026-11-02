@@ -18,7 +18,7 @@ Initial release.
   libraries, and the units of libraries, that reach the system past Eio's
   capabilities are declared empty, without depending on them: every unit
   of Eio 1.6's, and of Eio's main branch's, `Eio_unix`, `Eio_posix`, `Eio_linux`, `Eio_windows` and
-  `Eio_main`, and of `Iomux`, with the module of aliases dune makes for
+  `Eio_main`, and of `Iomux` and `Uring`, with the module of aliases dune makes for
   each, `Eio__core__Debug` and `Eio__core__Cancel` with `Eio__core__`,
   `Mtime_clock`, `Ptime_clock`, `Bytesrw_sysrandom`, `Fmt_tty`,
   `Console_tty` and `Console__Recording`, and the units that re-export the

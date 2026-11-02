@@ -576,7 +576,7 @@ let library lib message ?(overrides = []) units =
 
 (* The units of Eio's libraries, from the source tree of Eio 1.6 and of its
    main branch at 1fa7762, which adds Eio_unix__System_info and
-   Eio_windows__Process. *)
+   Eio_windows__Process, and of the iomux and uring its backends use. *)
 let eio_libraries =
   library "Eio_unix" eio_unix
     "Cap Config Err Fd File Fork_action Inherit_fds Net Pi Private Process Pty \
@@ -623,6 +623,12 @@ let eio_libraries =
        an argument and use Eio.Time.with_timeout, and take the descriptor as \
        an argument."
       "Config Poll Util"
+  (* uring 2.15.0, which Eio_linux submits its requests with. *)
+  @ library "Uring"
+      "Opens files by name, waits on the clock and reaches the network past \
+       Eio's capabilities: take Eio.Stdenv.fs, Eio.Stdenv.clock or \
+       Eio.Stdenv.net as an argument."
+      "Config Heap Region"
   @ [
       ( "Eio__core__",
         "The module of aliases to the units of Eio's core, which names \
