@@ -343,7 +343,7 @@ let randomness =
   @ seeded_tables "Ephemeron.K2.MakeSeeded" ~table:"'a t"
   @ seeded_tables "Ephemeron.Kn.MakeSeeded" ~table:"'a t"
 
-(* {1 Unix: its types stay, what reaches the world is refused} *)
+(* {1 Unix: its types stay, what reaches a capability is refused} *)
 
 let network = "Reaches the network: take Eio.Stdenv.net as an argument."
 let clock = "Reads the clock: take Eio.Stdenv.clock as an argument."
@@ -478,16 +478,21 @@ let aliases = [ "StdLabels" ]
 let name = "Hermetic"
 
 let doc =
-  "The standard library, restated to refuse ambient authority.\n\n\
-   In a file that opens [Hermetic], a use of a standard library value that \
-   reaches the world without being handed it is a type error. A file opens it \
-   on its first line:\n\n\
+  "The standard library, restated to make code take Eio's capabilities as \
+   arguments.\n\n\
+   In a file that opens [Hermetic], a use of a standard library, [Unix] or \
+   [Thread] value is a type error when it reaches, without being handed it, \
+   something Eio's env provides as a capability: the file system, a clock, the \
+   network, the standard input, output or error, the system's entropy, a \
+   domain or a child process. A value that can forge a capability, such as \
+   [Obj.magic] or a [Marshal] reader, is refused too. Everything else stays. A \
+   file opens the prelude on its first line:\n\n\
    {[\n\
    open! Hermetic\n\
    ]}\n\n\
    [Hermetic] restates the standard library, [Unix] and [Thread], and gives \
-   each value it refuses one of three types: {!ambient} when it reaches the \
-   world without being handed it, {!unsafe} when it can forge memory or a \
+   each value it refuses one of three types: {!ambient} when it reaches an Eio \
+   capability without being handed it, {!unsafe} when it can forge memory or a \
    value of any type, and {!unreviewed} when this version of hermetic has not \
    reviewed it. Each type is abstract and nothing in the prelude consumes it, \
    so a refused value can be named but not applied or used at its original \
@@ -495,10 +500,8 @@ let doc =
    polymorphic function such as [ignore] compiles and does nothing.\n\n\
    A refused value carries an alert named after its type, and the alert is its \
    documentation: the compiler prints it at each use, and its message says why \
-   the value is refused and, when it can, what to take as an argument \
-   instead.\n\n\
-   Library code does not write to the process's standard channels: diagnostics \
-   go through Logs or Eio's traceln, data through a sink the code is handed. \
+   the value is refused and, when it can, the [Eio.Stdenv] capability to take \
+   as an argument instead.\n\n\
    Every type of the standard library stays, so an interface, which does not \
    open the prelude, names the standard library's own types.\n\n\
    The prelude guards against accidents, not against an author trying to \

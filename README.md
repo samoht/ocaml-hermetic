@@ -1,38 +1,37 @@
 # hermetic
 
-A standard library prelude that refuses ambient authority.
+A standard library prelude that makes code take Eio's capabilities as
+arguments.
 
-In a file that opens `Hermetic`, a use of a standard library value that
-reaches the world without being handed it is a type error. Such a file cannot
-read the process environment, the clock or the file system through the
-standard library, cannot read the standard input or write the standard
-output, cannot spawn a process or a domain, and cannot end the process: the
-values that do so are refused at compile time, and their alerts name the
-`Eio.Stdenv` capability to take as an argument instead. The values of `Unix`
-that reach the world are refused too, and the libraries that reach the
-system past Eio's capabilities, `Eio_main` and `Eio_unix` among them, are
-refused by name. A pure core, such as a protocol state machine or a codec,
-is the case where no capability is handed in at all.
+In a file that opens `Hermetic`, a use of a standard library, `Unix` or
+`Thread` value is a type error when it reaches, without being handed it,
+something Eio's env provides as a capability: the file system, a clock, the
+network, the standard input, output or error, the system's entropy, a domain
+or a child process. Its alert names the `Eio.Stdenv` capability to take
+instead. A value that can forge a capability, such as `Obj.magic` or a
+`Marshal` reader, is refused too. Everything else stays.
 
-What this buys is that a library compiled under the prelude reaches the world
-through the standard library only with what it is handed, so a test can hand
-it an in-memory file system, a mock clock or a recorded network, and a review
-can read that authority from its arguments. It is not a sandbox: see
-[What it guards against](#what-it-guards-against).
+The libraries that reach the system past Eio's capabilities, `Eio_main` and
+`Eio_unix` among them, are refused by name. A pure core, such as a protocol
+state machine or a codec, is the case where no capability is handed in at
+all.
 
-`hermetic` also refuses what could forge what it was not handed: `Obj`, the
-readers of `Marshal`, and the accessors that skip a bounds check.
+What this buys is that a library compiled under the prelude reaches Eio's
+capabilities through the standard library only with what it is handed, so a
+test can hand it an in-memory file system, a mock clock or a recorded
+network, and a review can read that authority from its arguments. It is not
+a sandbox: see [What it guards against](#what-it-guards-against).
 
 ## What it guards against
 
-`hermetic` guards against accidents: an author who reaches for `Sys.getenv`
-or `open_in` out of habit, or a refactoring that moves a call to the clock
-into the wrong library. It does not guard against an author who is trying to
+`hermetic` guards against accidents: an author who reaches for `open_in`
+or `print_endline` out of habit, or a refactoring that moves a call to the
+clock into the wrong library. It does not guard against an author who is trying to
 cheat. It is not a sandbox: the standard library without refusals is one
 module away, as `Hermetic.Stdlib_original`, and an `external` declaration
 names a primitive directly. It does not check dependencies either: a function
-of another library that reads the environment in its own code is refused only
-when that library is itself compiled under the prelude.
+of another library that opens a file in its own code is refused only when
+that library is itself compiled under the prelude.
 
 ## Installation
 
@@ -60,7 +59,7 @@ Each source file of the library opens the prelude on its first line, with
 ```
 
 A refused value keeps its name but has one of three types: `Hermetic.ambient`
-when it reaches the world without being handed it, `Hermetic.unsafe` when it
+when it reaches an Eio capability without being handed it, `Hermetic.unsafe` when it
 can forge memory or a value of any type, and `Hermetic.unreviewed` when this
 version of `hermetic` has not reviewed it. Each type is abstract and nothing
 in the prelude consumes it: a refused value cannot be applied or used at its
@@ -97,8 +96,8 @@ Error: This expression has type ambient
 Silencing the alert hides the message but not the error. A refused value can
 still be named, with the alert as a warning, but not used.
 
-The refusal follows the declaration, not the spelling: `Stdlib.Sys.getenv`,
-`Stdlib__Sys.getenv`, a module alias of `Sys`, `open Stdlib` and
+The refusal follows the declaration, not the spelling:
+`Stdlib.Sys.file_exists`, `Stdlib__Sys.file_exists`, a module alias of `Sys`, `open Stdlib` and
 `include Sys` all reach the value the prelude declares, and a functor, a
 signature constraint or a first-class module type that expects the original
 `Sys` does not accept this one. `-unsafe` turns `a.(i)` into
@@ -202,52 +201,49 @@ leave it out of the files a flag opens the prelude in.
 
 ## What it refuses
 
-As `ambient`, what reaches the world without being handed it:
+As `ambient`, what reaches an Eio capability without being handed it:
 
-- the process environment, the process's own facts and the host's:
-  `Sys.getenv`, `Sys.argv`, `Sys.executable_name`, `Sys.getcwd`,
-  `Sys.chdir`, `Sys.runtime_parameters`, `Domain.recommended_domain_count`
-  and the rest;
-- the processor time: `Sys.time`;
-- the file system, reached by name: `open_in*`, `open_out*`, the openers of
-  `In_channel` and `Out_channel`, the file functions of `Sys`, the temporary
-  files of `Filename`, `Digest.file`, the files of `Scanf.Scanning`, and
+- the file system, reached by name, and the current directory: `open_in*`,
+  `open_out*`, the openers of `In_channel` and `Out_channel`, the file
+  functions of `Sys`, `Sys.getcwd` and `Sys.chdir`, the temporary files of
+  `Filename`, `Digest.file`, the files of `Scanf.Scanning`, and
   `Arg.read_arg` and `Arg.write_arg`;
-- the standard input, which the code was not handed: `stdin`, `read_*`,
-  `In_channel.stdin`, `Scanf.scanf` and `Scanf.Scanning.stdin`;
+- the standard input: `stdin`, `read_*`, `In_channel.stdin`, `Scanf.scanf`
+  and `Scanf.Scanning.stdin`;
 - the standard output and error: `stdout`, `stderr`, `print_*`, `prerr_*`,
   `flush_all`, `Out_channel.stdout` and `Out_channel.stderr`,
   `Printf.printf` and `Printf.eprintf`, the standard formatters of `Format`
   and every function that prints to them, `Printexc.print`,
-  `Thread.default_uncaught_exception_handler` and `Arg.usage`.
-  Library code does not write to the process's standard channels:
-  diagnostics go through Logs or Eio's `traceln`, which writes with the
-  function the fiber's context holds, and data through a sink the code is
-  handed;
-- the process's lifecycle: `exit`, `at_exit`, `do_at_exit`, `Domain.at_exit`,
-  `Domain.spawn`, `Sys.command`, the signals of `Sys`, `Printexc.catch` and
-  `Printexc.set_uncaught_exception_handler`, and `Arg.parse` and the rest of
-  what reads the command line;
+  `Printexc.catch`, `Thread.default_uncaught_exception_handler`,
+  `Arg.usage`, `Arg.parse` and its two siblings, which print the usage and
+  end the process, and `Sys.enable_runtime_warnings`, which makes the
+  runtime write on the standard error. `Gc.set` is restated to leave the
+  runtime's verbosity as it is, for the same reason;
+- a domain and a child process: `Domain.spawn` and `Sys.command`;
 - the system's entropy: `Random.self_init`, `Random.State.make_self_init`,
-  `Hashtbl.randomize`, and the `?random`
-  argument of every `create` that has one (`Hashtbl`, `MoreLabels.Hashtbl`,
-  their `MakeSeeded`, and the `MakeSeeded` of `Ephemeron`). Those are
-  restated without it, and every table the prelude makes, `of_seq` and
-  `rebuild` included, is made with `~random:false`, so that `OCAMLRUNPARAM=R`
-  does not seed it either. Passing `~random` to one, even
-  `~random:false`, is then a type error about an argument the function
+  and the `?random` argument of every `create` that has one (`Hashtbl`,
+  `MoreLabels.Hashtbl`, their `MakeSeeded`, and the `MakeSeeded` of
+  `Ephemeron`). Those are restated without it, and every table the prelude
+  makes, `of_seq` and `rebuild` included, is made with `~random:false`, so
+  that `OCAMLRUNPARAM=R` does not seed it either. Passing `~random` to one,
+  even `~random:false`, is then a type error about an argument the function
   does not expect, and no alert explains it;
-- the values of `Unix` and `UnixLabels` that reach the world: files and
-  descriptors, sockets and the network, processes and signals, the clock and
-  the time zone, the environment, users and the host, and the standard
-  descriptors;
-- `Thread.create`, which spawns a thread outside Eio's domain manager, and
-  `Thread.delay`, which sleeps on the process's clock;
+- the values of `Unix` and `UnixLabels` that reach a capability by name or
+  by address: files and directories by name, the current directory, the
+  clock and the waits on it, the network by address or by name, the
+  processes they spawn, wait for or signal, and the standard descriptors;
+- `Thread.delay`, `Thread.select`, `Thread.wait_timed_read` and
+  `Thread.wait_timed_write`, which wait on the clock, and `Thread.wait_pid`,
+  which waits for a child process;
 - the libraries that reach the system past Eio's capabilities:
   `Runtime_events`, `Dynlink`, `Eio_unix`, `Eio_posix`, `Eio_linux`,
   `Eio_windows` and `Eio_main`, which the prelude declares empty. Their types
   are refused with them, only because `hermetic` does not depend on Eio and
   so cannot restate the Eio libraries.
+
+Each alert names the `Eio.Stdenv` capability to take instead: a write on the
+standard output, for instance, names `Eio.Stdenv.stdout`, or Logs and
+`Eio.traceln` to log with.
 
 As `unsafe`, what can forge memory or a value of any type: `Obj`,
 `CamlinternalMod`, `CamlinternalOO`, the readers of `Marshal` and
@@ -259,33 +255,19 @@ labelled versions, and `unsafe_really_input`). `Bytes.unsafe_escape` and
 `BytesLabels.unsafe_escape` are kept: they return their argument or a fresh
 copy, and forge nothing.
 
-`Arg.parse_argv` and `Arg.parse_argv_dynamic` are restated with `~current`
-required, so that the position in the command line is handed in.
-
 The complete list, one refusal per line, is
 [test/refusals/hermetic.txt](test/refusals/hermetic.txt).
 
-## What it keeps, and why
+## What it keeps
 
 What works on what it is handed stays: a channel, a formatter, a buffer, a
 table, `isatty` on a channel, the writers of `Marshal` and `output_value`.
 
-State the whole process shares but that reaches no world stays too, since
-the prelude's concern is authority, not determinism: the default generator of
-`Random`, which OCaml 5 makes domain-local and seeds deterministically, and
-`Random.State`; the iteration order of a hash table; registered printers and
-backtraces; `Callback`, `Gc`, `Weak` and `Ephemeron`; the counters behind
-`Oo.id`, `Type.Id.uid` and `Printexc.exn_slot_id`; call stacks; `Atomic`,
-`Mutex`, `Condition`, `Semaphore`, `Lazy.Mutexed` and the domain-local state
-of `Domain`; `Arg.current`; and the switches of `Sys`, `Parsing` and
-`Printexc`.
-
-One rule separates what reads the environment from the runtime's state: a
-value that reads the host or the process's environment is refused, and the
-runtime's own state is kept, even where `OCAMLRUNPARAM` sets it, since the
-program can set it too. So `Sys.runtime_parameters` and
-`Domain.recommended_domain_count` are refused, while `Gc.get`,
-`Printexc.backtrace_status` and `Hashtbl.is_randomized` are kept.
+Everything else stays too, however surprising, since it reaches no
+capability Eio's env provides: the process environment (`Sys.getenv`), the
+command line (`Sys.argv`), `exit` and `at_exit`, the signals, the processor
+time, the facts of the process, its user and its host, I/O on a descriptor,
+a socket or a process the code was handed, and `Thread.create`.
 
 ## Unix and threads
 
@@ -293,19 +275,23 @@ The prelude restates `Unix` and `UnixLabels` as it restates the standard
 library. Every type stays, equal to the original with its constructors and
 fields, so a signature can name `Unix.file_descr`, `Unix.sockaddr` or
 `Unix.EADDRINUSE`, and so does the exception `Unix_error`, so a source file
-can match on it. The values that are pure stay: the conversions of internet
-addresses (`inet_addr_of_string`, `string_of_inet_addr`, `is_inet6_addr`)
-and their constants (`inet_addr_any`, `inet_addr_loopback` and their IPv6
-versions), `domain_of_sockaddr`, `error_message`, `gmtime`, and the
-conversions between a channel and its descriptor, which perform no I/O.
-Every other value is refused as `ambient`, and a value a newer compiler adds
-is refused as `unreviewed` until it is reviewed.
+can match on it. A value that reaches a capability by name or by address is
+refused as `ambient`: `openfile`, `stat` and the other functions that take a
+path, `getcwd` and `chdir`, `time`, `gettimeofday`, `sleep`, the timers and
+`select`, `socket`, `bind`, `connect`, `sendto` and the name resolvers, the
+functions that spawn a process, wait for one or signal one, and `stdin`,
+`stdout` and `stderr`. The rest stays: I/O on a descriptor, a socket or a process the code
+was handed, the environment, the facts of the process, its user and its
+host, the time zone, the signal masks and `_exit`, and the pure values, such
+as the conversions of internet addresses. A value a newer compiler adds is
+refused as `unreviewed` until it is reviewed.
 
 It restates the threads library's `Thread` too: every type stays, so a
 signature can name `Thread.t`, and so do the values that act only on the
 thread they are given or the current one (`self`, `id`, `join`, `yield` and
-the rest). `Thread.create` and `Thread.delay` are refused, since they bypass
-Eio's domain manager and its clock. `Event` refuses nothing, since its values
+the rest), and `Thread.create`. `Thread.delay`, `Thread.select` and the
+timed waits are refused, since they wait on the clock, and so is
+`Thread.wait_pid`, which waits for a child process. `Event` refuses nothing, since its values
 work only on the channels they are handed, so the prelude does not declare
 it, and a library's own module named `Event` stays its own.
 
@@ -360,9 +346,7 @@ compiler, is not.
 
 ## What it does not cover
 
-A dependency is outside its reach, and so is a file that forgets the open. A
-top-level `ref` of the library's own is state the whole process shares, and
-no name of the prelude can refuse it.
+A dependency is outside its reach, and so is a file that forgets the open.
 
 The libraries the prelude declares empty are refused by name only. Dune
 gives the modules of Eio's backends units of their own, named `Eio_unix__*`,
@@ -373,24 +357,6 @@ Eio to the next.
 
 An `OCAMLPARAM` in the environment of the build can add compiler options the
 build files do not show.
-
-Some values carry an identity the process gives them: an object, the
-constructor of a local exception, a type identifier, a channel and a closure.
-`Hashtbl.hash` on such a value sees an address or a counter the whole process
-shares, and so does `compare` on an object or an exception, so a library that
-hashes or orders them depends on what ran before. The garbage collector's
-timing shows through `==` on a lazy value once it has been forced.
-
-`Bytes.create`, `Array.create_float`, `Float.Array.create` and the `create`
-of each `Bigarray` module return memory the standard library leaves
-uninitialised, whose contents depend on what the process did before; the
-prelude keeps them as they are.
-
-The limits of the process are not inputs either: how deep a recursion goes
-before `Stack_overflow` depends on the stack the process was given, and an
-allocation can fail. The constants of `Sys` (`os_type`, `word_size`,
-`big_endian` and the rest) are the platform's, fixed when the program is
-built.
 
 ## Licence
 

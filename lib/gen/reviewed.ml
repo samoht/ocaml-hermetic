@@ -896,7 +896,7 @@ let version_specific =
 
 (* The kept values that hand out a channel, a formatter or output closures
    without taking one as an argument, each reviewed as making it from what it
-   is handed, or from state that reaches no world. *)
+   is handed, or from state that reaches no capability. *)
 let channels =
   [
     ("Format.formatter_of_buffer", "writes to the buffer it is handed");

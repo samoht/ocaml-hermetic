@@ -4,17 +4,19 @@ Initial release.
 
 - `Hermetic`, a prelude opened at the top of each source file with
   `open! Hermetic`, which restates the standard library: in a file that
-  opens it, a use of a standard library value that reaches the world
-  without being handed it is a type error. A value that reaches the world
-  without being handed it, or that can forge memory or a value of any type,
-  gets a type nothing consumes, and an alert says why and what to take
-  instead. Library code does not write to the standard channels, and the
-  libraries that reach the system past Eio's capabilities, such as
-  `Eio_unix`, are declared empty.
+  opens it, a use of a standard library value is a type error when it
+  reaches, without being handed it, something Eio's env provides as a
+  capability: the file system, a clock, the network, the standard input,
+  output or error, the system's entropy, a domain or a child process. Such
+  a value, and a value that can forge a capability, gets a type nothing
+  consumes, and its alert names the `Eio.Stdenv` capability to take
+  instead. Everything else stays. The libraries that reach the system past
+  Eio's capabilities, such as `Eio_unix`, are declared empty.
 - `Unix` and `UnixLabels` restated: their types and the exception
-  `Unix_error` are kept, equal to the originals, their pure values are kept,
-  and every value that reaches the world is refused. `Thread` restated too:
-  its types are kept, and `Thread.create` and `Thread.delay` are refused;
+  `Unix_error` are kept, equal to the originals. Unix: every value that
+  reaches a capability by name or address is refused; I/O on a descriptor
+  handed in stays. `Thread` restated too: its types are kept. Thread:
+  delay, select and the timed waits are refused, and so is wait_pid.
   `Event` is left whole. `hermetic` depends on neither the unix nor the
   threads library, so a program that names only their types links none of
   them.

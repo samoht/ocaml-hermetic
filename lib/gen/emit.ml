@@ -399,8 +399,8 @@ let refused_ml_unit =
 let type_docs =
   [
     ( "ambient",
-      "The type for values refused because they reach the world without being \
-       handed it." );
+      "The type for values refused because they reach an Eio capability \
+       without being handed it." );
     ( "unsafe",
       "The type for values refused because they can forge memory or a value of \
        any type." );

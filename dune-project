@@ -14,23 +14,17 @@
 
 (package
  (name hermetic)
- (synopsis "A standard library prelude that refuses ambient authority")
+ (synopsis
+  "A standard library prelude that makes code take Eio's capabilities as arguments")
  (tags (stdlib prelude capability))
  (description
-  "In a file that opens Hermetic, a use of a standard library value that
-reaches the world without being handed it is a type error. Such a file cannot
-read the process environment, the clock or the file system through the
-standard library, cannot read the standard input or write the standard
-output, cannot spawn a process or a domain, and cannot end the process: the
-values that do so get a type nothing consumes, and an alert names the
-capability to take as an argument instead. So do the values of Unix that
-reach the world. The libraries that reach the system past Eio's
-capabilities, Eio_main among them, are refused by name, and so are the
-values that can forge memory or a value of any type. A pure core is the case
-where no capability is handed in. The prelude is generated from the
-installed compiler's standard library, and a value a new compiler adds is
-refused until it is reviewed. It guards against accidents, not against an
-author trying to cheat, and it does not check dependencies")
+  "In a file that opens Hermetic, a use of a standard library, Unix or Thread
+value is a type error when it reaches, without being handed it, something
+Eio's env provides as a capability: the file system, a clock, the network,
+the standard input, output or error, the system's entropy, a domain or a
+child process. Its alert names the Eio.Stdenv capability to take instead. A
+value that can forge a capability, such as Obj.magic or a Marshal reader, is
+refused too. Everything else stays.")
  (depends
   (ocaml (and (>= 5.3) (< 5.6)))
   (alcotest (and :with-test (>= 1.7.0)))

@@ -14,7 +14,7 @@
     supported version. *)
 
 type kind =
-  | Ambient  (** Reaches the world without being handed it. *)
+  | Ambient  (** Reaches an Eio capability without being handed it. *)
   | Unsafe  (** Can forge memory or a value of any type. *)
   | Unreviewed  (** Not reviewed by this version of the policy. *)
 

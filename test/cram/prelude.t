@@ -65,9 +65,7 @@ The file system, reached by name, and the current directory.
   $ put file_scanning 'let ib = Scanf.Scanning.open_in "f"'
   $ put file_arg 'let args = Arg.read_arg "f"'
 
-The standard input, which the code was not handed, and the standard output
-and error, which library code does not write to: diagnostics go through Logs,
-data through a sink the code is handed.
+The standard input, output and error, which the code was not handed.
 
   $ put input_stdin 'let c = input_line stdin'
   $ put input_read_line 'let s = read_line ()'
