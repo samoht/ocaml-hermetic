@@ -27,11 +27,23 @@ let reviewed : Policy.reviewed =
       [ "List"; "Random"; "Random.State"; "Random.Fresh"; "Classy"; "Typed" ];
     kept =
       [
+        ( "",
+          [
+            "stderr";
+            "err_functions";
+            "err_output";
+            "with_err";
+            "formatter_of_out_channel";
+            "formatter_of_string";
+            "output_string";
+            "origin";
+          ] );
         ("List", [ "map"; "unsafe_peek" ]);
         ("Random.State", [ "make" ]);
         ("Random.Fresh", [ "v" ]);
         ("Classy", [ "c"; "v" ]);
       ];
+    channels = [];
   }
 
 let ambient message = Policy.Value { kind = Ambient; message }
@@ -225,6 +237,22 @@ let test_mistakes () =
   Alcotest.check strings "a path a supported compiler lacks" []
     (Plan.mistakes ~refusals ~version_specific:[ "List.mpa" ] (Lazy.force tree))
 
+(* A value that hands out a channel, a formatter, or a record or a tuple of
+   output closures, and takes none, is flagged; one that takes a channel as
+   an argument is not. A flagged value must be refused or reviewed. *)
+let test_channels () =
+  let tree = Lazy.force tree in
+  Alcotest.check strings "the values that hand out a channel"
+    [
+      "stderr"; "err_functions"; "err_output"; "with_err"; "formatter_of_string";
+    ]
+    tree.channels;
+  let refusals = refusals @ [ ("stderr", ambient "Writes.") ] in
+  let reviewed = { reviewed with channels = [ "formatter_of_string" ] } in
+  Alcotest.check strings "the ones neither refused nor reviewed"
+    [ "err_functions"; "err_output"; "with_err" ]
+    (Plan.channels ~refusals ~reviewed tree)
+
 let suite =
   ( "plan",
     [
@@ -236,4 +264,5 @@ let suite =
       Alcotest.test_case "the emitted units compile" `Quick test_compiles;
       Alcotest.test_case "keyword operators" `Quick test_keyword_operators;
       Alcotest.test_case "mistakes in the policy" `Quick test_mistakes;
+      Alcotest.test_case "values that hand out a channel" `Quick test_channels;
     ] )

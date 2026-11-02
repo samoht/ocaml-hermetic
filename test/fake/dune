@@ -2,7 +2,8 @@
 ; real one lacks today: an unreviewed value and submodule, an alias of a
 ; submodule, a generative functor, a functor of an anonymous parameter, an
 ; abstract module type, a keyword operator, a value named unsafe, a class,
-; a class type, and a new module that aliases another new one. Its
+; a class type, a new module that aliases another new one, and values that
+; hand out a channel, a formatter or output closures, or take one. Its
 ; interfaces are kept as .sig files, which this rule copies and compiles.
 
 (rule
