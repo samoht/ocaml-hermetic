@@ -162,6 +162,21 @@ and makes a descriptor from an integer.
   $ put past_iomux 'let poll = Iomux.Poll.poll'
   $ put past_iomux_util 'let fd = Iomux__Util.unix_of_fd'
 
+A unit that re-exports the standard library is Stdlib_original under
+another name: Base's Import0 and Import, which Base__ names, and
+Shadow_stdlib. Console_tty sets up the standard formatters, as Fmt_tty
+does, and with Console__Recording, which Console__ names, opens the file
+CONSOLE_CAST names.
+
+  $ put past_base_import0 'let cast x : int = Base__Import0.Stdlib.Obj.magic x'
+  $ put past_base_import 'module S = Base__Import.Stdlib'
+  $ put past_base_alias 'module S = Base__.Import0.Stdlib'
+  $ put past_shadow_stdlib 'let oc = Shadow_stdlib.open_out "f"'
+  $ put past_console_tty 'let () = Console_tty.setup ()'
+  $ put past_console_tty_alias 'module C = Console_tty__.Colour'
+  $ put past_console_recording 'let start = Console__Recording.start'
+  $ put past_console_alias 'module R = Console__.Recording'
+
 What can forge memory or a value of any type: the escapes from the type
 system, and every accessor that skips the check its safe version makes.
 
@@ -249,6 +264,13 @@ profile as in the development one.
   output_runtime_warnings: Hermetic.Sys.enable_runtime_warnings (ambient)
   output_std_formatter: Hermetic.Format.std_formatter (ambient)
   output_stdout: Hermetic.stdout (ambient)
+  past_base_alias: module Hermetic.Base__ (error)
+  past_base_import: module Hermetic.Base__Import (error)
+  past_base_import0: module Hermetic.Base__Import0 (error)
+  past_console_alias: module Hermetic.Console__ (error)
+  past_console_recording: module Hermetic.Console__Recording (error)
+  past_console_tty: module Hermetic.Console_tty (error)
+  past_console_tty_alias: module Hermetic.Console_tty__ (error)
   past_eio_cancel: module Hermetic.Eio__core__Cancel (error)
   past_eio_core_alias: module Hermetic.Eio__core__ (error)
   past_eio_debug: module Hermetic.Eio__core__Debug (error)
@@ -281,6 +303,7 @@ profile as in the development one.
   past_iomux_util: module Hermetic.Iomux__Util (error)
   past_mtime_clock: module Hermetic.Mtime_clock (error)
   past_ptime_clock: module Hermetic.Ptime_clock (error)
+  past_shadow_stdlib: module Hermetic.Shadow_stdlib (error)
   past_sysrandom: module Hermetic.Bytesrw_sysrandom (error)
   proc_arg: Hermetic.Arg.parse (ambient)
   proc_catch: Hermetic.Printexc.catch (ambient)
