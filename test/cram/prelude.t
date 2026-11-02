@@ -163,6 +163,14 @@ and makes a descriptor from an integer.
   $ put past_iomux 'let poll = Iomux.Poll.poll'
   $ put past_iomux_util 'let fd = Iomux__Util.unix_of_fd'
 
+Uring, which Eio_linux submits its requests with, opens a file by name,
+waits on the clock and makes and connects a socket, as Iomux reaches what
+Eio_posix does.
+
+  $ put past_uring 'let ring () : unit Uring.t = Uring.create ~queue_depth:4 ()'
+  $ put past_uring_alias 'module H = Uring__.Heap'
+  $ put past_uring_region 'let free = Uring__Region.free'
+
 A unit that re-exports the standard library is Stdlib_original under
 another name: Base's Import0 and Import, which Base__ names, and
 Shadow_stdlib. Console_tty sets up the standard formatters, as Fmt_tty
@@ -325,6 +333,9 @@ profile as in the development one.
   past_ptime_clock: module Hermetic.Ptime_clock (error)
   past_shadow_stdlib: module Hermetic.Shadow_stdlib (error)
   past_sysrandom: module Hermetic.Bytesrw_sysrandom (error)
+  past_uring: module Hermetic.Uring (error)
+  past_uring_alias: module Hermetic.Uring__ (error)
+  past_uring_region: module Hermetic.Uring__Region (error)
   proc_arg: Hermetic.Arg.parse (ambient)
   proc_catch: Hermetic.Printexc.catch (ambient)
   proc_command: Hermetic.Sys.command (ambient)
