@@ -226,6 +226,14 @@ let test_compiles () =
   Alcotest.check strings "implementations that do not compile" []
     (rounds implementations)
 
+(* A module the prelude restates only because it aliases restated ones, as
+   StdLabels does, has a unit of its own, as the modules the policy names
+   do: the overflow unit holds only what this version does not name. *)
+let test_alias_units () =
+  Alcotest.(check bool)
+    "StdLabels has a unit" true
+    (List.mem "hermetic__StdLabels.mli" Emit.file_names)
+
 let test_keyword_operators () =
   List.iter
     (fun op ->
@@ -265,6 +273,7 @@ let suite =
       Alcotest.test_case "a class cannot be restated" `Quick test_class;
       Alcotest.test_case "the emitted units" `Quick test_emitted;
       Alcotest.test_case "the emitted units compile" `Quick test_compiles;
+      Alcotest.test_case "units of restated aliases" `Quick test_alias_units;
       Alcotest.test_case "keyword operators" `Quick test_keyword_operators;
       Alcotest.test_case "mistakes in the policy" `Quick test_mistakes;
       Alcotest.test_case "values that hand out a channel" `Quick test_channels;
