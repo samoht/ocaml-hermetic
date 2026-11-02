@@ -101,15 +101,18 @@ The refusal follows the declaration, not the spelling: `Stdlib.Sys.getenv`,
 `include Sys` all reach the value the prelude declares, and a functor, a
 signature constraint or a first-class module type that expects the original
 `Sys` does not accept this one. `-unsafe` turns `a.(i)` into
-`Array.unsafe_get`, which the prelude refuses, so a file that opens it cannot
-be compiled with `-unsafe`.
+`Array.unsafe_get`, `s.[i]` into `String.unsafe_get` and `b.{i}` into the
+`unsafe_get` of `Bigarray`, which the prelude refuses, so a file that opens
+it and indexes an array, a string or a bigarray cannot be compiled with
+`-unsafe`; a file that does not index one compiles.
 
 Some details of this setup matter:
 
 - The open is spelled `open!`. A plain `open` that leaves nothing used is
   warning 33, an error in dune's development profile up to
   `(lang dune 3.20)`, and one that shadows a name of the standard library is
-  warning 44, which `-w +a` enables.
+  warning 44, which `-w +a` enables. `open!` silences both, but not warning
+  66: under `-w +a`, an `open!` that leaves nothing used is still reported.
 - Code above the open is outside the prelude, so the open is the first line.
   Nothing catches a file that forgets it: there is no checker.
 - The interfaces do not open the prelude, so they name the standard library's
@@ -120,19 +123,41 @@ Some details of this setup matter:
   restates, such as `Digest.t`, is the prelude's, and its consumer needs
   `hermetic` in its path. Such a file can also export a refused value it
   merely names, which then fails only in its consumer.
+- A module of the library named like a top-level module the prelude
+  declares is shadowed by the prelude's after the open, and cannot be named
+  by its own name. Those modules are `Arg`, `Array`, `ArrayLabels`,
+  `Bigarray`, `Bytes`, `BytesLabels`, `CamlinternalMod`, `CamlinternalOO`,
+  `Char`, `Digest`, `Domain`, `Dynarray`, `Ephemeron`, `Filename`, `Float`,
+  `Format`, `Hashtbl`, `Iarray`, `In_channel`, `Lexing`, `Marshal`,
+  `MoreLabels`, `Obj`, `Out_channel`, `Parsing`, `Printexc`, `Printf`,
+  `Random`, `Scanf`, `StdLabels`, `Stdlib`, `Stdlib_original`, `String`,
+  `StringLabels`, `Sys`, `Uchar`, `Unix`, `UnixLabels` and the
+  `Stdlib__` units, those a compiler lacks aside, and the libraries the
+  prelude declares empty (see [What it refuses](#what-it-refuses)). Rename
+  the module, or name it again after the open through the unit dune gives
+  it: in a library `model`, `module Format = Model__Format`.
 - A module that extends one of the standard library, with
   `include module type of String` in its interface and `include String` in
   its source file, includes the prelude's `String` in the source file, whose
   refused values do not match the interface. Include `Stdlib_original.String`
   there instead.
+- The result of `Hashtbl.MakeSeeded`, and of the `MakeSeeded` of
+  `MoreLabels.Hashtbl` and of `Ephemeron`, no longer matches the standard
+  library's `SeededS`: its `create` has no `?random`. A signature constraint
+  that names `Hashtbl.SeededS` rejects it; constrain it with the signature
+  the functor returns instead, or apply the functor of
+  `Stdlib_original.Hashtbl`.
 - The prelude is a module of aliases, and each module it restates is a unit
-  of its own, so a program links only the units it uses.
+  of its own, so a program links only the units it uses. A module that only
+  a compiler newer than this version of `hermetic` has shares the unit
+  `Hermetic__Unreviewed` with the others of its kind until it is reviewed.
 
 ## Escaping the prelude
 
 `Hermetic.Stdlib_original` is `Stdlib` without refusals. Name it only for an
-audited use, as in `Stdlib_original.Bytes.unsafe_get b i`: `grep
-Stdlib_original` finds each one.
+audited use, as in `Stdlib_original.Bytes.unsafe_get b i`. `grep
+Stdlib_original` finds each line that names it, but not the uses of an alias:
+after `module S = Stdlib_original`, a use of `S` does not name it.
 
 ## Other ways to apply it
 
@@ -226,7 +251,9 @@ As `unsafe`, what can forge memory or a value of any type: `Obj`,
 and `Parsing.yyparse`, and every accessor that skips the check its safe
 version makes (the `unsafe_` functions of `Array`, `Bytes`, `String`,
 `Bigarray`, `Char`, `Uchar`, `Float.Array`, `Iarray` and `Dynarray`, their
-labelled versions, and `unsafe_really_input`).
+labelled versions, and `unsafe_really_input`). `Bytes.unsafe_escape` and
+`BytesLabels.unsafe_escape` are kept: they return their argument or a fresh
+copy, and forge nothing.
 
 `Arg.parse_argv` and `Arg.parse_argv_dynamic` are restated with `~current`
 required, so that the position in the command line is handed in.
@@ -309,8 +336,10 @@ fails instead and lists the names to review. It also fails on a kept value
 whose type hands out a channel, a formatter, or a record or a tuple of output
 closures, as a result or to a callback, without taking one as an argument:
 such a value can reach a standard channel, so it is refused, or reviewed as
-making what it hands out from what it is handed, as `Format.formatter_of_buffer`
-does.
+making what it hands out from what it is handed, as
+`Format.formatter_of_buffer` does. Otherwise the check compares names, not
+types or behaviour: a reviewed value whose type or behaviour a new compiler
+changes passes it, so the review of a new compiler reads its changes too.
 
 Adding a refusal can break a library that builds today, so it is a breaking
 change. Keeping a value the prelude refused, or widening the bound on the

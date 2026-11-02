@@ -316,7 +316,8 @@ Hashtbl.is_randomized.
   exit 0
 
 -unsafe compiles a.(i) to Array.unsafe_get, which the prelude refuses, so a
-file that opens it cannot be compiled with -unsafe.
+file that opens it and indexes an array cannot be compiled with -unsafe; one
+that indexes nothing can.
 
   $ mkdir unsafe
   $ cat > unsafe/dune <<EOF
@@ -326,6 +327,9 @@ file that opens it cannot be compiled with -unsafe.
   $ dune build --root . --display quiet --profile dev ./unsafe 2>&1 | tr -d '"' | grep -E '^(Alert|Error)'
   Alert unsafe: Hermetic.Array.unsafe_get
   Error: This expression has type unsafe
+  $ printf 'open! Hermetic\nlet first l = List.hd l\n' > unsafe/u.ml
+  $ dune build --root . --display quiet --profile dev ./unsafe; echo "exit $?"
+  exit 0
 
 Code above the open is outside the prelude, so the open is the first line. No
 check catches a file that forgets it.
