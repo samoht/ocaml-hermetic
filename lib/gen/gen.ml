@@ -58,10 +58,19 @@ let strict stdlib =
   let _, unreviewed = Plan.v tree in
   let mistakes = Plan.mistakes tree in
   let channels = Plan.channels tree in
-  List.iter (Printf.eprintf "Stdlib.%s is not reviewed\n") unreviewed;
+  let spelled path =
+    let head = List.hd (String.split_on_char '.' path) in
+    if List.mem_assoc head tree.modules && not (List.mem head tree.in_stdlib)
+    then path
+    else "Stdlib." ^ path
+  in
   List.iter
-    (Printf.eprintf
-       "Stdlib.%s is kept, but hands out a channel without taking one\n")
+    (fun p -> Printf.eprintf "%s is not reviewed\n" (spelled p))
+    unreviewed;
+  List.iter
+    (fun p ->
+      Printf.eprintf "%s is kept, but hands out a channel without taking one\n"
+        (spelled p))
     channels;
   List.iter
     (Printf.eprintf "%s is refused, but no supported compiler has it\n")

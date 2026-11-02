@@ -35,6 +35,8 @@ type ctx = {
   entries : (string, Policy.entry) Hashtbl.t;
   reviewed : Policy.reviewed;
   restated : string list;  (** The paths restated, at any depth. *)
+  units : string list;
+      (** The top-level modules that [Stdlib] does not name. *)
   mutable unreviewed : string list;
 }
 
@@ -57,9 +59,15 @@ let kept ctx p v =
   | Some names -> List.mem v names
   | None -> false
 
+(* A path as a user spells it: through [Stdlib], unless its head is a unit
+   that [Stdlib] does not name. *)
+let spelled ctx path =
+  let head = List.hd (String.split_on_char '.' path) in
+  if List.mem head ctx.units then path else "Stdlib." ^ path
+
 let unreviewed ctx path =
   ctx.unreviewed <- path :: ctx.unreviewed;
-  Policy.unreviewed path
+  Policy.unreviewed (spelled ctx path)
 
 (* A module the reader cannot open, or that has to change in a way the
    prelude cannot express, is removed and reported as unreviewed. *)
@@ -229,7 +237,12 @@ let v ?(refusals = Policy.refusals) ?(reviewed = Policy.reviewed)
   (* An alias of a restated module is restated in turn, until no more module
      is. *)
   let rec fix restated =
-    let ctx = { entries; reviewed; restated; unreviewed = [] } in
+    let units =
+      List.filter_map
+        (fun (m, _) -> if List.mem m tree.in_stdlib then None else Some m)
+        tree.modules
+    in
+    let ctx = { entries; reviewed; restated; units; unreviewed = [] } in
     let values, modules = walk ctx tree in
     let now =
       List.concat_map (fun (m, t) -> m :: paths m t) modules

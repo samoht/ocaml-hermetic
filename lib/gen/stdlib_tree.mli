@@ -45,9 +45,9 @@ type t = {
       (** The types of [Stdlib] itself, each with its number of parameters. *)
   values : string list;  (** The values of [Stdlib] itself. *)
   modules : (string * node) list;
-      (** The modules of [Stdlib], each followed to its unit, then the units of
-          the standard library that [Stdlib] does not name ([CamlinternalOO] and
-          the rest), in that order. *)
+      (** The modules of [Stdlib], each followed to its unit, then every other
+          unit of the directory ([CamlinternalOO], [Std_exit] and any unit a
+          newer compiler adds), in that order. *)
   in_stdlib : string list;
       (** The names in {!field-modules} that [Stdlib] names. *)
   channels : string list;

@@ -56,8 +56,10 @@ val doc : string
 (** The odoc preamble of the prelude's interface. *)
 
 val unreviewed : string -> refusal
-(** [unreviewed path] is the refusal of the value or the module at [path], which
-    the policy has not reviewed. *)
+(** [unreviewed name] is the refusal of the value or the module [name], which
+    the policy has not reviewed. [name] is spelled as a user spells it:
+    ["Stdlib.Sys.getenv"], or ["CamlinternalOO"] for a unit that [Stdlib] does
+    not name. *)
 
 type reviewed = {
   modules : string list;

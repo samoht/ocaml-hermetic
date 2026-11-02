@@ -470,8 +470,7 @@ let unreviewed path =
       Printf.sprintf
         "Not reviewed by this version of hermetic: %s is new in this compiler, \
          and is refused until hermetic reviews it."
-        (if String.starts_with ~prefix:"Camlinternal" path then path
-         else "Stdlib." ^ path);
+        path;
   }
 
 type reviewed = {

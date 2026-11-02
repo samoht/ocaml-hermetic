@@ -187,12 +187,13 @@ let units sg =
       | _ -> None)
     sg
 
-(* The units of the standard library that [Stdlib] does not name: its
-   runtime support, CamlinternalOO and the rest. *)
-let internal_units dir =
+(* Every unit in [dir] that [Stdlib] does not name: its runtime support,
+   CamlinternalOO and the rest, Std_exit, and any unit a newer compiler
+   adds, which the policy then reviews or refuses like any other module. *)
+let internal_units dir units =
   Sys.readdir dir |> Array.to_list |> List.sort String.compare
   |> List.filter_map unit_of_file
-  |> List.filter (String.starts_with ~prefix:"Camlinternal")
+  |> List.filter (fun u -> u <> "Stdlib" && not (List.mem_assoc u units))
 
 (* {1 Values that hand out a channel} *)
 
@@ -315,7 +316,7 @@ let read dir =
       in_stdlib
     @ List.map
         (fun u -> (u, find (Longident.Lident u) units))
-        (internal_units dir)
+        (internal_units dir units)
   in
   let channels =
     channels_of env "" stdlib.md_type
@@ -323,7 +324,7 @@ let read dir =
         (fun u ->
           channels_of env u
             (snd (Env.find_module_by_name (Longident.Lident u) env)).md_type)
-        (internal_units dir)
+        (internal_units dir units)
   in
   {
     channels;

@@ -148,6 +148,7 @@ let modules =
     "Set.Make";
     "Stack";
     "StdLabels";
+    "Std_exit";
     "String";
     "StringLabels";
     "Sys";

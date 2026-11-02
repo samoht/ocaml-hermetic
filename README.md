@@ -262,8 +262,13 @@ compiler's standard library and a policy that does not depend on the
 compiler's version. The policy names every value and module it has reviewed,
 at any depth. A value or a module a new compiler adds and the policy has not
 reviewed is refused as `unreviewed`, and the modules above it are restated to
-refuse it. A module whose contents the generator cannot open, such as a
-generative functor, is removed and reported as unreviewed. The package's
+refuse it. So is a unit of the compiler's library directory that `Stdlib` does
+not name and the policy has not reviewed, beside `CamlinternalOO` and
+`Std_exit`. A module whose contents the generator cannot open, such as a
+generative functor, is removed and reported as unreviewed. A class cannot be
+restated, so a class a new compiler adds to a module the prelude must restate
+fails the generator: `hermetic` does not build on that compiler until the
+policy reviews the class. The package's
 upper bound on the compiler moves with each release, after a review. The test
 suite runs the generator with `--strict` in the development profile, which
 fails instead and lists the names to review. It also fails on a kept value
