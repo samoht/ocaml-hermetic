@@ -360,16 +360,37 @@ let processes =
   "Runs or controls a process: take Eio.Stdenv.process_mgr as an argument."
 
 (* Every value of the compiler's Unix, or UnixLabels, at [m] that reaches a
-   capability by name or by address. The others are kept, by reviewed.ml
-   or, for a name that says [unsafe] and for [socket], here. *)
+   capability by name or by address, or makes a descriptor the code was not
+   handed. The others are kept, by reviewed.ml or, for a name that says
+   [unsafe], here. *)
 let unix m =
   let large = m ^ ".LargeFile" in
   each m "unsafe_environment unsafe_getenv"
     (Keep "It reads the process environment, as getenv does.")
   @ each m "socket"
-      (Keep
-         "A socket neither bound nor connected reaches no network: bind, \
-          connect and sendto are refused.")
+      (ambient
+         "Makes a socket the code was not handed, which listen binds to every \
+          interface and whose fstat reads the clock: take Eio.Stdenv.net as an \
+          argument.")
+  @ each m "socketpair"
+      (ambient
+         "Makes a pair of sockets the code was not handed, whose fstat reads \
+          the clock: take the sockets as arguments, which the executable makes \
+          with Eio_unix.Net.socketpair_stream.")
+  @ each m "pipe"
+      (ambient
+         "Makes a pipe the code was not handed, whose fstat reads the clock: \
+          take its ends as arguments, which the executable makes with \
+          Eio_unix.pipe.")
+  @ each m "listen"
+      (ambient
+         "Binds a socket that is not bound to a port on every interface: take \
+          Eio.Stdenv.net as an argument and use Eio.Net.listen.")
+  @ each m "setsockopt_float"
+      (ambient
+         "Sets a timeout on a socket, which makes a receive or a send a timed \
+          wait on the clock: take Eio.Stdenv.clock as an argument and use \
+          Eio.Time.with_timeout.")
   @ each m "getcwd"
       (ambient
          "Reads the process's working directory: take Eio.Stdenv.cwd as an \

@@ -832,14 +832,13 @@ let kept =
        descr_of_in_channel descr_of_out_channel dup dup2 fchmod fchown fstat \
        fsync ftruncate getpeername getsockname getsockopt getsockopt_error \
        getsockopt_float getsockopt_int getsockopt_optint in_channel_of_descr \
-       isatty listen lockf lseek map_file out_channel_of_descr pipe \
-       process_full_pid process_in_pid process_out_pid process_pid read \
-       read_bigarray readdir recv recvfrom rewinddir send send_substring \
-       set_close_on_exec set_nonblock setsockopt setsockopt_float \
-       setsockopt_int setsockopt_optint shutdown shutdown_connection \
-       single_write single_write_bigarray single_write_substring socketpair \
-       tcdrain tcflow tcflush tcgetattr tcsendbreak tcsetattr write \
-       write_bigarray write_substring" );
+       isatty lockf lseek map_file out_channel_of_descr process_full_pid \
+       process_in_pid process_out_pid process_pid read read_bigarray readdir \
+       recv recvfrom rewinddir send send_substring set_close_on_exec \
+       set_nonblock setsockopt setsockopt_int setsockopt_optint shutdown \
+       shutdown_connection single_write single_write_bigarray \
+       single_write_substring tcdrain tcflow tcflush tcgetattr tcsendbreak \
+       tcsetattr write write_bigarray write_substring" );
     ("Unix.LargeFile", "given", "fstat ftruncate lseek");
     ( "Unix",
       "process",
@@ -860,14 +859,13 @@ let kept =
        descr_of_in_channel descr_of_out_channel dup dup2 fchmod fchown fstat \
        fsync ftruncate getpeername getsockname getsockopt getsockopt_error \
        getsockopt_float getsockopt_int getsockopt_optint in_channel_of_descr \
-       isatty listen lockf lseek map_file out_channel_of_descr pipe \
-       process_full_pid process_in_pid process_out_pid process_pid read \
-       read_bigarray readdir recv recvfrom rewinddir send send_substring \
-       set_close_on_exec set_nonblock setsockopt setsockopt_float \
-       setsockopt_int setsockopt_optint shutdown shutdown_connection \
-       single_write single_write_bigarray single_write_substring socketpair \
-       tcdrain tcflow tcflush tcgetattr tcsendbreak tcsetattr write \
-       write_bigarray write_substring" );
+       isatty lockf lseek map_file out_channel_of_descr process_full_pid \
+       process_in_pid process_out_pid process_pid read read_bigarray readdir \
+       recv recvfrom rewinddir send send_substring set_close_on_exec \
+       set_nonblock setsockopt setsockopt_int setsockopt_optint shutdown \
+       shutdown_connection single_write single_write_bigarray \
+       single_write_substring tcdrain tcflow tcflush tcgetattr tcsendbreak \
+       tcsetattr write write_bigarray write_substring" );
     ("UnixLabels.LargeFile", "given", "fstat ftruncate lseek");
     ( "UnixLabels",
       "process",

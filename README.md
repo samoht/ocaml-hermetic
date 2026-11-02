@@ -242,6 +242,9 @@ As `ambient`, what reaches an Eio capability without being handed it:
   by address: files and directories by name, the current directory, the
   clock and the waits on it, the network by address or by name, the
   processes they spawn, wait for or signal, and the standard descriptors;
+  and those that make a descriptor the code was not handed, or that turn
+  one into a way to the network or the clock: `socket`, `socketpair`,
+  `pipe`, `listen` and `setsockopt_float`;
 - `Thread.delay`, `Thread.select`, `Thread.wait_timed_read` and
   `Thread.wait_timed_write`, which wait on the clock, and `Thread.wait_pid`,
   which waits for a child process;
@@ -288,8 +291,7 @@ Everything else stays too, however surprising, since it reaches no
 capability Eio's env provides: the process environment (`Sys.getenv`), the
 command line (`Sys.argv`), `exit` and `at_exit`, the signals, the processor
 time, the facts of the process, its user and its host, I/O on a descriptor,
-a socket or a process the code was handed, `Unix.socket`, which makes a
-socket neither bound nor connected, and `Thread.create`.
+a socket or a process the code was handed, and `Thread.create`.
 
 ## Unix and threads
 
@@ -302,9 +304,15 @@ refused as `ambient`: `openfile`, `stat` and the other functions that take a
 path, `getcwd` and `chdir`, `time`, `gettimeofday`, `sleep`, the timers and
 `select`, `bind`, `connect`, `sendto`, `open_connection`,
 `establish_server` and the name resolvers, the functions that spawn a
-process, wait for one or signal one, and `stdin`, `stdout` and `stderr`.
-The rest stays: `socket`, since a socket neither bound nor connected reaches
-no network, I/O on a descriptor, a socket or a process the code was handed,
+process, wait for one or signal one, and `stdin`, `stdout` and `stderr`. So
+is a value that makes a descriptor the code was not handed: `socket`,
+`socketpair` and `pipe`. A fresh socket reaches the network, since `listen`
+on a socket that is not bound binds it to a port on every interface, and
+the times `fstat` reads of a fresh socket or pipe are the clock's. `listen`
+is refused for the same reason, and `setsockopt_float`, whose only options,
+`SO_RCVTIMEO` and `SO_SNDTIMEO`, make a receive or a send a timed wait on
+the clock. The rest stays: I/O on a descriptor, a socket or a process the
+code was handed, `accept` on a listening socket it was handed,
 the environment, the facts of the process, its user and its
 host, the time zone, the signal masks and `_exit`, and the pure values, such
 as the conversions of internet addresses. A value a newer compiler adds is

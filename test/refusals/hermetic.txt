@@ -280,6 +280,7 @@ Unix.gettimeofday: ambient
 Unix.handle_unix_error: ambient
 Unix.kill: ambient
 Unix.link: ambient
+Unix.listen: ambient
 Unix.lstat: ambient
 Unix.mkdir: ambient
 Unix.mkfifo: ambient
@@ -294,6 +295,7 @@ Unix.open_process_in: ambient
 Unix.open_process_out: ambient
 Unix.opendir: ambient
 Unix.openfile: ambient
+Unix.pipe: ambient
 Unix.readlink: ambient
 Unix.realpath: ambient
 Unix.rename: ambient
@@ -302,9 +304,11 @@ Unix.select: ambient
 Unix.sendto: ambient
 Unix.sendto_substring: ambient
 Unix.setitimer: ambient
+Unix.setsockopt_float: ambient
 Unix.sleep: ambient
 Unix.sleepf: ambient
-Unix.socket: kept
+Unix.socket: ambient
+Unix.socketpair: ambient
 Unix.stat: ambient
 Unix.stderr: ambient
 Unix.stdin: ambient
@@ -352,6 +356,7 @@ UnixLabels.gettimeofday: ambient
 UnixLabels.handle_unix_error: ambient
 UnixLabels.kill: ambient
 UnixLabels.link: ambient
+UnixLabels.listen: ambient
 UnixLabels.lstat: ambient
 UnixLabels.mkdir: ambient
 UnixLabels.mkfifo: ambient
@@ -366,6 +371,7 @@ UnixLabels.open_process_in: ambient
 UnixLabels.open_process_out: ambient
 UnixLabels.opendir: ambient
 UnixLabels.openfile: ambient
+UnixLabels.pipe: ambient
 UnixLabels.readlink: ambient
 UnixLabels.realpath: ambient
 UnixLabels.rename: ambient
@@ -374,9 +380,11 @@ UnixLabels.select: ambient
 UnixLabels.sendto: ambient
 UnixLabels.sendto_substring: ambient
 UnixLabels.setitimer: ambient
+UnixLabels.setsockopt_float: ambient
 UnixLabels.sleep: ambient
 UnixLabels.sleepf: ambient
-UnixLabels.socket: kept
+UnixLabels.socket: ambient
+UnixLabels.socketpair: ambient
 UnixLabels.stat: ambient
 UnixLabels.stderr: ambient
 UnixLabels.stdin: ambient
