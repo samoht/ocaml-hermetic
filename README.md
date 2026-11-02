@@ -364,6 +364,13 @@ A dependency is outside its reach, and so is a file that forgets the open. A
 top-level `ref` of the library's own is state the whole process shares, and
 no name of the prelude can refuse it.
 
+The libraries the prelude declares empty are refused by name only. Dune
+gives the modules of Eio's backends units of their own, named `Eio_unix__*`,
+`Eio_posix__*` and `Eio_linux__*`, and a file that names one directly
+reaches the system past Eio's capabilities. The prelude does not cover them:
+`hermetic` does not depend on Eio, and their names vary from one version of
+Eio to the next.
+
 An `OCAMLPARAM` in the environment of the build can add compiler options the
 build files do not show.
 
