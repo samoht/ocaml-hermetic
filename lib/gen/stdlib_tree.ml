@@ -187,12 +187,23 @@ let units sg =
       | _ -> None)
     sg
 
-(* Every unit in [dir] that [Stdlib] does not name: its runtime support,
-   CamlinternalOO and the rest, Std_exit, and any unit a newer compiler
-   adds, which the policy then reviews or refuses like any other module. *)
+(* The directories read: the standard library's, and the unix library's
+   beside it, which the compiler ships too. *)
+let dirs dir =
+  let unix = Filename.concat dir "unix" in
+  if Sys.file_exists unix && Sys.is_directory unix then [ dir; unix ]
+  else [ dir ]
+
+(* Every unit in [dirs dir] that [Stdlib] does not name: its runtime
+   support, CamlinternalOO and the rest, Std_exit, Unix and UnixLabels, and
+   any unit a newer compiler adds, which the policy then reviews or refuses
+   like any other module. *)
 let internal_units dir units =
-  Sys.readdir dir |> Array.to_list |> List.sort String.compare
-  |> List.filter_map unit_of_file
+  List.concat_map
+    (fun d ->
+      Sys.readdir d |> Array.to_list |> List.sort String.compare
+      |> List.filter_map unit_of_file)
+    (dirs dir)
   |> List.filter (fun u -> u <> "Stdlib" && not (List.mem_assoc u units))
 
 (* {1 Values that hand out a channel} *)
@@ -290,7 +301,7 @@ let rec channels_of env prefix mty =
 
 let read dir =
   Clflags.no_std_include := true;
-  Clflags.include_dirs := [ dir ];
+  Clflags.include_dirs := dirs dir;
   Compmisc.init_path ();
   let env = Compmisc.initial_env () in
   let find lid units =

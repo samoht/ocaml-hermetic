@@ -15,7 +15,8 @@
    - pure: a function of its arguments;
    - data: a data structure, read or changed through a value handed in;
    - channel, format: works on a channel, formatter or buffer handed in;
-   - given: works on what it is handed (a lexer buffer, an argv);
+   - given: works on what it is handed (a lexer buffer, an argv, a channel
+     or a file descriptor, which it converts without I/O);
    - constant: a fact fixed when the program is built;
    - concurrency: synchronisation and domain-local state, which reach no
      world;
@@ -158,6 +159,10 @@ let modules =
     "Type.Id";
     "Uchar";
     "Unit";
+    "Unix";
+    "Unix.LargeFile";
+    "UnixLabels";
+    "UnixLabels.LargeFile";
     "Weak";
     "Weak.Make";
   ]
@@ -791,6 +796,24 @@ let kept =
        utf_decode utf_decode_invalid utf_decode_is_valid utf_decode_length \
        utf_decode_uchar" );
     ("Unit", "pure", "compare equal to_string");
+    ( "Unix",
+      "pure",
+      "domain_of_sockaddr error_message gmtime inet6_addr_any \
+       inet6_addr_loopback inet_addr_any inet_addr_loopback \
+       inet_addr_of_string is_inet6_addr string_of_inet_addr" );
+    ( "Unix",
+      "given",
+      "descr_of_in_channel descr_of_out_channel in_channel_of_descr \
+       out_channel_of_descr" );
+    ( "UnixLabels",
+      "pure",
+      "domain_of_sockaddr error_message gmtime inet6_addr_any \
+       inet6_addr_loopback inet_addr_any inet_addr_loopback \
+       inet_addr_of_string is_inet6_addr string_of_inet_addr" );
+    ( "UnixLabels",
+      "given",
+      "descr_of_in_channel descr_of_out_channel in_channel_of_descr \
+       out_channel_of_descr" );
     ("Weak", "runtime", "blit check create fill get get_copy length set");
     ( "Weak.Make",
       "runtime",
@@ -807,6 +830,10 @@ let version_specific =
     "Printf.leprintf";
     "Format.lprintf";
     "Format.leprintf";
+    "Unix.sigwait";
+    "Unix.unsetenv";
+    "UnixLabels.sigwait";
+    "UnixLabels.unsetenv";
   ]
 
 (* The kept values that hand out a channel, a formatter or output closures
@@ -827,4 +854,8 @@ let channels =
     ("Lexing.from_function", "reads with the function it is handed");
     ("Scanf.Scanning.from_string", "reads the string it is handed");
     ("Scanf.Scanning.from_function", "reads with the function it is handed");
+    ("Unix.in_channel_of_descr", "reads the descriptor it is handed");
+    ("Unix.out_channel_of_descr", "writes to the descriptor it is handed");
+    ("UnixLabels.in_channel_of_descr", "reads the descriptor it is handed");
+    ("UnixLabels.out_channel_of_descr", "writes to the descriptor it is handed");
   ]

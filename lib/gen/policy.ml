@@ -408,9 +408,108 @@ let randomness =
   @ seeded_tables "Ephemeron.K2.MakeSeeded" ~table:"'a t"
   @ seeded_tables "Ephemeron.Kn.MakeSeeded" ~table:"'a t"
 
+(* {1 Unix: its types stay, what reaches the world is refused} *)
+
+let descriptor =
+  "Performs I/O on a file descriptor: take an Eio flow, or the bytes, as an \
+   argument."
+
+let network = "Reaches the network: take Eio.Stdenv.net as an argument."
+let clock = "Reads the clock: take Eio.Stdenv.clock as an argument."
+
+let waits =
+  "Waits on the clock: take Eio.Stdenv.clock as an argument and use \
+   Eio.Time.sleep."
+
+let processes =
+  "Runs or controls a process: take Eio.Stdenv.process_mgr as an argument."
+
+let host = "Reads a fact of the host: take the value as an argument."
+
+(* Every value of the compiler's Unix, or UnixLabels, at [m], except the
+   pure ones, which reviewed.ml keeps: the conversions of addresses and of
+   errors, [gmtime], and the conversions between a channel and its
+   descriptor. *)
+let unix m =
+  let large = m ^ ".LargeFile" in
+  each m "environment getenv unsafe_environment unsafe_getenv"
+    (ambient "Reads the process environment: take the value as an argument.")
+  @ each m "putenv unsetenv"
+      (ambient
+         "Changes the process environment: take the value as an argument, and \
+          hand the environment to the process you spawn.")
+  @ each m
+      "getpid getppid getuid geteuid getgid getegid getgroups getlogin umask \
+       nice setuid setgid setgroups initgroups setsid chroot"
+      (ambient fact)
+  @ each m "getcwd"
+      (ambient
+         "Reads the process's working directory: take Eio.Stdenv.cwd as an \
+          argument.")
+  @ each m "chdir"
+      (ambient
+         "Changes the process's working directory: take Eio.Stdenv.cwd (an \
+          Eio.Path) as an argument.")
+  @ each m "gethostname getpwnam getpwuid getgrgid getgrnam has_symlink"
+      (ambient host)
+  @ each m "localtime mktime"
+      (ambient
+         "Reads the host's time zone: take the value as an argument, or use \
+          gmtime.")
+  @ each m "time gettimeofday times" (ambient clock)
+  @ each m "sleep sleepf alarm getitimer setitimer" (ambient waits)
+  @ each m "openfile opendir" (ambient opens)
+  @ each m "access stat lstat readlink realpath" (ambient reads_fs)
+  @ each m
+      "chmod chown link mkdir mkfifo rename rmdir symlink truncate unlink \
+       utimes"
+      (ambient writes_fs)
+  @ each large "stat lstat" (ambient reads_fs)
+  @ each large "truncate" (ambient writes_fs)
+  @ each m
+      "close read write single_write write_substring single_write_substring \
+       read_bigarray write_bigarray single_write_bigarray lseek ftruncate \
+       fstat fchmod fchown fsync dup dup2 pipe set_nonblock clear_nonblock \
+       set_close_on_exec clear_close_on_exec lockf select isatty map_file \
+       readdir rewinddir closedir tcgetattr tcsetattr tcsendbreak tcdrain \
+       tcflush tcflow"
+      (ambient descriptor)
+  @ each large "lseek ftruncate fstat" (ambient descriptor)
+  @ each m
+      "socket socketpair accept bind connect listen shutdown getsockname \
+       getpeername recv recvfrom send send_substring sendto sendto_substring \
+       getsockopt setsockopt getsockopt_int setsockopt_int getsockopt_optint \
+       setsockopt_optint getsockopt_float setsockopt_float getsockopt_error \
+       open_connection shutdown_connection establish_server getaddrinfo \
+       getnameinfo gethostbyname gethostbyaddr getprotobyname getprotobynumber \
+       getservbyname getservbyport"
+      (ambient network)
+  @ each m
+      "create_process create_process_env execv execve execvp execvpe fork wait \
+       waitpid system open_process open_process_in open_process_out \
+       open_process_full open_process_args open_process_args_in \
+       open_process_args_out open_process_args_full close_process \
+       close_process_in close_process_out close_process_full process_pid \
+       process_in_pid process_out_pid process_full_pid"
+      (ambient processes)
+  @ each m "kill sigprocmask sigpending sigsuspend sigwait pause"
+      (ambient signal)
+  @ each m "stdin" (ambient stdin)
+  @ each m "stdout" (ambient (writes "output"))
+  @ each m "stderr" (ambient (writes "error"))
+  @ [
+      ( m ^ "._exit",
+        ambient "Ends the process: return an outcome and let the caller exit."
+      );
+      ( m ^ ".handle_unix_error",
+        ambient
+          "Prints the error on the process's standard error and ends the \
+           process: catch Unix_error and return an outcome." );
+    ]
+
 let refusals =
   unsafe_refusals @ environment @ files @ standard_input @ standard_output
-  @ the_process @ command_line @ randomness
+  @ the_process @ command_line @ randomness @ unix "Unix" @ unix "UnixLabels"
 
 (* Libraries that reach the system past Eio's capabilities, which the prelude
    declares empty, so that a name of theirs is unbound. *)
@@ -422,8 +521,6 @@ let shadowed =
   List.map
     (fun m -> (m, past))
     [
-      "Unix";
-      "UnixLabels";
       "Thread";
       "Event";
       "Runtime_events";

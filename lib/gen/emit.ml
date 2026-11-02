@@ -557,7 +557,8 @@ let dune ~gen =
   List.iter (fun f -> line buf 0 "  %s" f) (List.sort String.compare file_names);
   line buf 0 " )";
   line buf 0 " (deps";
-  line buf 0 "  (glob_files %%{ocaml_where}/*.cmi))";
+  line buf 0 "  (glob_files %%{ocaml_where}/*.cmi)";
+  line buf 0 "  (glob_files %%{ocaml_where}/unix/*.cmi))";
   line buf 0 " (action";
   line buf 0 "  (run %s %%{ocaml_where} .)))" gen;
   Buffer.contents buf

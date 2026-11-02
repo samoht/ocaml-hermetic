@@ -8,10 +8,11 @@ process environment, the clock or the file system by name, cannot read the
 standard input or write the standard output, cannot spawn a process or a
 domain, and cannot end the process: the standard library values that do so
 are refused at compile time, and their alerts name the `Eio.Stdenv`
-capability to take as an argument instead. The libraries that reach the
-system past Eio's capabilities, `Unix` and `Eio_main` among them, are refused
-by name. A pure core, such as a protocol state machine or a codec, is the
-case where no capability is handed in at all.
+capability to take as an argument instead. So are the values of `Unix` that
+reach the world, and the libraries that reach the system past Eio's
+capabilities, `Eio_main` and `Eio_unix` among them, are refused by name. A
+pure core, such as a protocol state machine or a codec, is the case where no
+capability is handed in at all.
 
 What this buys is that a library compiled under the prelude touches only what
 it is handed, so a test can hand it an in-memory file system, a mock clock or
@@ -39,7 +40,9 @@ $ opam install hermetic
 ```
 
 It supports OCaml 5.3, 5.4 and 5.5. It does not depend on Eio, nor on any
-library it refuses: they are named in its messages only.
+library it refuses: they are named in its messages only. Its `Unix` is
+compiled against the interface of the compiler's unix library, without
+depending on it (see [Unix](#unix)).
 
 ## Setup
 
@@ -205,10 +208,15 @@ As `ambient`, what reaches the world without being handed it:
   does not seed it either. Passing `~random` to one, even
   `~random:false`, is then a type error about an argument the function
   does not expect, and no alert explains it;
-- the libraries that reach the system past Eio's capabilities: `Unix`,
-  `UnixLabels`, `Thread`, `Event`, `Runtime_events`, `Dynlink`, `Eio_unix`,
-  `Eio_posix`, `Eio_linux`, `Eio_windows` and `Eio_main`, which the prelude
-  declares empty.
+- the values of `Unix` and `UnixLabels` that reach the world: files and
+  descriptors, sockets and the network, processes and signals, the clock and
+  the time zone, the environment, users and the host, and the standard
+  descriptors;
+- the libraries that reach the system past Eio's capabilities: `Thread`,
+  `Event`, `Runtime_events`, `Dynlink`, `Eio_unix`, `Eio_posix`, `Eio_linux`,
+  `Eio_windows` and `Eio_main`, which the prelude declares empty. The types
+  of the Eio libraries are refused with them, only because `hermetic` does
+  not depend on Eio and so cannot restate them.
 
 As `unsafe`, what can forge memory or a value of any type: `Obj`,
 `CamlinternalMod`, `CamlinternalOO`, the readers of `Marshal` and
@@ -245,6 +253,30 @@ runtime's own state is kept, even where `OCAMLRUNPARAM` sets it, since the
 program can set it too. So `Sys.runtime_parameters` and
 `Domain.recommended_domain_count` are refused, while `Gc.get`,
 `Printexc.backtrace_status` and `Hashtbl.is_randomized` are kept.
+
+## Unix
+
+The prelude restates `Unix` and `UnixLabels` as it restates the standard
+library. Every type stays, equal to the original with its constructors and
+fields, so a signature can name `Unix.file_descr`, `Unix.sockaddr` or
+`Unix.EADDRINUSE`, and so does the exception `Unix_error`, so a source file
+can match on it. The values that are pure stay: the conversions of internet
+addresses (`inet_addr_of_string`, `string_of_inet_addr`, `is_inet6_addr`)
+and their constants (`inet_addr_any`, `inet_addr_loopback` and their IPv6
+versions), `domain_of_sockaddr`, `error_message`, `gmtime`, and the
+conversions between a channel and its descriptor, which perform no I/O.
+Every other value is refused as `ambient`, and a value a newer compiler adds
+is refused as `unreviewed` until it is reviewed.
+
+The unix library forces its own link: a program that names it among its
+libraries links all of it, and the standard library modules it uses, whether
+it uses a value of it or not. So `hermetic` does not depend on it. A program
+that uses a value of `Unix`, or matches on `Unix_error`, names `unix` among
+its libraries, as it would without the prelude. A file that names only
+`Unix`'s types needs the interfaces they are declared in, but none of its
+code: `(flags (:standard -I +unix))` finds them without linking anything.
+Without either, OCaml 5 finds them itself and prints the
+`ocaml_deprecated_auto_include` alert.
 
 ## Eio code
 

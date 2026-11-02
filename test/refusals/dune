@@ -25,6 +25,7 @@
  (enabled_if
   (= %{profile} dev))
  (deps
-  (glob_files %{ocaml_where}/*.cmi))
+  (glob_files %{ocaml_where}/*.cmi)
+  (glob_files %{ocaml_where}/unix/*.cmi))
  (action
   (run %{exe:../../lib/gen/gen.exe} --strict %{ocaml_where})))

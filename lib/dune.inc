@@ -73,10 +73,15 @@
   hermetic__Sys.mli
   hermetic__Uchar.ml
   hermetic__Uchar.mli
+  hermetic__Unix.ml
+  hermetic__Unix.mli
+  hermetic__UnixLabels.ml
+  hermetic__UnixLabels.mli
   hermetic__Unreviewed.ml
   hermetic__Unreviewed.mli
  )
  (deps
-  (glob_files %{ocaml_where}/*.cmi))
+  (glob_files %{ocaml_where}/*.cmi)
+  (glob_files %{ocaml_where}/unix/*.cmi))
  (action
   (run %{exe:gen/gen.exe} %{ocaml_where} .)))

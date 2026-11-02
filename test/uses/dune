@@ -3,7 +3,8 @@
 
 (rule
  (deps
-  (glob_files %{ocaml_where}/*.cmi))
+  (glob_files %{ocaml_where}/*.cmi)
+  (glob_files %{ocaml_where}/unix/*.cmi))
  (action
   (with-stdout-to
    uses.txt

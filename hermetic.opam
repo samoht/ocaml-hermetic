@@ -8,10 +8,11 @@ the process environment, the clock or the file system by name, cannot read
 the standard input or write the standard output, cannot spawn a process or a
 domain, and cannot end the process: the standard library values that do so
 get a type nothing consumes, so a use of one is a type error, and an alert
-names the capability to take as an argument instead. The libraries that
-reach the system past Eio's capabilities, Unix and Eio_main among them, are
-refused by name, and so are the values that can forge memory or a value of
-any type. A pure core is the case where no capability is handed in. The
+names the capability to take as an argument instead. So do the values of
+Unix that reach the world. The libraries that reach the system past Eio's
+capabilities, Eio_main among them, are refused by name, and so are the values
+that can forge memory or a value of any type. A pure core is the case where
+no capability is handed in. The
 prelude is generated from the installed compiler's standard library, and a
 value a new compiler adds is refused until it is reviewed. It guards against
 accidents, not against an author trying to cheat, and it does not check

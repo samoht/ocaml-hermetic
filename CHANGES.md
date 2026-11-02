@@ -9,7 +9,12 @@ Initial release.
   memory or a value of any type, gets a type nothing consumes, and an alert
   says why and what to take instead. Library code does not write to the
   standard channels, and the libraries that reach the system past Eio's
-  capabilities, such as `Unix`, are declared empty.
+  capabilities, such as `Eio_unix`, are declared empty.
+- `Unix` and `UnixLabels` restated: their types and the exception
+  `Unix_error` are kept, equal to the originals, their pure values are kept,
+  and every value that reaches the world is refused. `hermetic` does not
+  depend on the unix library, so a program that names only its types links
+  none of it.
 - The prelude is generated from the installed compiler's standard library,
   for OCaml 5.3 to 5.5. A value a newer compiler adds is refused as
   unreviewed until the policy reviews it.
