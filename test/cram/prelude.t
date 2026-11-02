@@ -45,6 +45,11 @@ the value's type.
   Error: This expression has type ambient
          This is not a function; it cannot be applied.
   $ rm lib/exists.ml
+  $ put print 'let () = print_endline "x"'
+  $ dune build --root . --display quiet --profile dev ./lib 2>&1 | tr -d '"' | grep -A1 '^Alert'
+  Alert ambient: Hermetic.print_endline
+  Writes the process's standard output: take Eio.Stdenv.stdout as an argument, or log with Logs or Eio.traceln.
+  $ rm lib/print.ml
 
 The file system, reached by name, and the current directory.
 

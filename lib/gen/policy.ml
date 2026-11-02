@@ -118,7 +118,8 @@ let unsafe_refusals =
   @ strings "StringLabels"
   @ no_check "bounds" "Iarray" [ ("unsafe_get", "get") ]
 
-(* {1 Ambient authority: what reaches the world without being handed in} *)
+(* {1 Ambient authority: what reaches an Eio capability without being handed
+   it} *)
 
 let fs = "take Eio.Stdenv.fs or Eio.Stdenv.cwd (an Eio.Path) as an argument"
 let opens = "Opens a file by name: " ^ fs ^ ", or the file's contents."
@@ -129,12 +130,15 @@ let stdin =
   "Reads the process's standard input: take Eio.Stdenv.stdin or the bytes as \
    an argument."
 
-let writes channel =
-  "Writes the process's standard " ^ channel
-  ^ ": log with Logs or Eio.traceln, or take an Eio sink or a formatter as an \
-     argument."
+let capability = function
+  | "output" -> "Eio.Stdenv.stdout"
+  | _ -> "Eio.Stdenv.stderr"
 
-let process = "the process is the caller's."
+let writes channel =
+  Printf.sprintf
+    "Writes the process's standard %s: take %s as an argument, or log with \
+     Logs or Eio.traceln."
+    channel (capability channel)
 
 let environment =
   [
@@ -162,8 +166,9 @@ let files =
   @ each "Sys" "remove rename mkdir rmdir" (ambient writes_fs)
   @ each "Filename" "temp_file open_temp_file temp_dir"
       (ambient
-         "Creates a file in the temporary directory: take a directory (an \
-          Eio.Path) as an argument.")
+         "Creates a file in the process's temporary directory: take a \
+          directory (an Eio.Path from Eio.Stdenv.fs or Eio.Stdenv.cwd) as an \
+          argument.")
   @ each ""
       "Digest.file Digest.BLAKE128.file Digest.BLAKE256.file \
        Digest.BLAKE512.file Digest.MD5.file"
@@ -199,14 +204,12 @@ let std_formatter names =
       ( "Format." ^ n,
         ambient
           (Printf.sprintf
-             "Writes the process's standard output: log with Logs or \
-              Eio.traceln, or use pp_%s on a formatter you are given."
+             "Writes the process's standard output: take Eio.Stdenv.stdout as \
+              an argument and use pp_%s on a formatter of it, or log with Logs \
+              or Eio.traceln."
              n) ))
     (words names)
 
-(* Library code does not write to the process's standard channels:
-   diagnostics go through Logs or Eio.traceln, data through a sink it is
-   handed. *)
 let standard_output =
   each ""
     "stdout print_char print_string print_bytes print_int print_float \
@@ -252,13 +255,25 @@ let the_process =
         "Runs a shell command: take Eio.Stdenv.process_mgr as an argument." );
     ( "Printexc.catch",
       ambient
-        ("Prints the exception and ends the process: catch it and return an \
-          outcome; " ^ process) );
+        "Prints the exception on the process's standard error and ends the \
+         process: take Eio.Stdenv.stderr as an argument, or catch the \
+         exception and return an outcome." );
   ]
-  @ each "Arg" "parse parse_dynamic parse_expand"
-      (ambient
-         "Parses the process's command line: take the arguments and use \
-          parse_argv, or take the parsed values as arguments.")
+  @ List.map
+      (fun (parse, argv) ->
+        ( "Arg." ^ parse,
+          ambient
+            (Printf.sprintf
+               "Prints on the process's standard output or error and ends the \
+                process: take Eio.Stdenv.stdout and Eio.Stdenv.stderr as \
+                arguments, and use Arg.%s, which raises Arg.Help or Arg.Bad \
+                instead."
+               argv) ))
+      [
+        ("parse", "parse_argv");
+        ("parse_dynamic", "parse_argv_dynamic");
+        ("parse_expand", "parse_and_expand_argv_dynamic");
+      ]
 
 (* What would seed a hash table from the system's entropy, either because the
    [?random] argument says so or because [OCAMLRUNPARAM] holds [R]: every
@@ -337,6 +352,10 @@ let waits =
   "Waits on the clock: take Eio.Stdenv.clock as an argument and use \
    Eio.Time.sleep."
 
+let timed_waits =
+  "Waits with a timeout on the clock: take Eio.Stdenv.clock as an argument and \
+   use Eio.Time.with_timeout."
+
 let processes =
   "Runs or controls a process: take Eio.Stdenv.process_mgr as an argument."
 
@@ -356,13 +375,16 @@ let unix m =
          "Changes the process's working directory: take Eio.Stdenv.cwd (an \
           Eio.Path) as an argument.")
   @ each m "time gettimeofday" (ambient clock)
-  @ each m "sleep sleepf alarm getitimer setitimer select" (ambient waits)
+  @ each m "sleep sleepf alarm getitimer setitimer" (ambient waits)
+  @ each m "select" (ambient timed_waits)
   @ each m "openfile opendir" (ambient opens)
   @ each m "access stat lstat readlink realpath" (ambient reads_fs)
   @ each m
-      "chmod chown chroot link mkdir mkfifo rename rmdir symlink truncate \
-       unlink utimes"
+      "chmod chown link mkdir mkfifo rename rmdir symlink truncate unlink \
+       utimes"
       (ambient writes_fs)
+  @ each m "chroot"
+      (ambient ("Changes the process's root directory: " ^ fs ^ "."))
   @ each large "stat lstat" (ambient reads_fs)
   @ each large "truncate" (ambient writes_fs)
   @ each m
@@ -374,8 +396,12 @@ let unix m =
       "create_process create_process_env execv execve execvp execvpe fork wait \
        waitpid system open_process open_process_in open_process_out \
        open_process_full open_process_args open_process_args_in \
-       open_process_args_out open_process_args_full kill"
+       open_process_args_out open_process_args_full"
       (ambient processes)
+  @ each m "kill"
+      (ambient
+         "Signals a process by its identifier: take Eio.Stdenv.process_mgr as \
+          an argument and use Eio.Process.signal.")
   @ each m "stdin" (ambient stdin)
   @ each m "stdout" (ambient (writes "output"))
   @ each m "stderr" (ambient (writes "error"))
@@ -383,15 +409,12 @@ let unix m =
       ( m ^ ".handle_unix_error",
         ambient
           "Prints the error on the process's standard error and ends the \
-           process: catch Unix_error and return an outcome." );
+           process: take Eio.Stdenv.stderr as an argument, or catch Unix_error \
+           and return an outcome." );
     ]
 
 (* {1 Thread: its types and Event stay, what bypasses a capability is
    refused} *)
-
-let timed_waits =
-  "Waits with a timeout on the clock: take Eio.Stdenv.clock as an argument and \
-   use Eio.Time.with_timeout."
 
 let threads =
   [
@@ -427,26 +450,27 @@ let refusals =
 
 (* Libraries that reach the system past Eio's capabilities, which the prelude
    declares empty, so that a name of theirs is unbound. *)
-let past =
-  "Reaches the system past Eio's capabilities: take the Eio.Stdenv capability \
-   you need as an argument."
+let backend =
+  "Creates an Eio environment from nothing: take the capabilities as arguments \
+   from the executable's Eio_main.run."
 
 let shadowed =
-  List.map
-    (fun m -> (m, past))
-    [
-      "Runtime_events";
-      "Dynlink";
-      "Eio_unix";
-      "Eio_posix";
-      "Eio_linux";
-      "Eio_windows";
-    ]
-  @ [
-      ( "Eio_main",
-        "Creates an Eio environment from nothing: take the capabilities as \
-         arguments from the executable's Eio_main.run." );
-    ]
+  [
+    ( "Runtime_events",
+      "Writes and reads the runtime's events in a file it names: take \
+       Eio.Stdenv.fs as an argument, and leave tracing to the executable." );
+    ( "Dynlink",
+      "Loads code from a file by name: take Eio.Stdenv.fs as an argument, and \
+       leave loading code to the executable." );
+    ( "Eio_unix",
+      "Reaches the system past Eio's capabilities: take Eio.Stdenv.clock, \
+       Eio.Stdenv.net, Eio.Stdenv.process_mgr or the capability you need as an \
+       argument." );
+    ("Eio_posix", backend);
+    ("Eio_linux", backend);
+    ("Eio_windows", backend);
+    ("Eio_main", backend);
+  ]
 
 (* StdLabels refuses nothing of its own: it is restated because it aliases
    ArrayLabels and the other restated modules. *)
