@@ -37,6 +37,9 @@ BytesLabels.unsafe_of_string: unsafe
 BytesLabels.unsafe_set: unsafe
 BytesLabels.unsafe_to_string: unsafe
 Bytesrw_sysrandom: ambient, declared empty
+CamlinternalFormat.*: unsafe
+CamlinternalFormatBasics.*: unsafe
+CamlinternalLazy.*: unsafe
 CamlinternalMod.*: unsafe
 CamlinternalOO.*: unsafe
 Char.unsafe_chr: unsafe

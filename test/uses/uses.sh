@@ -8,7 +8,9 @@ rm -rf "$dir"
 mkdir "$dir"
 failed=0
 while read -r path kind; do
-  printf 'open! Hermetic\nlet _ : int = %s\n' "$path" > "$dir/use.ml"
+  # An operator, such as Args.@, is spelled in parentheses: Args.( @ ).
+  use=$(printf '%s' "$path" | sed 's/\.\([^A-Za-z_.][^.]*\)$/.( \1 )/')
+  printf 'open! Hermetic\nlet _ : int = %s\n' "$use" > "$dir/use.ml"
   if ocamlc -I "$objs" -c -o "$dir/use.cmo" "$dir/use.ml" > "$dir/log" 2>&1; then
     echo "$path: builds"
     failed=1

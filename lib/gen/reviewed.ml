@@ -28,8 +28,7 @@
      reaches no capability;
    - local: the default generator, which is domain-local and seeded
      deterministically;
-   - seeded: a generator made from a seed handed in;
-   - internal: the runtime support the compiler's output calls. *)
+   - seeded: a generator made from a seed handed in. *)
 
 let modules =
   [
@@ -51,10 +50,6 @@ let modules =
     "Bytes";
     "BytesLabels";
     "Callback";
-    "CamlinternalFormat";
-    "CamlinternalFormat.Args";
-    "CamlinternalFormatBasics";
-    "CamlinternalLazy";
     "Char";
     "Char.Ascii";
     "Complex";
@@ -301,19 +296,6 @@ let kept =
        set_utf_8_uchar split_on_char starts_with sub sub_string to_seq to_seqi \
        to_string trim uncapitalize_ascii uppercase_ascii" );
     ("Callback", "runtime", "register register_exception");
-    ( "CamlinternalFormat",
-      "internal",
-      "add_in_char_set bufput_acc char_of_iconv create_char_set \
-       fmt_ebb_of_string format_of_string_fmtty format_of_string_format \
-       freeze_char_set is_in_char_set make_iprintf make_lprintf make_printf \
-       open_box_of_string output_acc param_format_of_ignored_format recast \
-       rev_char_set string_of_fmt string_of_fmtty string_of_formatting_lit \
-       strput_acc symm trans type_format" );
-    ("CamlinternalFormat.Args", "internal", "@ apply");
-    ( "CamlinternalFormatBasics",
-      "internal",
-      "concat_fmt concat_fmtty erase_rel string_concat_map" );
-    ("CamlinternalLazy", "internal", "force_gen force_lazy_block indirect");
     ( "Char",
       "pure",
       "chr code compare equal escaped hash lowercase_ascii seeded_hash \

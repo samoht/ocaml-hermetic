@@ -83,6 +83,18 @@ let type_escapes =
     ( "CamlinternalOO",
       unsafe_module "The runtime support of objects: escapes the type system."
     );
+    ( "CamlinternalFormat",
+      unsafe_module
+        "The runtime support of format strings, which the compiler's output \
+         calls: use Printf, Format or Scanf." );
+    ( "CamlinternalFormatBasics",
+      unsafe_module
+        "The runtime support of format strings, which the compiler's output \
+         calls: use Printf, Format or Scanf." );
+    ( "CamlinternalLazy",
+      unsafe_module
+        "The runtime support of lazy values, which the compiler's output \
+         calls: use Lazy." );
     ("input_value", unsafe marshalled);
     ( "Dynarray.unsafe_to_iarray",
       unsafe

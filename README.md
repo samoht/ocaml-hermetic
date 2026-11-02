@@ -136,12 +136,14 @@ Some details of this setup matter:
 - A module of the library named like a top-level module the prelude
   declares is shadowed by the prelude's after the open, and cannot be named
   by its own name. Those modules are `Arg`, `Array`, `ArrayLabels`,
-  `Bigarray`, `Bytes`, `BytesLabels`, `CamlinternalMod`, `CamlinternalOO`,
-  `Char`, `Digest`, `Domain`, `Dynarray`, `Ephemeron`, `Filename`, `Float`,
-  `Format`, `Gc`, `Hashtbl`, `Iarray`, `In_channel`, `Lexing`, `Marshal`,
-  `MoreLabels`, `Obj`, `Out_channel`, `Parsing`, `Printexc`, `Printf`,
-  `Random`, `Scanf`, `StdLabels`, `Stdlib`, `Stdlib_original`, `String`,
-  `StringLabels`, `Sys`, `Thread`, `Uchar`, `Unix`, `UnixLabels` and the
+  `Bigarray`, `Bytes`, `BytesLabels`, `CamlinternalFormat`,
+  `CamlinternalFormatBasics`, `CamlinternalLazy`, `CamlinternalMod`,
+  `CamlinternalOO`, `Char`, `Digest`, `Domain`, `Dynarray`, `Ephemeron`,
+  `Filename`, `Float`, `Format`, `Gc`, `Hashtbl`, `Iarray`, `In_channel`,
+  `Lexing`, `Marshal`, `MoreLabels`, `Obj`, `Out_channel`, `Parsing`,
+  `Printexc`, `Printf`, `Random`, `Scanf`, `StdLabels`, `Stdlib`,
+  `Stdlib_original`, `String`, `StringLabels`, `Sys`, `Thread`, `Uchar`,
+  `Unix`, `UnixLabels` and the
   `Stdlib__` units, those a compiler lacks aside, and the libraries the
   prelude declares empty (see [What it refuses](#what-it-refuses)). Rename
   the module, or name it again after the open through the unit dune gives
@@ -274,7 +276,11 @@ standard output, for instance, names `Eio.Stdenv.stdout`, or Logs and
 `Eio.traceln` to log with.
 
 As `unsafe`, what can forge memory or a value of any type: `Obj`,
-`CamlinternalMod`, `CamlinternalOO`, the readers of `Marshal` and
+`CamlinternalMod`, `CamlinternalOO`, and, for parity with them, the other
+runtime support the compiler's output calls, `CamlinternalFormat`,
+`CamlinternalFormatBasics` and `CamlinternalLazy` (the compiler finds them
+through its own environment, so format strings and lazy values still
+compile under the prelude), the readers of `Marshal` and
 `input_value`, `Lexing.engine` and `Lexing.new_engine`, `Parsing.peek_val`
 and `Parsing.yyparse`, and every accessor that skips the check its safe
 version makes (the `unsafe_` functions of `Array`, `Bytes`, `String`,

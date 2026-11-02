@@ -17,6 +17,12 @@
   hermetic__Bytes.mli
   hermetic__BytesLabels.ml
   hermetic__BytesLabels.mli
+  hermetic__CamlinternalFormat.ml
+  hermetic__CamlinternalFormat.mli
+  hermetic__CamlinternalFormatBasics.ml
+  hermetic__CamlinternalFormatBasics.mli
+  hermetic__CamlinternalLazy.ml
+  hermetic__CamlinternalLazy.mli
   hermetic__CamlinternalMod.ml
   hermetic__CamlinternalMod.mli
   hermetic__CamlinternalOO.ml
