@@ -20,3 +20,8 @@
 (cram
  (applies_to mtime)
  (enabled_if %{lib-available:mtime.clock}))
+
+(cram
+ (applies_to eio-units)
+ (enabled_if %{lib-available:eio.unix})
+ (deps %{bin:ocamlc} %{bin:ocamlfind}))

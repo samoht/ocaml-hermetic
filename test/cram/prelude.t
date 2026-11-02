@@ -127,6 +127,32 @@ or not.
   $ put past_eio_posix_low_level 'let fd = Eio_posix__Low_level.openat'
   $ put past_eio_linux_low_level 'let fd = Eio_linux__Low_level.openat'
 
+Every other unit of those libraries is declared empty too, and so is the
+module of aliases dune makes for each, which names each of its units by a
+short name: the units of Eio_posix and Eio_main hold a ready-made file
+system, clock, network, process manager, domain manager, entropy source or
+a whole environment. Iomux, which Eio_posix polls with, waits on the clock
+and makes a descriptor from an integer.
+
+  $ put past_eio_unix_alias 'module Fd = Eio_unix__.Fd'
+  $ put past_eio_posix_alias 'module L = Eio_posix__.Low_level'
+  $ put past_eio_linux_alias 'module L = Eio_linux__.Low_level'
+  $ put past_eio_windows_alias 'module L = Eio_windows__.Low_level'
+  $ put past_eio_main_alias 'module B = Eio_main__.Posix_backend'
+  $ put past_eio_core_alias 'module D = Eio__core__.Debug'
+  $ put past_eio_main_backend 'let run = Eio_main__Posix_backend.run'
+  $ put past_eio_posix_fs 'let fs = Eio_posix__Fs.fs'
+  $ put past_eio_posix_time 'let clock = Eio_posix__Time.clock'
+  $ put past_eio_posix_net 'let net = Eio_posix__Net.v'
+  $ put past_eio_posix_process 'let mgr = Eio_posix__Process.mgr'
+  $ put past_eio_posix_domain_mgr 'let mgr = Eio_posix__Domain_mgr.v'
+  $ put past_eio_posix_flow 'let entropy = Eio_posix__Flow.secure_random'
+  $ put past_eio_unix_pty 'let pty = Eio_unix__Pty.open_pty'
+  $ put past_eio_unix_file 'let import = Eio_unix__File.import_rw'
+  $ put past_eio_unix_fork_action 'let exec = Eio_unix__Fork_action.execve'
+  $ put past_iomux 'let poll = Iomux.Poll.poll'
+  $ put past_iomux_util 'let fd = Iomux__Util.unix_of_fd'
+
 What can forge memory or a value of any type: the escapes from the type
 system, and every accessor that skips the check its safe version makes.
 
@@ -203,17 +229,35 @@ profile as in the development one.
   output_std_formatter: Hermetic.Format.std_formatter (ambient)
   output_stdout: Hermetic.stdout (ambient)
   past_eio_cancel: module Hermetic.Eio__core__Cancel (error)
+  past_eio_core_alias: module Hermetic.Eio__core__ (error)
   past_eio_debug: module Hermetic.Eio__core__Debug (error)
+  past_eio_linux_alias: module Hermetic.Eio_linux__ (error)
   past_eio_linux_low_level: module Hermetic.Eio_linux__Low_level (error)
   past_eio_main: module Hermetic.Eio_main (error)
+  past_eio_main_alias: module Hermetic.Eio_main__ (error)
+  past_eio_main_backend: module Hermetic.Eio_main__Posix_backend (error)
+  past_eio_posix_alias: module Hermetic.Eio_posix__ (error)
+  past_eio_posix_domain_mgr: module Hermetic.Eio_posix__Domain_mgr (error)
+  past_eio_posix_flow: module Hermetic.Eio_posix__Flow (error)
+  past_eio_posix_fs: module Hermetic.Eio_posix__Fs (error)
   past_eio_posix_low_level: module Hermetic.Eio_posix__Low_level (error)
+  past_eio_posix_net: module Hermetic.Eio_posix__Net (error)
+  past_eio_posix_process: module Hermetic.Eio_posix__Process (error)
+  past_eio_posix_time: module Hermetic.Eio_posix__Time (error)
   past_eio_unix: module Hermetic.Eio_unix (error)
+  past_eio_unix_alias: module Hermetic.Eio_unix__ (error)
   past_eio_unix_fd: module Hermetic.Eio_unix__Fd (error)
+  past_eio_unix_file: module Hermetic.Eio_unix__File (error)
+  past_eio_unix_fork_action: module Hermetic.Eio_unix__Fork_action (error)
   past_eio_unix_net: module Hermetic.Eio_unix__Net (error)
   past_eio_unix_private: module Hermetic.Eio_unix__Private (error)
   past_eio_unix_process: module Hermetic.Eio_unix__Process (error)
+  past_eio_unix_pty: module Hermetic.Eio_unix__Pty (error)
   past_eio_unix_thread_pool: module Hermetic.Eio_unix__Thread_pool (error)
+  past_eio_windows_alias: module Hermetic.Eio_windows__ (error)
   past_fmt_tty: module Hermetic.Fmt_tty (error)
+  past_iomux: module Hermetic.Iomux (error)
+  past_iomux_util: module Hermetic.Iomux__Util (error)
   past_mtime_clock: module Hermetic.Mtime_clock (error)
   past_ptime_clock: module Hermetic.Ptime_clock (error)
   past_sysrandom: module Hermetic.Bytesrw_sysrandom (error)
