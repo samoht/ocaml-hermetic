@@ -89,7 +89,7 @@ data through a sink the code is handed.
   $ put output_flush 'let () = flush_all ()'
 
 The process: its exit, its commands, its signals, its command line and its
-domains.
+domains, and the host's processor count.
 
   $ put proc_exit 'let stop () = exit 1'
   $ put proc_at_exit 'let () = at_exit ignore'
@@ -98,6 +98,7 @@ domains.
   $ put proc_arg 'let () = Arg.parse [] ignore ""'
   $ put proc_spawn 'let d = Domain.spawn ignore'
   $ put proc_domain_exit 'let () = Domain.at_exit ignore'
+  $ put proc_domain_count 'let n = Domain.recommended_domain_count ()'
   $ put proc_catch 'let run f = Printexc.catch f ()'
 
 Entropy from the system, which would seed a generator or a hash table.
@@ -105,7 +106,6 @@ Entropy from the system, which would seed a generator or a hash table.
   $ put random_self_init 'let () = Random.self_init ()'
   $ put random_state_self 'let s = Random.State.make_self_init ()'
   $ put table_randomize 'let () = Hashtbl.randomize ()'
-  $ put table_is_randomized 'let r = Hashtbl.is_randomized ()'
 
 The libraries that reach the system past Eio's capabilities: the prelude
 declares them empty, without depending on them, so each of their names is
@@ -201,13 +201,13 @@ profile as in the development one.
   proc_at_exit: Hermetic.at_exit (ambient)
   proc_catch: Hermetic.Printexc.catch (ambient)
   proc_command: Hermetic.Sys.command (ambient)
+  proc_domain_count: Hermetic.Domain.recommended_domain_count (ambient)
   proc_domain_exit: Hermetic.Domain.at_exit (ambient)
   proc_exit: Hermetic.exit (ambient)
   proc_signal: Hermetic.Sys.set_signal (ambient)
   proc_spawn: Hermetic.Domain.spawn (ambient)
   random_self_init: Hermetic.Random.self_init (ambient)
   random_state_self: Hermetic.Random.State.make_self_init (ambient)
-  table_is_randomized: Hermetic.Hashtbl.is_randomized (ambient)
   table_randomize: Hermetic.Hashtbl.randomize (ambient)
   unsafe_array_get: Hermetic.Array.unsafe_get (unsafe)
   unsafe_bigarray: Hermetic.Bigarray.Array1.unsafe_get (unsafe)
@@ -265,7 +265,9 @@ What stays is what works on what it is handed, and the state the whole
 process shares but that reaches no world: the default generator, which is
 domain-local and seeded deterministically; the order of a hash table; the
 garbage collector, registered printers, backtraces, the process's counters
-and synchronisation.
+and synchronisation. The runtime's state stays even where OCAMLRUNPARAM sets
+it, since the program can set it too: Gc.get, Printexc.backtrace_status and
+Hashtbl.is_randomized.
 
   $ rm lib/*.ml
   $ cat > lib/ok.ml <<'EOF'
@@ -292,6 +294,8 @@ and synchronisation.
   > let a = Atomic.make 0
   > let self () = Domain.self ()
   > let () = Gc.compact ()
+  > let tuned = (Gc.get ()).space_overhead + Bool.to_int (Printexc.backtrace_status ())
+  > let randomized = Hashtbl.is_randomized ()
   > let id o = Oo.id o
   > let terminal ic = In_channel.isatty ic
   > let parse argv = Arg.parse_argv ~current:(ref 0) argv [] ignore ""
