@@ -125,12 +125,6 @@ let opens = "Opens a file by name: " ^ fs ^ ", or the file's contents."
 let reads_fs = "Reads the file system by name: " ^ fs ^ "."
 let writes_fs = "Writes the file system by name: " ^ fs ^ "."
 
-(* A value that reads the host or the process's environment is refused. The
-   runtime's own state is kept, even where OCAMLRUNPARAM sets it, since the
-   program can set it too: Gc.get, Printexc.backtrace_status and
-   Hashtbl.is_randomized. *)
-let fact = "Reads a fact of the process: take the value as an argument."
-
 let stdin =
   "Reads the process's standard input: take Eio.Stdenv.stdin or the bytes as \
    an argument."
@@ -141,17 +135,9 @@ let writes channel =
      argument."
 
 let process = "the process is the caller's."
-let signal = "Changes how the process handles a signal: " ^ process
 
 let environment =
   [
-    ( "Sys.getenv",
-      ambient "Reads the process environment: take the value as an argument." );
-    ( "Sys.getenv_opt",
-      ambient "Reads the process environment: take the value as an argument." );
-    ( "Sys.argv",
-      ambient "Reads the process's command line: take the values as arguments."
-    );
     ( "Sys.getcwd",
       ambient
         "Reads the process's working directory: take Eio.Stdenv.cwd as an \
@@ -160,20 +146,7 @@ let environment =
       ambient
         "Changes the process's working directory: take Eio.Stdenv.cwd (an \
          Eio.Path) as an argument." );
-    ( "Sys.time",
-      ambient
-        "Reads the processor time the process has used: take the value as an \
-         argument." );
   ]
-  @ each "Sys"
-      "executable_name runtime_executable runtime_parameters interactive"
-      (ambient fact)
-  @ [
-      ( "Domain.recommended_domain_count",
-        ambient
-          "Reads a fact of the host, its number of processors: take the value \
-           as an argument." );
-    ]
 
 let files =
   each "" "open_in open_in_bin open_in_gen open_out open_out_bin open_out_gen"
@@ -191,15 +164,6 @@ let files =
       (ambient
          "Creates a file in the temporary directory: take a directory (an \
           Eio.Path) as an argument.")
-  @ [
-      ( "Filename.get_temp_dir_name",
-        ambient "Reads TMPDIR: take a directory (an Eio.Path) as an argument."
-      );
-      ( "Filename.set_temp_dir_name",
-        ambient
-          "Sets a directory the whole process shares: take a directory (an \
-           Eio.Path) as an argument." );
-    ]
   @ each ""
       "Digest.file Digest.BLAKE128.file Digest.BLAKE256.file \
        Digest.BLAKE512.file Digest.MD5.file"
@@ -274,68 +238,20 @@ let standard_output =
 
 let the_process =
   [
-    ( "exit",
-      ambient "Ends the process: return an outcome and let the caller exit." );
-    ( "at_exit",
-      ambient
-        "Registers an action on the process's exit: release it with \
-         Eio.Switch.on_release on a switch you are given." );
-    ("do_at_exit", ambient ("Runs the process's exit actions: " ^ process));
-    ( "do_domain_local_at_exit",
-      ambient "Runs the domain's exit actions: the domain is the caller's." );
-    ( "Domain.at_exit",
-      ambient
-        "Registers an action on the domain's exit: release it with \
-         Eio.Switch.on_release on a switch you are given." );
     ( "Domain.spawn",
       ambient "Spawns a domain: take Eio.Stdenv.domain_mgr as an argument." );
     ( "Sys.command",
       ambient
         "Runs a shell command: take Eio.Stdenv.process_mgr as an argument." );
-    ("Sys.signal", ambient signal);
-    ("Sys.set_signal", ambient signal);
-    ( "Sys.catch_break",
-      ambient ("Changes how the process handles an interrupt: " ^ process) );
-    ( "Sys.poll_actions",
-      ambient ("Runs the process's pending signal handlers: " ^ process) );
     ( "Printexc.catch",
       ambient
         ("Prints the exception and ends the process: catch it and return an \
           outcome; " ^ process) );
-    ( "Printexc.set_uncaught_exception_handler",
-      ambient ("Sets how the process ends on an exception: " ^ process) );
   ]
   @ each "Arg" "parse parse_dynamic parse_expand"
       (ambient
          "Parses the process's command line: take the arguments and use \
           parse_argv, or take the parsed values as arguments.")
-
-(* [parse_argv] and [parse_argv_dynamic] take the position in the command
-   line as an argument, rather than defaulting to [Arg.current]. *)
-let command_line =
-  let args = "string array -> " in
-  let rest = "{orig}.anon_fun -> {orig}.usage_msg -> unit" in
-  let specs = "({orig}.key * {orig}.spec * {orig}.doc) list" in
-  [
-    ( "Arg.parse_argv",
-      Retyped
-        {
-          typ = "current:int ref -> " ^ args ^ specs ^ " -> " ^ rest;
-          impl = "fun ~current -> parse_argv ~current";
-          doc =
-            "[parse_argv ~current args specs anon usage] is \
-             [Stdlib.Arg.parse_argv] with [~current] required.";
-        } );
-    ( "Arg.parse_argv_dynamic",
-      Retyped
-        {
-          typ = "current:int ref -> " ^ args ^ specs ^ " ref -> " ^ rest;
-          impl = "fun ~current -> parse_argv_dynamic ~current";
-          doc =
-            "[parse_argv_dynamic ~current args specs anon usage] is \
-             [Stdlib.Arg.parse_argv_dynamic] with [~current] required.";
-        } );
-  ]
 
 (* What would seed a hash table from the system's entropy, either because the
    [?random] argument says so or because [OCAMLRUNPARAM] holds [R]: every
@@ -366,9 +282,6 @@ let seeded_tables m ~table =
 let tables m =
   let t = "('a, 'b) {orig}.t" in
   [
-    ( m ^ ".randomize",
-      ambient ("Seeds every later table from the system's entropy: " ^ process)
-    );
     ( m ^ ".create",
       Retyped
         {
@@ -410,10 +323,6 @@ let randomness =
 
 (* {1 Unix: its types stay, what reaches the world is refused} *)
 
-let descriptor =
-  "Performs I/O on a file descriptor: take an Eio flow, or the bytes, as an \
-   argument."
-
 let network = "Reaches the network: take Eio.Stdenv.net as an argument."
 let clock = "Reads the clock: take Eio.Stdenv.clock as an argument."
 
@@ -424,24 +333,13 @@ let waits =
 let processes =
   "Runs or controls a process: take Eio.Stdenv.process_mgr as an argument."
 
-let host = "Reads a fact of the host: take the value as an argument."
-
-(* Every value of the compiler's Unix, or UnixLabels, at [m], except the
-   pure ones, which reviewed.ml keeps: the conversions of addresses and of
-   errors, [gmtime], and the conversions between a channel and its
-   descriptor. *)
+(* Every value of the compiler's Unix, or UnixLabels, at [m] that reaches a
+   capability by name or by address. The others are kept, by reviewed.ml
+   or, for a name that says [unsafe], here. *)
 let unix m =
   let large = m ^ ".LargeFile" in
-  each m "environment getenv unsafe_environment unsafe_getenv"
-    (ambient "Reads the process environment: take the value as an argument.")
-  @ each m "putenv unsetenv"
-      (ambient
-         "Changes the process environment: take the value as an argument, and \
-          hand the environment to the process you spawn.")
-  @ each m
-      "getpid getppid getuid geteuid getgid getegid getgroups getlogin umask \
-       nice setuid setgid setgroups initgroups setsid chroot"
-      (ambient fact)
+  each m "unsafe_environment unsafe_getenv"
+    (Keep "It reads the process environment, as getenv does.")
   @ each m "getcwd"
       (ambient
          "Reads the process's working directory: take Eio.Stdenv.cwd as an \
@@ -450,57 +348,31 @@ let unix m =
       (ambient
          "Changes the process's working directory: take Eio.Stdenv.cwd (an \
           Eio.Path) as an argument.")
-  @ each m "gethostname getpwnam getpwuid getgrgid getgrnam has_symlink"
-      (ambient host)
-  @ each m "localtime mktime"
-      (ambient
-         "Reads the host's time zone: take the value as an argument, or use \
-          gmtime.")
-  @ each m "time gettimeofday times" (ambient clock)
-  @ each m "sleep sleepf alarm getitimer setitimer" (ambient waits)
+  @ each m "time gettimeofday" (ambient clock)
+  @ each m "sleep sleepf alarm getitimer setitimer select" (ambient waits)
   @ each m "openfile opendir" (ambient opens)
   @ each m "access stat lstat readlink realpath" (ambient reads_fs)
   @ each m
-      "chmod chown link mkdir mkfifo rename rmdir symlink truncate unlink \
-       utimes"
+      "chmod chown chroot link mkdir mkfifo rename rmdir symlink truncate \
+       unlink utimes"
       (ambient writes_fs)
   @ each large "stat lstat" (ambient reads_fs)
   @ each large "truncate" (ambient writes_fs)
   @ each m
-      "close read write single_write write_substring single_write_substring \
-       read_bigarray write_bigarray single_write_bigarray lseek ftruncate \
-       fstat fchmod fchown fsync dup dup2 pipe set_nonblock clear_nonblock \
-       set_close_on_exec clear_close_on_exec lockf select isatty map_file \
-       readdir rewinddir closedir tcgetattr tcsetattr tcsendbreak tcdrain \
-       tcflush tcflow"
-      (ambient descriptor)
-  @ each large "lseek ftruncate fstat" (ambient descriptor)
-  @ each m
-      "socket socketpair accept bind connect listen shutdown getsockname \
-       getpeername recv recvfrom send send_substring sendto sendto_substring \
-       getsockopt setsockopt getsockopt_int setsockopt_int getsockopt_optint \
-       setsockopt_optint getsockopt_float setsockopt_float getsockopt_error \
-       open_connection shutdown_connection establish_server getaddrinfo \
-       getnameinfo gethostbyname gethostbyaddr getprotobyname getprotobynumber \
-       getservbyname getservbyport"
+      "socket bind connect sendto sendto_substring open_connection \
+       establish_server getaddrinfo getnameinfo gethostbyname gethostbyaddr \
+       getprotobyname getprotobynumber getservbyname getservbyport"
       (ambient network)
   @ each m
       "create_process create_process_env execv execve execvp execvpe fork wait \
        waitpid system open_process open_process_in open_process_out \
        open_process_full open_process_args open_process_args_in \
-       open_process_args_out open_process_args_full close_process \
-       close_process_in close_process_out close_process_full process_pid \
-       process_in_pid process_out_pid process_full_pid"
+       open_process_args_out open_process_args_full kill"
       (ambient processes)
-  @ each m "kill sigprocmask sigpending sigsuspend sigwait pause"
-      (ambient signal)
   @ each m "stdin" (ambient stdin)
   @ each m "stdout" (ambient (writes "output"))
   @ each m "stderr" (ambient (writes "error"))
   @ [
-      ( m ^ "._exit",
-        ambient "Ends the process: return an outcome and let the caller exit."
-      );
       ( m ^ ".handle_unix_error",
         ambient
           "Prints the error on the process's standard error and ends the \
@@ -512,19 +384,13 @@ let unix m =
 
 let threads =
   [
-    ( "Thread.create",
-      ambient
-        "Spawns a thread outside Eio's domain manager: take \
-         Eio.Stdenv.domain_mgr as an argument, or fork a fiber with Eio.Fiber."
-    );
     ("Thread.delay", ambient waits);
     ("Thread.default_uncaught_exception_handler", ambient (writes "error"));
   ]
 
 let refusals =
   unsafe_refusals @ environment @ files @ standard_input @ standard_output
-  @ the_process @ command_line @ randomness @ unix "Unix" @ unix "UnixLabels"
-  @ threads
+  @ the_process @ randomness @ unix "Unix" @ unix "UnixLabels" @ threads
 
 (* Libraries that reach the system past Eio's capabilities, which the prelude
    declares empty, so that a name of theirs is unbound. *)

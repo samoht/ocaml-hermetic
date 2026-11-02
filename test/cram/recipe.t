@@ -13,8 +13,8 @@ those its executable reaches.
   $ cat > lib/core.ml <<'EOF'
   > let decide x = x * 2
   > EOF
-  $ cat > lib/env.ml <<'EOF'
-  > let home () = Sys.getenv "HOME"
+  $ cat > lib/load.ml <<'EOF'
+  > let load () = open_in "model.bin"
   > EOF
   $ cat > check/dune <<EOF
   > (copy_files# (files ../lib/*.ml))
@@ -27,7 +27,7 @@ The library itself builds, and the check refuses it, at the original file.
   $ dune build --root . --display quiet --profile dev ./lib; echo "exit $?"
   exit 0
   $ dune build --root . --display quiet --profile dev ./check 2>&1 | tr -d '"' | grep -E '^(File|Alert|Error)'
-  File lib/env.ml, line 1, characters 14-24:
-  Alert ambient: Hermetic.Sys.getenv
-  File lib/env.ml, line 1, characters 14-24:
+  File lib/load.ml, line 1, characters 14-21:
+  Alert ambient: Hermetic.open_in
+  File lib/load.ml, line 1, characters 14-21:
   Error: This expression has type ambient

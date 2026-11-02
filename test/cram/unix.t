@@ -32,22 +32,22 @@ interface that does not open the prelude names the same types.
   $ dune build --root . --display quiet ./lib; echo "exit $?"
   exit 0
 
-What reaches the world through Unix is refused as ambient, as the standard
-library's own values are: opening a file, reading the clock, reading the
-environment.
+What reaches a capability through Unix is refused as ambient, as the
+standard library's own values are: opening a file by name, reading the clock,
+connecting to an address.
 
   $ mkdir refused
   $ echo '(library (name refused) (libraries hermetic))' > refused/dune
   $ printf 'open! Hermetic\nlet fd = Unix.openfile "f" [ Unix.O_RDONLY ] 0\n' > refused/openfile.ml
   $ printf 'open! Hermetic\nlet now = Unix.time ()\n' > refused/time.ml
-  $ printf 'open! Hermetic\nlet home = Unix.getenv "HOME"\n' > refused/getenv.ml
+  $ printf 'open! Hermetic\nlet connect fd = Unix.connect fd (Unix.ADDR_UNIX "s")\n' > refused/connect.ml
   $ dune build --root . --display quiet ./refused 2>&1 | tr -d '"' | grep -A1 -E '^Alert' | grep -v '^--' | sort
-  Alert ambient: Hermetic.Unix.getenv
+  Alert ambient: Hermetic.Unix.connect
   Alert ambient: Hermetic.Unix.openfile
   Alert ambient: Hermetic.Unix.time
   Opens a file by name: take Eio.Stdenv.fs or Eio.Stdenv.cwd (an Eio.Path) as an argument, or the file's contents.
+  Reaches the network: take Eio.Stdenv.net as an argument.
   Reads the clock: take Eio.Stdenv.clock as an argument.
-  Reads the process environment: take the value as an argument.
   $ dune build --root . --display quiet ./refused 2>&1 | tr -d '"' | grep -c '^Error: This expression has type ambient'
   3
 

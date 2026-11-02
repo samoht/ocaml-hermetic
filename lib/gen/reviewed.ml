@@ -15,14 +15,17 @@
    - pure: a function of its arguments;
    - data: a data structure, read or changed through a value handed in;
    - channel, format: works on a channel, formatter or buffer handed in;
-   - given: works on what it is handed (a lexer buffer, an argv, a channel
-     or a file descriptor, which it converts without I/O);
+   - given: works on what it is handed: a lexer buffer, an argv, a channel,
+     a file descriptor, a socket or a child process;
+   - process: the process environment, a fact of the process, its user or
+     its host, the processor time it has used, its exit and its signals,
+     none of which is an Eio capability;
    - constant: a fact fixed when the program is built;
-   - concurrency: synchronisation and domain-local state, which reach no
-     world;
+   - concurrency: threads, synchronisation and domain-local state, which
+     reach no capability;
    - runtime: the runtime's own state (the garbage collector, backtraces,
      registered printers, counters, whether tables are randomised), which
-     reaches no world; OCAMLRUNPARAM can set it, but so can the program;
+     reaches no capability;
    - local: the default generator, which is domain-local and seeded
      deterministically;
    - seeded: a generator made from a seed handed in;
@@ -191,7 +194,11 @@ let kept =
        seek_out set_binary_mode_in set_binary_mode_out sin sinh snd sqrt \
        string_of_bool string_of_float string_of_format string_of_int succ tan \
        tanh truncate valid_float_lexem" );
-    ("Arg", "given", "align current parse_and_expand_argv_dynamic usage_string");
+    ("", "process", "at_exit do_at_exit do_domain_local_at_exit exit");
+    ( "Arg",
+      "given",
+      "align current parse_and_expand_argv_dynamic parse_argv \
+       parse_argv_dynamic usage_string" );
     ( "Array",
       "data",
       "append blit combine compare concat copy create_float equal exists \
@@ -346,6 +353,7 @@ let kept =
       "concurrency",
       "before_first_spawn count cpu_relax get_id is_main_domain join self \
        self_index" );
+    ("Domain", "process", "at_exit recommended_domain_count");
     ("Domain.DLS", "concurrency", "get new_key set");
     ( "Dynarray",
       "data",
@@ -409,6 +417,7 @@ let kept =
       "basename check_suffix chop_extension chop_suffix chop_suffix_opt concat \
        current_dir_name dir_sep dirname extension is_implicit is_relative null \
        parent_dir_name quote quote_command remove_extension" );
+    ("Filename", "process", "get_temp_dir_name set_temp_dir_name");
     ( "Float",
       "pure",
       "abs acos acosh add asin asinh atan atan2 atanh cbrt ceil classify_float \
@@ -490,7 +499,7 @@ let kept =
        find_and_replace find_opt fold hash hash_param iter length mem remove \
        replace replace_seq reset seeded_hash seeded_hash_param stats to_seq \
        to_seq_keys to_seq_values" );
-    ("Hashtbl", "runtime", "is_randomized");
+    ("Hashtbl", "runtime", "is_randomized randomize");
     ( "Hashtbl.Make",
       "data",
       "add add_seq clear copy create filter_map_inplace find find_all \
@@ -596,7 +605,7 @@ let kept =
        find_and_replace find_opt fold hash hash_param iter length mem remove \
        replace replace_seq reset seeded_hash seeded_hash_param stats to_seq \
        to_seq_keys to_seq_values" );
-    ("MoreLabels.Hashtbl", "runtime", "is_randomized");
+    ("MoreLabels.Hashtbl", "runtime", "is_randomized randomize");
     ( "MoreLabels.Hashtbl.Make",
       "data",
       "add add_seq clear copy create filter_map_inplace find find_all \
@@ -683,6 +692,7 @@ let kept =
        raw_backtrace_to_string record_backtrace register_printer \
        string_of_extension_constructor to_string to_string_default \
        use_printers" );
+    ("Printexc", "process", "set_uncaught_exception_handler");
     ("Printexc.Slot", "runtime", "format is_inline is_raise location name");
     ( "Printf",
       "format",
@@ -792,10 +802,15 @@ let kept =
        sigpoll sigprof sigquit sigsegv sigstop sigsys sigterm sigtrap sigtstp \
        sigttin sigttou sigurg sigusr1 sigusr2 sigvtalrm sigwinch sigxcpu \
        sigxfsz unix win32 word_size" );
+    ( "Sys",
+      "process",
+      "argv catch_break executable_name getenv getenv_opt interactive \
+       poll_actions runtime_executable runtime_parameters set_signal signal \
+       time" );
     ("Sys.Immediate64.Make", "constant", "repr");
     ( "Thread",
       "concurrency",
-      "exit id join select self set_current_thread_name \
+      "create exit id join select self set_current_thread_name \
        set_uncaught_exception_handler sigmask wait_pid wait_signal \
        wait_timed_read wait_timed_write yield" );
     ("Type.Id", "runtime", "make provably_equal uid");
@@ -814,8 +829,27 @@ let kept =
        inet_addr_of_string is_inet6_addr string_of_inet_addr" );
     ( "Unix",
       "given",
-      "descr_of_in_channel descr_of_out_channel in_channel_of_descr \
-       out_channel_of_descr" );
+      "accept clear_close_on_exec clear_nonblock close close_process \
+       close_process_full close_process_in close_process_out closedir \
+       descr_of_in_channel descr_of_out_channel dup dup2 fchmod fchown fstat \
+       fsync ftruncate getpeername getsockname getsockopt getsockopt_error \
+       getsockopt_float getsockopt_int getsockopt_optint in_channel_of_descr \
+       isatty listen lockf lseek map_file out_channel_of_descr pipe \
+       process_full_pid process_in_pid process_out_pid process_pid read \
+       read_bigarray readdir recv recvfrom rewinddir send send_substring \
+       set_close_on_exec set_nonblock setsockopt setsockopt_float \
+       setsockopt_int setsockopt_optint shutdown shutdown_connection \
+       single_write single_write_bigarray single_write_substring socketpair \
+       tcdrain tcflow tcflush tcgetattr tcsendbreak tcsetattr write \
+       write_bigarray write_substring" );
+    ("Unix.LargeFile", "given", "fstat ftruncate lseek");
+    ( "Unix",
+      "process",
+      "_exit environment getegid getenv geteuid getgid getgroups getgrgid \
+       getgrnam gethostname getlogin getpid getppid getpwnam getpwuid getuid \
+       has_symlink initgroups localtime mktime nice pause putenv setgid \
+       setgroups setsid setuid sigpending sigprocmask sigsuspend sigwait times \
+       umask unsetenv" );
     ( "UnixLabels",
       "pure",
       "domain_of_sockaddr error_message gmtime inet6_addr_any \
@@ -823,8 +857,27 @@ let kept =
        inet_addr_of_string is_inet6_addr string_of_inet_addr" );
     ( "UnixLabels",
       "given",
-      "descr_of_in_channel descr_of_out_channel in_channel_of_descr \
-       out_channel_of_descr" );
+      "accept clear_close_on_exec clear_nonblock close close_process \
+       close_process_full close_process_in close_process_out closedir \
+       descr_of_in_channel descr_of_out_channel dup dup2 fchmod fchown fstat \
+       fsync ftruncate getpeername getsockname getsockopt getsockopt_error \
+       getsockopt_float getsockopt_int getsockopt_optint in_channel_of_descr \
+       isatty listen lockf lseek map_file out_channel_of_descr pipe \
+       process_full_pid process_in_pid process_out_pid process_pid read \
+       read_bigarray readdir recv recvfrom rewinddir send send_substring \
+       set_close_on_exec set_nonblock setsockopt setsockopt_float \
+       setsockopt_int setsockopt_optint shutdown shutdown_connection \
+       single_write single_write_bigarray single_write_substring socketpair \
+       tcdrain tcflow tcflush tcgetattr tcsendbreak tcsetattr write \
+       write_bigarray write_substring" );
+    ("UnixLabels.LargeFile", "given", "fstat ftruncate lseek");
+    ( "UnixLabels",
+      "process",
+      "_exit environment getegid getenv geteuid getgid getgroups getgrgid \
+       getgrnam gethostname getlogin getpid getppid getpwnam getpwuid getuid \
+       has_symlink initgroups localtime mktime nice pause putenv setgid \
+       setgroups setsid setuid sigpending sigprocmask sigsuspend sigwait times \
+       umask unsetenv" );
     ("Weak", "runtime", "blit check create fill get get_copy length set");
     ( "Weak.Make",
       "runtime",
@@ -836,16 +889,11 @@ let version_specific =
   [
     "Dynarray.unsafe_to_iarray";
     "Iarray.unsafe_get";
-    "Sys.runtime_executable";
     "Printf.lprintf";
     "Printf.leprintf";
     "Format.lprintf";
     "Format.leprintf";
     "Thread.set_current_thread_name";
-    "Unix.sigwait";
-    "Unix.unsetenv";
-    "UnixLabels.sigwait";
-    "UnixLabels.unsetenv";
   ]
 
 (* The kept values that hand out a channel, a formatter or output closures

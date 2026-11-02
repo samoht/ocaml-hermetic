@@ -74,22 +74,22 @@ an argument instead. This source file of the library:
 ```
 open! Hermetic
 
-let home () = Sys.getenv "HOME"
+let load () = open_in "model.bin"
 ```
 
 does not build:
 
 <!-- $MDX skip -->
 ```
-File "lib/machine.ml", line 3, characters 14-24:
-3 | let home () = Sys.getenv "HOME"
-                  ^^^^^^^^^^
-Alert ambient: Hermetic.Sys.getenv
-Reads the process environment: take the value as an argument.
+File "lib/machine.ml", line 3, characters 14-21:
+3 | let load () = open_in "model.bin"
+                  ^^^^^^^
+Alert ambient: Hermetic.open_in
+Opens a file by name: take Eio.Stdenv.fs or Eio.Stdenv.cwd (an Eio.Path) as an argument, or the file's contents.
 
-File "lib/machine.ml", line 3, characters 14-24:
-3 | let home () = Sys.getenv "HOME"
-                  ^^^^^^^^^^
+File "lib/machine.ml", line 3, characters 14-21:
+3 | let load () = open_in "model.bin"
+                  ^^^^^^^
 Error: This expression has type ambient
        This is not a function; it cannot be applied.
 ```

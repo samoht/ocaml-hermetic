@@ -17,17 +17,17 @@ on every supported compiler.
   $ cat > lib/machine.ml <<'EOF'
   > open! Hermetic
   > 
-  > let home () = Sys.getenv "HOME"
+  > let load () = open_in "model.bin"
   > EOF
   $ dune build --root . --display quiet ./lib 2>&1 | sed '/^Error:/s/"//g'
-  File "lib/machine.ml", line 3, characters 14-24:
-  3 | let home () = Sys.getenv "HOME"
-                    ^^^^^^^^^^
-  Alert ambient: Hermetic.Sys.getenv
-  Reads the process environment: take the value as an argument.
+  File "lib/machine.ml", line 3, characters 14-21:
+  3 | let load () = open_in "model.bin"
+                    ^^^^^^^
+  Alert ambient: Hermetic.open_in
+  Opens a file by name: take Eio.Stdenv.fs or Eio.Stdenv.cwd (an Eio.Path) as an argument, or the file's contents.
   
-  File "lib/machine.ml", line 3, characters 14-24:
-  3 | let home () = Sys.getenv "HOME"
-                    ^^^^^^^^^^
+  File "lib/machine.ml", line 3, characters 14-21:
+  3 | let load () = open_in "model.bin"
+                    ^^^^^^^
   Error: This expression has type ambient
          This is not a function; it cannot be applied.

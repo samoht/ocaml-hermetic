@@ -1,12 +1,12 @@
 A source file opens Hermetic on its first line, with open!, and its library
 names hermetic among its libraries. A value of the standard library that
-reaches the world without being handed it then has the type ambient, and one
-that can forge memory or a value of any type has the type unsafe. Nothing
-consumes either type, and each refused value carries an alert named after its
-type, whose message says why and what to take as an argument instead. Each
-case below is one module of such a library that uses a refused value. For
-each, refusals prints the value the alert names and the type the build
-stopped on, or "(builds)" when the module compiles.
+reaches an Eio capability without being handed it then has the type ambient,
+and one that can forge memory or a value of any type has the type unsafe.
+Nothing consumes either type, and each refused value carries an alert named
+after its type, whose message says why and what to take as an argument
+instead. Each case below is one module of such a library that uses a refused
+value. For each, refusals prints the value the alert names and the type the
+build stopped on, or "(builds)" when the module compiles.
 
   $ cat > dune-project <<EOF
   > (lang dune 3.0)
@@ -37,26 +37,18 @@ stopped on, or "(builds)" when the module compiles.
 The alert names the value and says what to take instead; the build stops on
 the value's type.
 
-  $ put getenv 'let home = Sys.getenv "HOME"'
+  $ put exists 'let here = Sys.file_exists "model.bin"'
   $ dune build --root . --display quiet --profile dev ./lib 2>&1 | tr -d '"' | grep -A1 -E '^(Alert|Error)'
-  Alert ambient: Hermetic.Sys.getenv
-  Reads the process environment: take the value as an argument.
+  Alert ambient: Hermetic.Sys.file_exists
+  Reads the file system by name: take Eio.Stdenv.fs or Eio.Stdenv.cwd (an Eio.Path) as an argument.
   --
   Error: This expression has type ambient
          This is not a function; it cannot be applied.
-  $ rm lib/getenv.ml
+  $ rm lib/exists.ml
 
-The process environment and the process's own facts, and the clock.
+The file system, reached by name, and the current directory.
 
-  $ put env_getenv_opt 'let home = Sys.getenv_opt "HOME"'
-  $ put env_argv 'let first = Sys.argv.(0)'
-  $ put env_executable 'let exe = String.length Sys.executable_name'
-  $ put env_cwd 'let cwd = Sys.getcwd ()'
-  $ put env_runtime 'let params = Sys.runtime_parameters ()'
-  $ put clock 'let t = Sys.time ()'
-
-The file system, reached by name.
-
+  $ put file_cwd 'let cwd = Sys.getcwd ()'
   $ put file_open_in 'let ic = open_in "f"'
   $ put file_in_channel 'let read path = In_channel.with_open_bin path In_channel.input_all'
   $ put file_out_channel 'let write path = Out_channel.with_open_bin path (fun oc -> Out_channel.output_string oc "x")'
@@ -88,29 +80,24 @@ data through a sink the code is handed.
   $ put output_format_stag_functions 'let () = let f = Format.get_formatter_stag_functions () in f.print_open_stag (Format.String_tag "x")'
   $ put output_flush 'let () = flush_all ()'
 
-The process: its exit, its commands, its signals, its command line and its
-domains, and the host's processor count.
+A child process and a domain, which Eio's process and domain managers hand
+out, and what parses the command line or ends the process by printing on the
+standard error.
 
-  $ put proc_exit 'let stop () = exit 1'
-  $ put proc_at_exit 'let () = at_exit ignore'
   $ put proc_command 'let n = Sys.command "true"'
-  $ put proc_signal 'let () = Sys.set_signal Sys.sigint Sys.Signal_ignore'
-  $ put proc_arg 'let () = Arg.parse [] ignore ""'
   $ put proc_spawn 'let d = Domain.spawn ignore'
-  $ put proc_domain_exit 'let () = Domain.at_exit ignore'
-  $ put proc_domain_count 'let n = Domain.recommended_domain_count ()'
+  $ put proc_arg 'let () = Arg.parse [] ignore ""'
   $ put proc_catch 'let run f = Printexc.catch f ()'
 
-Entropy from the system, which would seed a generator or a hash table.
+Entropy from the system, which would seed a generator.
 
   $ put random_self_init 'let () = Random.self_init ()'
   $ put random_state_self 'let s = Random.State.make_self_init ()'
-  $ put table_randomize 'let () = Hashtbl.randomize ()'
 
 Unix, which the prelude restates as it restates the standard library: its
-types stay, and what reaches the world is refused (see unix.t).
+types stay, and what reaches a capability is refused (see unix.t).
 
-  $ put unix_getenv 'let home = Unix.getenv "HOME"'
+  $ put unix_connect 'let connect fd addr = Unix.connect fd addr'
 
 The libraries that reach the system past Eio's capabilities and that ship
 apart from the compiler: the prelude declares them empty, without depending
@@ -144,21 +131,21 @@ Stdlib, a module alias, an open, an include, a unit of the standard library
 named by its own name (Stdlib__Sys), a functor argument, a signature
 constraint or a first-class module.
 
-  $ put via_stdlib 'let home = Stdlib.Sys.getenv "HOME"'
-  $ put via_alias 'module S = Sys let home = S.getenv "HOME"'
-  $ put via_stdlib_alias 'module L = Stdlib let home = L.Sys.getenv "HOME"'
-  $ put via_open 'open Stdlib let home = Sys.getenv "HOME"'
-  $ put via_local_open 'let home = Stdlib.(Sys.getenv "HOME")'
-  $ put via_include 'include Sys let home = getenv "HOME"'
-  $ put via_unit 'let home = Stdlib__Sys.getenv "HOME"'
-  $ put via_functor 'module F (X : sig val getenv : string -> string end) = struct let home = X.getenv "HOME" end module M = F (Sys)'
-  $ put via_constraint 'module S : sig val getenv : string -> string end = Sys'
-  $ put via_first_class 'module type E = sig val getenv : string -> string end let m = (module Sys : E)'
+  $ put via_stdlib 'let here = Stdlib.Sys.file_exists "f"'
+  $ put via_alias 'module S = Sys let here = S.file_exists "f"'
+  $ put via_stdlib_alias 'module L = Stdlib let here = L.Sys.file_exists "f"'
+  $ put via_open 'open Stdlib let here = Sys.file_exists "f"'
+  $ put via_local_open 'let here = Stdlib.(Sys.file_exists "f")'
+  $ put via_include 'include Sys let here = file_exists "f"'
+  $ put via_unit 'let here = Stdlib__Sys.file_exists "f"'
+  $ put via_functor 'module F (X : sig val file_exists : string -> bool end) = struct let here = X.file_exists "f" end module M = F (Sys)'
+  $ put via_constraint 'module S : sig val file_exists : string -> bool end = Sys'
+  $ put via_first_class 'module type E = sig val file_exists : string -> bool end let m = (module Sys : E)'
   $ put via_qualified_value 'let s = Stdlib.read_line ()'
 
 A refused value can be named, with the alert as a warning, but not used.
 
-  $ put named 'let read = Sys.getenv'
+  $ put named 'let exists = Sys.file_exists'
 
 A refusal is a type error, so the build fails the same way in the release
 profile as in the development one.
@@ -166,13 +153,8 @@ profile as in the development one.
   $ refusals dev > dev.out
   $ refusals release > release.out
   $ cat dev.out
-  clock: Hermetic.Sys.time (ambient)
-  env_argv: Hermetic.Sys.argv (ambient)
-  env_cwd: Hermetic.Sys.getcwd (ambient)
-  env_executable: Hermetic.Sys.executable_name (ambient)
-  env_getenv_opt: Hermetic.Sys.getenv_opt (ambient)
-  env_runtime: Hermetic.Sys.runtime_parameters (ambient)
   file_arg: Hermetic.Arg.read_arg (ambient)
+  file_cwd: Hermetic.Sys.getcwd (ambient)
   file_digest: Hermetic.Digest.file (ambient)
   file_exists: Hermetic.Sys.file_exists (ambient)
   file_in_channel: Hermetic.In_channel.with_open_bin (ambient)
@@ -186,7 +168,7 @@ profile as in the development one.
   input_read_line: Hermetic.read_line (ambient)
   input_scanf: Hermetic.Scanf.scanf (ambient)
   input_stdin: Hermetic.stdin (ambient)
-  named: Hermetic.Sys.getenv (builds)
+  named: Hermetic.Sys.file_exists (builds)
   output_flush: Hermetic.flush_all (ambient)
   output_format: Hermetic.Format.printf (ambient)
   output_format_out_functions: Hermetic.Format.get_formatter_out_functions (ambient)
@@ -201,18 +183,12 @@ profile as in the development one.
   past_eio_main: module Hermetic.Eio_main (error)
   past_eio_unix: module Hermetic.Eio_unix (error)
   proc_arg: Hermetic.Arg.parse (ambient)
-  proc_at_exit: Hermetic.at_exit (ambient)
   proc_catch: Hermetic.Printexc.catch (ambient)
   proc_command: Hermetic.Sys.command (ambient)
-  proc_domain_count: Hermetic.Domain.recommended_domain_count (ambient)
-  proc_domain_exit: Hermetic.Domain.at_exit (ambient)
-  proc_exit: Hermetic.exit (ambient)
-  proc_signal: Hermetic.Sys.set_signal (ambient)
   proc_spawn: Hermetic.Domain.spawn (ambient)
   random_self_init: Hermetic.Random.self_init (ambient)
   random_state_self: Hermetic.Random.State.make_self_init (ambient)
-  table_randomize: Hermetic.Hashtbl.randomize (ambient)
-  unix_getenv: Hermetic.Unix.getenv (ambient)
+  unix_connect: Hermetic.Unix.connect (ambient)
   unsafe_array_get: Hermetic.Array.unsafe_get (unsafe)
   unsafe_bigarray: Hermetic.Bigarray.Array1.unsafe_get (unsafe)
   unsafe_bytes_get: Hermetic.Bytes.unsafe_get (unsafe)
@@ -229,17 +205,17 @@ profile as in the development one.
   unsafe_stdlabels: Hermetic.StdLabels.Array.unsafe_get (unsafe)
   unsafe_string_get: Hermetic.String.unsafe_get (unsafe)
   unsafe_uchar: Hermetic.Uchar.unsafe_of_int (unsafe)
-  via_alias: S.getenv (ambient)
-  via_constraint: getenv (ambient)
-  via_first_class: getenv (ambient)
-  via_functor: getenv (ambient)
-  via_include: getenv (ambient)
-  via_local_open: Hermetic.Stdlib.Sys.getenv (ambient)
-  via_open: Hermetic.Stdlib.Sys.getenv (ambient)
+  via_alias: S.file_exists (ambient)
+  via_constraint: file_exists (ambient)
+  via_first_class: file_exists (ambient)
+  via_functor: file_exists (ambient)
+  via_include: file_exists (ambient)
+  via_local_open: Hermetic.Stdlib.Sys.file_exists (ambient)
+  via_open: Hermetic.Stdlib.Sys.file_exists (ambient)
   via_qualified_value: Hermetic.Stdlib.read_line (ambient)
-  via_stdlib: Hermetic.Stdlib.Sys.getenv (ambient)
-  via_stdlib_alias: L.Sys.getenv (ambient)
-  via_unit: Hermetic.Stdlib__Sys.getenv (ambient)
+  via_stdlib: Hermetic.Stdlib.Sys.file_exists (ambient)
+  via_stdlib_alias: L.Sys.file_exists (ambient)
+  via_unit: Hermetic.Stdlib__Sys.file_exists (ambient)
   $ diff dev.out release.out && echo same in release
   same in release
 
@@ -247,7 +223,7 @@ Silencing the alert hides the message, not the refusal: the value keeps its
 type.
 
   $ rm lib/*.ml
-  $ put silenced 'let home = (Sys.getenv [@alert "-ambient"]) "HOME"'
+  $ put silenced 'let here = (Sys.file_exists [@alert "-ambient"]) "f"'
   $ dune build --root . --display quiet --profile dev ./lib 2>&1 | tr -d '"' | grep -E '^(Alert|Error)'
   Error: This expression has type ambient
 
@@ -256,7 +232,7 @@ refusals. A use of it is a visible exception, which a review can find with
 grep.
 
   $ rm lib/*.ml
-  $ put audited 'let home = Stdlib_original.Sys.getenv_opt "HOME" let c b = Stdlib_original.Bytes.unsafe_get b 0'
+  $ put audited 'let here = Stdlib_original.Sys.file_exists "f" let c b = Stdlib_original.Bytes.unsafe_get b 0'
   $ dune build --root . --display quiet --profile dev ./lib; echo "exit $?"
   exit 0
   $ rm lib/*.ml
@@ -265,13 +241,12 @@ grep.
   Alert unsafe: Hermetic.Bytes.unsafe_get
   No bounds check: use Bytes.get.
 
-What stays is what works on what it is handed, and the state the whole
-process shares but that reaches no world: the default generator, which is
-domain-local and seeded deterministically; the order of a hash table; the
-garbage collector, registered printers, backtraces, the process's counters
-and synchronisation. The runtime's state stays even where OCAMLRUNPARAM sets
-it, since the program can set it too: Gc.get, Printexc.backtrace_status and
-Hashtbl.is_randomized.
+What stays is everything that reaches no Eio capability: what works on what
+it is handed; the process environment, the command line, the process's facts,
+the processor time it has used, its exit and its signals; and the state the
+whole process shares: the default generator, which is domain-local and seeded
+deterministically, the order of a hash table, the garbage collector,
+registered printers, backtraces, the process's counters and synchronisation.
 
   $ rm lib/*.ml
   $ cat > lib/ok.ml <<'EOF'
@@ -302,7 +277,15 @@ Hashtbl.is_randomized.
   > let randomized = Hashtbl.is_randomized ()
   > let id o = Oo.id o
   > let terminal ic = In_channel.isatty ic
-  > let parse argv = Arg.parse_argv ~current:(ref 0) argv [] ignore ""
+  > let parse argv = Arg.parse_argv argv [] ignore ""
+  > let home = Sys.getenv_opt "HOME"
+  > let program = Sys.argv.(0) ^ Sys.executable_name ^ Sys.runtime_parameters ()
+  > let t = Sys.time ()
+  > let stop () = exit 1
+  > let () = at_exit ignore; Domain.at_exit ignore
+  > let () = Sys.set_signal Sys.sigint Sys.Signal_ignore
+  > let n = Domain.recommended_domain_count ()
+  > let () = Hashtbl.randomize ()
   > class c = object method m = 1 end
   > let o = (new c)#m
   > module rec R : sig val x : int end = struct let x = 1 end
@@ -336,7 +319,7 @@ check catches a file that forgets it.
 
   $ mkdir above
   $ echo '(library (name above) (libraries hermetic))' > above/dune
-  $ printf 'let home = Sys.getenv "HOME"\nopen! Hermetic\nlet n = List.length []\n' > above/above.ml
+  $ printf 'let here = Sys.file_exists "f"\nopen! Hermetic\nlet n = List.length []\n' > above/above.ml
   $ dune build --root . --display quiet --profile dev ./above; echo "exit $?"
   exit 0
 
@@ -373,7 +356,7 @@ the standard library's own.
   > (library (name flagged) (libraries hermetic)
   >  (flags (:standard -open Hermetic)))
   > EOF
-  $ echo 'let home = Sys.getenv "HOME"' > flag/flagged.ml
+  $ echo 'let here = Sys.file_exists "f"' > flag/flagged.ml
   $ dune build --root . --display quiet --profile release ./flag 2>&1 | tr -d '"' | grep -E '^(Alert|Error)'
-  Alert ambient: Hermetic.Sys.getenv
+  Alert ambient: Hermetic.Sys.file_exists
   Error: This expression has type Hermetic__Refused.ambient

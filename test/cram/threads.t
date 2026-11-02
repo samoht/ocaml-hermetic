@@ -15,30 +15,30 @@ types.
   > val me : unit -> Thread.t
   > val number : unit -> int
   > val handoff : int Event.channel -> int -> unit
+  > val spawn : (unit -> unit) -> Thread.t
   > EOF
   $ cat > lib/work.ml <<'EOF'
   > open! Hermetic
   > let me () = Thread.self ()
   > let number () = Thread.id (me ())
   > let handoff c v = Event.sync (Event.send c v)
+  > let spawn f = Thread.create f ()
   > EOF
   $ dune build --root . --display quiet ./lib; echo "exit $?"
   exit 0
 
-A thread spawned outside Eio's domain manager and a sleep on the process's
-clock are refused as ambient: each alert names the capability to take.
+A thread reaches no capability, so Thread.create stays. A sleep on the
+process's clock is refused as ambient, and its alert names the capability to
+take.
 
   $ mkdir refused
   $ echo '(library (name refused) (libraries hermetic))' > refused/dune
-  $ printf 'open! Hermetic\nlet t = Thread.create ignore ()\n' > refused/create.ml
   $ printf 'open! Hermetic\nlet () = Thread.delay 1.\n' > refused/delay.ml
   $ dune build --root . --display quiet ./refused 2>&1 | tr -d '"' | grep -A1 -E '^Alert' | grep -v '^--' | sort
-  Alert ambient: Hermetic.Thread.create
   Alert ambient: Hermetic.Thread.delay
-  Spawns a thread outside Eio's domain manager: take Eio.Stdenv.domain_mgr as an argument, or fork a fiber with Eio.Fiber.
   Waits on the clock: take Eio.Stdenv.clock as an argument and use Eio.Time.sleep.
   $ dune build --root . --display quiet ./refused 2>&1 | tr -d '"' | grep -c '^Error: This expression has type ambient'
-  2
+  1
 
 Event refuses nothing, so the prelude does not declare it, and a library's
 own module named Event stays its own under the open. A module of the
