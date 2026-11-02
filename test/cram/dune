@@ -16,3 +16,7 @@
 (cram
  (applies_to stdlib-types)
  (deps %{bin:ocamlc} %{bin:ocamlfind}))
+
+(cram
+ (applies_to mtime)
+ (enabled_if %{lib-available:mtime.clock}))

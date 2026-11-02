@@ -104,11 +104,28 @@ types stay, and what reaches a capability is refused (see unix.t).
   $ put unix_connect 'let connect fd addr = Unix.connect fd addr'
 
 The libraries that reach the system past Eio's capabilities and that ship
-apart from the compiler: the prelude declares them empty, without depending
-on them, so each of their names is unbound.
+apart from the compiler: Eio's backends, the clocks of mtime and ptime, the
+entropy of bytesrw, the setup of Fmt's standard formatters, and the units of
+Eio and its backends that reach a capability, or the standard error past the
+executable's Eio.traceln. The prelude declares them empty, without depending
+on them, so each of their names is unbound, whether the library is installed
+or not.
 
   $ put past_eio_main 'let run = Eio_main.run'
   $ put past_eio_unix 'let () = Eio_unix.sleep 1.'
+  $ put past_mtime_clock 'let now = Mtime_clock.now ()'
+  $ put past_ptime_clock 'let now = Ptime_clock.now ()'
+  $ put past_sysrandom 'let bytes n = Bytesrw_sysrandom.get_random n'
+  $ put past_fmt_tty 'let () = Fmt_tty.setup_std_outputs ()'
+  $ put past_eio_debug 'let say = Eio__core__Debug.default_traceln'
+  $ put past_eio_cancel 'let root = Eio__core__Cancel.Fiber_context.make_root ()'
+  $ put past_eio_unix_private 'let resolve = Eio_unix__Private.getaddrinfo'
+  $ put past_eio_unix_fd 'let out = Eio_unix__Fd.stdout'
+  $ put past_eio_unix_net 'let name = Eio_unix__Net.getnameinfo'
+  $ put past_eio_unix_process 'let spawn = Eio_unix__Process.spawn_unix'
+  $ put past_eio_unix_thread_pool 'let run = Eio_unix__Thread_pool.run_in_systhread'
+  $ put past_eio_posix_low_level 'let fd = Eio_posix__Low_level.openat'
+  $ put past_eio_linux_low_level 'let fd = Eio_linux__Low_level.openat'
 
 What can forge memory or a value of any type: the escapes from the type
 system, and every accessor that skips the check its safe version makes.
@@ -185,8 +202,21 @@ profile as in the development one.
   output_runtime_warnings: Hermetic.Sys.enable_runtime_warnings (ambient)
   output_std_formatter: Hermetic.Format.std_formatter (ambient)
   output_stdout: Hermetic.stdout (ambient)
+  past_eio_cancel: module Hermetic.Eio__core__Cancel (error)
+  past_eio_debug: module Hermetic.Eio__core__Debug (error)
+  past_eio_linux_low_level: module Hermetic.Eio_linux__Low_level (error)
   past_eio_main: module Hermetic.Eio_main (error)
+  past_eio_posix_low_level: module Hermetic.Eio_posix__Low_level (error)
   past_eio_unix: module Hermetic.Eio_unix (error)
+  past_eio_unix_fd: module Hermetic.Eio_unix__Fd (error)
+  past_eio_unix_net: module Hermetic.Eio_unix__Net (error)
+  past_eio_unix_private: module Hermetic.Eio_unix__Private (error)
+  past_eio_unix_process: module Hermetic.Eio_unix__Process (error)
+  past_eio_unix_thread_pool: module Hermetic.Eio_unix__Thread_pool (error)
+  past_fmt_tty: module Hermetic.Fmt_tty (error)
+  past_mtime_clock: module Hermetic.Mtime_clock (error)
+  past_ptime_clock: module Hermetic.Ptime_clock (error)
+  past_sysrandom: module Hermetic.Bytesrw_sysrandom (error)
   proc_arg: Hermetic.Arg.parse (ambient)
   proc_catch: Hermetic.Printexc.catch (ambient)
   proc_command: Hermetic.Sys.command (ambient)
