@@ -36,6 +36,7 @@ BytesLabels.unsafe_get: unsafe
 BytesLabels.unsafe_of_string: unsafe
 BytesLabels.unsafe_set: unsafe
 BytesLabels.unsafe_to_string: unsafe
+Bytesrw_sysrandom: ambient, declared empty
 CamlinternalMod.*: unsafe
 CamlinternalOO.*: unsafe
 Char.unsafe_chr: unsafe
@@ -47,10 +48,19 @@ Digest.file: ambient
 Domain.spawn: ambient
 Dynarray.unsafe_to_iarray: unsafe
 Dynlink: ambient, declared empty
+Eio__core__Cancel: ambient, declared empty
+Eio__core__Debug: ambient, declared empty
 Eio_linux: ambient, declared empty
+Eio_linux__Low_level: ambient, declared empty
 Eio_main: ambient, declared empty
 Eio_posix: ambient, declared empty
+Eio_posix__Low_level: ambient, declared empty
 Eio_unix: ambient, declared empty
+Eio_unix__Fd: ambient, declared empty
+Eio_unix__Net: ambient, declared empty
+Eio_unix__Private: ambient, declared empty
+Eio_unix__Process: ambient, declared empty
+Eio_unix__Thread_pool: ambient, declared empty
 Eio_windows: ambient, declared empty
 Ephemeron.K1.MakeSeeded.create: retyped
 Ephemeron.K1.MakeSeeded.of_seq: retyped
@@ -65,6 +75,7 @@ Float.Array.unsafe_get: unsafe
 Float.Array.unsafe_set: unsafe
 Float.ArrayLabels.unsafe_get: unsafe
 Float.ArrayLabels.unsafe_set: unsafe
+Fmt_tty: ambient, declared empty
 Format.close_box: ambient
 Format.close_stag: ambient
 Format.close_tbox: ambient
@@ -129,6 +140,7 @@ MoreLabels.Hashtbl.MakeSeeded.of_seq: retyped
 MoreLabels.Hashtbl.create: retyped
 MoreLabels.Hashtbl.of_seq: retyped
 MoreLabels.Hashtbl.rebuild: retyped
+Mtime_clock: ambient, declared empty
 Obj.*: unsafe
 Out_channel.flush_all: ambient
 Out_channel.open_bin: ambient
@@ -148,6 +160,7 @@ Printf.eprintf: ambient
 Printf.leprintf: ambient
 Printf.lprintf: ambient
 Printf.printf: ambient
+Ptime_clock: ambient, declared empty
 Random.State.make_self_init: ambient
 Random.self_init: ambient
 Runtime_events: ambient, declared empty

@@ -448,11 +448,22 @@ let refusals =
   unsafe_refusals @ environment @ files @ standard_input @ standard_output @ gc
   @ the_process @ randomness @ unix "Unix" @ unix "UnixLabels" @ threads
 
-(* Libraries that reach the system past Eio's capabilities, which the prelude
-   declares empty, so that a name of theirs is unbound. *)
+(* Libraries, and units of libraries, that reach the system past Eio's
+   capabilities, which the prelude declares empty, so that a name of theirs
+   is unbound. The prelude does not depend on them: a name whose unit is not
+   installed is declared all the same. *)
 let backend =
   "Creates an Eio environment from nothing: take the capabilities as arguments \
    from the executable's Eio_main.run."
+
+let low_level =
+  "Reaches the file system, the network, the clock, the system's entropy and \
+   child processes past Eio's capabilities: take the Eio.Stdenv capability you \
+   need as an argument."
+
+let past_traceln =
+  "past the executable's Eio.Stdenv.debug: log with Eio.traceln, which writes \
+   where the executable says."
 
 let shadowed =
   [
@@ -470,6 +481,46 @@ let shadowed =
     ("Eio_linux", backend);
     ("Eio_windows", backend);
     ("Eio_main", backend);
+    ( "Eio__core__Debug",
+      "A unit of Eio: its default_traceln writes on the process's standard \
+       error " ^ past_traceln );
+    ( "Eio__core__Cancel",
+      "A unit of Eio: a fiber context it makes drops the executable's \
+       Eio.traceln, which then writes on the process's standard error "
+      ^ past_traceln );
+    ( "Eio_unix__Private",
+      "A unit of Eio_unix: it reaches the monotonic clock, the file system by \
+       name and the name resolver past Eio's capabilities: take \
+       Eio.Stdenv.mono_clock, Eio.Stdenv.fs or Eio.Stdenv.net as an argument."
+    );
+    ( "Eio_unix__Fd",
+      "A unit of Eio_unix: its stdin, stdout and stderr are the process's \
+       standard descriptors: take Eio.Stdenv.stdin, Eio.Stdenv.stdout or \
+       Eio.Stdenv.stderr as an argument." );
+    ( "Eio_unix__Net",
+      "A unit of Eio_unix: it resolves names past Eio's capabilities: take \
+       Eio.Stdenv.net as an argument." );
+    ( "Eio_unix__Process",
+      "A unit of Eio_unix: it spawns processes past Eio's capabilities: take \
+       Eio.Stdenv.process_mgr as an argument." );
+    ( "Eio_unix__Thread_pool",
+      "A unit of Eio_unix: it runs code in a system thread, where Eio.traceln \
+       writes on the process's standard error " ^ past_traceln );
+    ("Eio_posix__Low_level", "A unit of Eio_posix: " ^ low_level);
+    ("Eio_linux__Low_level", "A unit of Eio_linux: " ^ low_level);
+    ( "Mtime_clock",
+      "Reads the monotonic clock: take Eio.Stdenv.mono_clock (an \
+       Eio.Time.Mono) as an argument." );
+    ( "Ptime_clock",
+      "Reads the clock: take Eio.Stdenv.clock (an Eio.Time.clock) as an \
+       argument." );
+    ( "Bytesrw_sysrandom",
+      "Reads the system's entropy: take Eio.Stdenv.secure_random as an \
+       argument." );
+    ( "Fmt_tty",
+      "Sets up the process's standard output and error: take Eio.Stdenv.stdout \
+       or Eio.Stdenv.stderr as an argument, and leave the setup to the \
+       executable." );
   ]
 
 (* StdLabels refuses nothing of its own: it is restated because it aliases

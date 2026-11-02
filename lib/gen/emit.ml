@@ -441,15 +441,16 @@ let preamble_mli buf =
   line buf 0 "module Stdlib_original = Stdlib";
   line buf 0 ""
 
-(* The libraries that reach the system past Eio's capabilities, declared
-   empty. *)
+(* The libraries and units that reach the system past Eio's capabilities,
+   declared empty. *)
 let shadowed_mli buf =
   line buf 0 "(** {1:past Past the capabilities} *)";
   line buf 0 "";
   comment buf 0
-    "The libraries that reach the system past Eio's capabilities, declared \
-     empty, so that each of their names is unbound. The prelude does not \
-     depend on them.";
+    "The libraries, and the units of libraries, that reach the system past \
+     Eio's capabilities, declared empty, so that each of their names is \
+     unbound. The prelude does not depend on them, and declares a name whether \
+     its library is installed or not.";
   line buf 0 "";
   List.iter
     (fun (m, message) ->
