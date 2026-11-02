@@ -247,18 +247,20 @@ As `ambient`, what reaches an Eio capability without being handed it:
   which waits for a child process;
 - the libraries, and the units of libraries, that reach the system past
   Eio's capabilities, which the prelude declares empty: `Runtime_events`,
-  `Dynlink`, `Eio_unix`, `Eio_posix`, `Eio_linux`, `Eio_windows` and
-  `Eio_main`; the clocks `Mtime_clock` and `Ptime_clock`;
-  `Bytesrw_sysrandom`, which reads the system's entropy; `Fmt_tty`, which
-  sets up the standard output and error; and the units of Eio 1.6 that reach
-  a capability by their own names, or the standard error past the
-  executable's `Eio.traceln`: `Eio__core__Debug`, `Eio__core__Cancel`,
-  `Eio_unix__Private`, `Eio_unix__Fd`, `Eio_unix__Net`, `Eio_unix__Process`,
-  `Eio_unix__Thread_pool`, `Eio_posix__Low_level` and `Eio_linux__Low_level`.
-  Their types are refused with them, only because `hermetic` depends on none
-  of them and so cannot restate them. A name is declared whether its library
-  is installed or not. Only the clock of mtime is refused: a library that
-  depends on mtime still names `Mtime.t` and `Mtime.Span`.
+  `Dynlink`; `Eio_unix`, `Eio_posix`, `Eio_linux`, `Eio_windows`,
+  `Eio_main` and `Iomux`, which `Eio_posix` polls with, each with every unit
+  of its library, such as `Eio_posix__Fs`, and the module of aliases dune
+  makes for it, such as `Eio_unix__`, which names each unit by a short name;
+  the clocks `Mtime_clock` and `Ptime_clock`; `Bytesrw_sysrandom`, which
+  reads the system's entropy; `Fmt_tty`, which sets up the standard output
+  and error; and the units of Eio's core that reach the standard error past
+  the executable's `Eio.traceln`, `Eio__core__Debug` and
+  `Eio__core__Cancel`, with `Eio__core__`, which names them. The units are
+  those of Eio 1.6 and of the iomux it builds with. Their types are refused
+  with them, only because `hermetic` depends on none of them and so cannot
+  restate them. A name is declared whether its library is installed or not.
+  Only the clock of mtime is refused: a library that depends on mtime still
+  names `Mtime.t` and `Mtime.Span`.
 
 Each alert names the `Eio.Stdenv` capability to take instead: a write on the
 standard output, for instance, names `Eio.Stdenv.stdout`, or Logs and
@@ -399,9 +401,8 @@ to use instead:
   whole process: leave it to the executable.
 
 Dependencies also use `unsafe_` accessors, `Obj` and `Marshal`: the prelude
-refuses them only in a file that opens it. It declares empty only the
-units of Eio 1.6 it names; a unit another version of Eio adds is not
-covered.
+refuses them only in a file that opens it. It declares empty the units of
+Eio 1.6 and of iomux; a unit another version adds is not covered.
 
 Authority is not always readable from arguments. A top-level reference or
 table can hold a capability the code was handed, and a function that reads

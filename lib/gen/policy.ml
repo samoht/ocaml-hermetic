@@ -469,6 +469,93 @@ let past_traceln =
   "past the executable's Eio.Stdenv.debug: log with Eio.traceln, which writes \
    where the executable says."
 
+let eio_unix =
+  "Reaches the system past Eio's capabilities: take Eio.Stdenv.clock, \
+   Eio.Stdenv.net, Eio.Stdenv.process_mgr or the capability you need as an \
+   argument."
+
+(* [library lib message units overrides] declares empty the library whose
+   main module is [lib], the module of aliases dune makes for it, [lib__],
+   which names each of its units by a short name, and each of the
+   space-separated [units], as [lib__U]. A unit takes its message from
+   [overrides], or [message] otherwise. The units are those of the library's
+   source, generated ones included, so that one of them a platform does not
+   build is declared all the same. *)
+let library lib message ?(overrides = []) units =
+  let unit u =
+    match List.assoc_opt u overrides with
+    | Some m -> m
+    | None -> Printf.sprintf "A unit of %s: %s" lib message
+  in
+  (lib, message)
+  :: ( lib ^ "__",
+       Printf.sprintf
+         "The module of aliases to the units of %s, which names each of them: \
+          %s"
+         lib message )
+  :: List.map (fun u -> (lib ^ "__" ^ u, unit u)) (words units)
+
+(* The units of Eio 1.6's libraries, from its source tree. *)
+let eio_libraries =
+  library "Eio_unix" eio_unix
+    "Cap Config Err Fd File Fork_action Inherit_fds Net Pi Private Process Pty \
+     Rcfd Resource Thread_pool Types"
+    ~overrides:
+      [
+        ( "Private",
+          "A unit of Eio_unix: it reaches the monotonic clock, the file system \
+           by name and the name resolver past Eio's capabilities: take \
+           Eio.Stdenv.mono_clock, Eio.Stdenv.fs or Eio.Stdenv.net as an \
+           argument." );
+        ( "Fd",
+          "A unit of Eio_unix: its stdin, stdout and stderr are the process's \
+           standard descriptors: take Eio.Stdenv.stdin, Eio.Stdenv.stdout or \
+           Eio.Stdenv.stderr as an argument." );
+        ( "Net",
+          "A unit of Eio_unix: it resolves names past Eio's capabilities: take \
+           Eio.Stdenv.net as an argument." );
+        ( "Process",
+          "A unit of Eio_unix: it spawns processes past Eio's capabilities: \
+           take Eio.Stdenv.process_mgr as an argument." );
+        ( "Pty",
+          "A unit of Eio_unix: it opens a pseudo-terminal through the file \
+           system, past Eio's capabilities: take the terminal's flow as an \
+           argument." );
+        ( "Thread_pool",
+          "A unit of Eio_unix: it runs code in a system thread, where \
+           Eio.traceln writes on the process's standard error " ^ past_traceln
+        );
+      ]
+  @ library "Eio_posix" backend
+      "Config Domain_mgr Err Flow Fs Low_level Net Path Process Sched Time"
+      ~overrides:[ ("Low_level", "A unit of Eio_posix: " ^ low_level) ]
+  @ library "Eio_linux" backend
+      "Err Fixed Flow Fs Low_level Net Process Sched Time"
+      ~overrides:[ ("Low_level", "A unit of Eio_linux: " ^ low_level) ]
+  @ library "Eio_windows" backend
+      "Config Domain_mgr Err Flow Fs Low_level Net Sched Time"
+      ~overrides:[ ("Low_level", "A unit of Eio_windows: " ^ low_level) ]
+  @ library "Eio_main" backend "Linux_backend Posix_backend Windows_backend"
+  @ library "Iomux"
+      "Waits on descriptors past Eio's capabilities, with a timeout on the \
+       clock, and makes a descriptor from an integer: take Eio.Stdenv.clock as \
+       an argument and use Eio.Time.with_timeout, and take the descriptor as \
+       an argument."
+      "Config Poll Util"
+  @ [
+      ( "Eio__core__",
+        "The module of aliases to the units of Eio's core, which names \
+         Eio__core__Debug and Eio__core__Cancel: use Eio's own modules, and \
+         log with Eio.traceln, which writes where the executable says." );
+      ( "Eio__core__Debug",
+        "A unit of Eio: its default_traceln writes on the process's standard \
+         error " ^ past_traceln );
+      ( "Eio__core__Cancel",
+        "A unit of Eio: a fiber context it makes drops the executable's \
+         Eio.traceln, which then writes on the process's standard error "
+        ^ past_traceln );
+    ]
+
 let shadowed =
   [
     ( "Runtime_events",
@@ -477,55 +564,23 @@ let shadowed =
     ( "Dynlink",
       "Loads code from a file by name: take Eio.Stdenv.fs as an argument, and \
        leave loading code to the executable." );
-    ( "Eio_unix",
-      "Reaches the system past Eio's capabilities: take Eio.Stdenv.clock, \
-       Eio.Stdenv.net, Eio.Stdenv.process_mgr or the capability you need as an \
-       argument." );
-    ("Eio_posix", backend);
-    ("Eio_linux", backend);
-    ("Eio_windows", backend);
-    ("Eio_main", backend);
-    ( "Eio__core__Debug",
-      "A unit of Eio: its default_traceln writes on the process's standard \
-       error " ^ past_traceln );
-    ( "Eio__core__Cancel",
-      "A unit of Eio: a fiber context it makes drops the executable's \
-       Eio.traceln, which then writes on the process's standard error "
-      ^ past_traceln );
-    ( "Eio_unix__Private",
-      "A unit of Eio_unix: it reaches the monotonic clock, the file system by \
-       name and the name resolver past Eio's capabilities: take \
-       Eio.Stdenv.mono_clock, Eio.Stdenv.fs or Eio.Stdenv.net as an argument."
-    );
-    ( "Eio_unix__Fd",
-      "A unit of Eio_unix: its stdin, stdout and stderr are the process's \
-       standard descriptors: take Eio.Stdenv.stdin, Eio.Stdenv.stdout or \
-       Eio.Stdenv.stderr as an argument." );
-    ( "Eio_unix__Net",
-      "A unit of Eio_unix: it resolves names past Eio's capabilities: take \
-       Eio.Stdenv.net as an argument." );
-    ( "Eio_unix__Process",
-      "A unit of Eio_unix: it spawns processes past Eio's capabilities: take \
-       Eio.Stdenv.process_mgr as an argument." );
-    ( "Eio_unix__Thread_pool",
-      "A unit of Eio_unix: it runs code in a system thread, where Eio.traceln \
-       writes on the process's standard error " ^ past_traceln );
-    ("Eio_posix__Low_level", "A unit of Eio_posix: " ^ low_level);
-    ("Eio_linux__Low_level", "A unit of Eio_linux: " ^ low_level);
-    ( "Mtime_clock",
-      "Reads the monotonic clock: take Eio.Stdenv.mono_clock (an \
-       Eio.Time.Mono) as an argument." );
-    ( "Ptime_clock",
-      "Reads the clock: take Eio.Stdenv.clock (an Eio.Time.clock) as an \
-       argument." );
-    ( "Bytesrw_sysrandom",
-      "Reads the system's entropy: take Eio.Stdenv.secure_random as an \
-       argument." );
-    ( "Fmt_tty",
-      "Sets up the process's standard output and error: take Eio.Stdenv.stdout \
-       or Eio.Stdenv.stderr as an argument, and leave the setup to the \
-       executable." );
   ]
+  @ eio_libraries
+  @ [
+      ( "Mtime_clock",
+        "Reads the monotonic clock: take Eio.Stdenv.mono_clock (an \
+         Eio.Time.Mono) as an argument." );
+      ( "Ptime_clock",
+        "Reads the clock: take Eio.Stdenv.clock (an Eio.Time.clock) as an \
+         argument." );
+      ( "Bytesrw_sysrandom",
+        "Reads the system's entropy: take Eio.Stdenv.secure_random as an \
+         argument." );
+      ( "Fmt_tty",
+        "Sets up the process's standard output and error: take \
+         Eio.Stdenv.stdout or Eio.Stdenv.stderr as an argument, and leave the \
+         setup to the executable." );
+    ]
 
 (* StdLabels refuses nothing of its own: it is restated because it aliases
    ArrayLabels and the other restated modules. *)

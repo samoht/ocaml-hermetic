@@ -48,20 +48,67 @@ Digest.file: ambient
 Domain.spawn: ambient
 Dynarray.unsafe_to_iarray: unsafe
 Dynlink: ambient, declared empty
+Eio__core__: ambient, declared empty
 Eio__core__Cancel: ambient, declared empty
 Eio__core__Debug: ambient, declared empty
 Eio_linux: ambient, declared empty
+Eio_linux__: ambient, declared empty
+Eio_linux__Err: ambient, declared empty
+Eio_linux__Fixed: ambient, declared empty
+Eio_linux__Flow: ambient, declared empty
+Eio_linux__Fs: ambient, declared empty
 Eio_linux__Low_level: ambient, declared empty
+Eio_linux__Net: ambient, declared empty
+Eio_linux__Process: ambient, declared empty
+Eio_linux__Sched: ambient, declared empty
+Eio_linux__Time: ambient, declared empty
 Eio_main: ambient, declared empty
+Eio_main__: ambient, declared empty
+Eio_main__Linux_backend: ambient, declared empty
+Eio_main__Posix_backend: ambient, declared empty
+Eio_main__Windows_backend: ambient, declared empty
 Eio_posix: ambient, declared empty
+Eio_posix__: ambient, declared empty
+Eio_posix__Config: ambient, declared empty
+Eio_posix__Domain_mgr: ambient, declared empty
+Eio_posix__Err: ambient, declared empty
+Eio_posix__Flow: ambient, declared empty
+Eio_posix__Fs: ambient, declared empty
 Eio_posix__Low_level: ambient, declared empty
+Eio_posix__Net: ambient, declared empty
+Eio_posix__Path: ambient, declared empty
+Eio_posix__Process: ambient, declared empty
+Eio_posix__Sched: ambient, declared empty
+Eio_posix__Time: ambient, declared empty
 Eio_unix: ambient, declared empty
+Eio_unix__: ambient, declared empty
+Eio_unix__Cap: ambient, declared empty
+Eio_unix__Config: ambient, declared empty
+Eio_unix__Err: ambient, declared empty
 Eio_unix__Fd: ambient, declared empty
+Eio_unix__File: ambient, declared empty
+Eio_unix__Fork_action: ambient, declared empty
+Eio_unix__Inherit_fds: ambient, declared empty
 Eio_unix__Net: ambient, declared empty
+Eio_unix__Pi: ambient, declared empty
 Eio_unix__Private: ambient, declared empty
 Eio_unix__Process: ambient, declared empty
+Eio_unix__Pty: ambient, declared empty
+Eio_unix__Rcfd: ambient, declared empty
+Eio_unix__Resource: ambient, declared empty
 Eio_unix__Thread_pool: ambient, declared empty
+Eio_unix__Types: ambient, declared empty
 Eio_windows: ambient, declared empty
+Eio_windows__: ambient, declared empty
+Eio_windows__Config: ambient, declared empty
+Eio_windows__Domain_mgr: ambient, declared empty
+Eio_windows__Err: ambient, declared empty
+Eio_windows__Flow: ambient, declared empty
+Eio_windows__Fs: ambient, declared empty
+Eio_windows__Low_level: ambient, declared empty
+Eio_windows__Net: ambient, declared empty
+Eio_windows__Sched: ambient, declared empty
+Eio_windows__Time: ambient, declared empty
 Ephemeron.K1.MakeSeeded.create: retyped
 Ephemeron.K1.MakeSeeded.of_seq: retyped
 Ephemeron.K2.MakeSeeded.create: retyped
@@ -130,6 +177,11 @@ In_channel.stdin: ambient
 In_channel.with_open_bin: ambient
 In_channel.with_open_gen: ambient
 In_channel.with_open_text: ambient
+Iomux: ambient, declared empty
+Iomux__: ambient, declared empty
+Iomux__Config: ambient, declared empty
+Iomux__Poll: ambient, declared empty
+Iomux__Util: ambient, declared empty
 Lexing.engine: unsafe
 Lexing.new_engine: unsafe
 Marshal.from_bytes: unsafe
