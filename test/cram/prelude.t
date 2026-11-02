@@ -82,6 +82,15 @@ The standard input, output and error, which the code was not handed.
   $ put output_format_output_functions 'let () = let out, _ = Format.get_formatter_output_functions () in out "x" 0 1'
   $ put output_format_stag_functions 'let () = let f = Format.get_formatter_stag_functions () in f.print_open_stag (Format.String_tag "x")'
   $ put output_flush 'let () = flush_all ()'
+  $ put output_do_at_exit 'let () = do_at_exit ()'
+  $ put output_format_set_output 'let capture b = Format.set_formatter_output_functions (Buffer.add_substring b) ignore'
+  $ put output_format_set_out_channel 'let redirect oc = Format.set_formatter_out_channel oc'
+  $ put output_format_set_max_boxes 'let () = Format.set_max_boxes 2'
+  $ put output_format_set_ellipsis 'let () = Format.set_ellipsis_text "x"'
+  $ put output_format_set_mark_tags 'let () = Format.set_mark_tags true'
+  $ put output_format_set_geometry 'let () = Format.safe_set_geometry ~max_indent:2 ~margin:4'
+  $ put output_format_get_margin 'let m = Format.get_margin ()'
+  $ put output_format_over_max_boxes 'let b = Format.over_max_boxes ()'
   $ put output_runtime_warnings 'let () = Sys.enable_runtime_warnings true'
 
 A child process and a domain, which Eio's process and domain managers hand
@@ -216,11 +225,20 @@ profile as in the development one.
   input_scanf: Hermetic.Scanf.scanf (ambient)
   input_stdin: Hermetic.stdin (ambient)
   named: Hermetic.Sys.file_exists (builds)
+  output_do_at_exit: Hermetic.do_at_exit (ambient)
   output_flush: Hermetic.flush_all (ambient)
   output_format: Hermetic.Format.printf (ambient)
+  output_format_get_margin: Hermetic.Format.get_margin (ambient)
   output_format_out_functions: Hermetic.Format.get_formatter_out_functions (ambient)
   output_format_output_functions: Hermetic.Format.get_formatter_output_functions (ambient)
+  output_format_over_max_boxes: Hermetic.Format.over_max_boxes (ambient)
   output_format_print: Hermetic.Format.print_string (ambient)
+  output_format_set_ellipsis: Hermetic.Format.set_ellipsis_text (ambient)
+  output_format_set_geometry: Hermetic.Format.safe_set_geometry (ambient)
+  output_format_set_mark_tags: Hermetic.Format.set_mark_tags (ambient)
+  output_format_set_max_boxes: Hermetic.Format.set_max_boxes (ambient)
+  output_format_set_out_channel: Hermetic.Format.set_formatter_out_channel (ambient)
+  output_format_set_output: Hermetic.Format.set_formatter_output_functions (ambient)
   output_format_stag_functions: Hermetic.Format.get_formatter_stag_functions (ambient)
   output_prerr: Hermetic.prerr_endline (ambient)
   output_print: Hermetic.print_endline (ambient)
