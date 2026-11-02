@@ -188,7 +188,9 @@ As `ambient`, what reaches the world without being handed it:
   `Printf.printf` and `Printf.eprintf`, the standard formatters of `Format`
   and every function that prints to them, `Printexc.print` and `Arg.usage`.
   Library code does not write to the process's standard channels:
-  diagnostics go through Logs, data through a sink the code is handed;
+  diagnostics go through Logs or Eio's `traceln`, which writes with the
+  function the fiber's context holds, and data through a sink the code is
+  handed;
 - the process's lifecycle: `exit`, `at_exit`, `do_at_exit`, `Domain.at_exit`,
   `Domain.spawn`, `Sys.command`, the signals of `Sys`, `Printexc.catch` and
   `Printexc.set_uncaught_exception_handler`, and `Arg.parse` and the rest of
