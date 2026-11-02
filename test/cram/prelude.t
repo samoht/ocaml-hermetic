@@ -169,6 +169,9 @@ system, and every accessor that skips the check its safe version makes.
   $ put unsafe_marshal 'let read s : int = Marshal.from_string s 0'
   $ put unsafe_input_value 'let read ic : int = input_value ic'
   $ put unsafe_internal 'let shape = CamlinternalMod.init_mod ("f", 1, 1) (CamlinternalMod.Module [||])'
+  $ put unsafe_internal_format 'let show fmt = CamlinternalFormat.string_of_fmt fmt'
+  $ put unsafe_internal_format_basics 'let erase rel = CamlinternalFormatBasics.erase_rel rel'
+  $ put unsafe_internal_lazy 'let force l : int = CamlinternalLazy.force_lazy_block l'
   $ put unsafe_parsing 'let v : int = Parsing.peek_val (Obj.magic 0) 0'
   $ put unsafe_lexing 'let state lexbuf = Lexing.engine (Obj.magic 0) 0 lexbuf'
   $ put unsafe_bytes_get 'let c b = Bytes.unsafe_get b 0'
@@ -295,6 +298,9 @@ profile as in the development one.
   unsafe_floatarray: Hermetic.ArrayLabels.Floatarray.unsafe_set (unsafe)
   unsafe_input_value: Hermetic.input_value (unsafe)
   unsafe_internal: Hermetic.CamlinternalMod.init_mod (unsafe)
+  unsafe_internal_format: Hermetic.CamlinternalFormat.string_of_fmt (unsafe)
+  unsafe_internal_format_basics: Hermetic.CamlinternalFormatBasics.erase_rel (unsafe)
+  unsafe_internal_lazy: Hermetic.CamlinternalLazy.force_lazy_block (unsafe)
   unsafe_lexing: Hermetic.Lexing.engine (unsafe)
   unsafe_marshal: Hermetic.Marshal.from_string (unsafe)
   unsafe_obj: Hermetic.Obj.magic (unsafe)
@@ -387,6 +393,16 @@ registered printers, backtraces, the process's counters and synchronisation.
   > let o = (new c)#m
   > module rec R : sig val x : int end = struct let x = 1 end
   > let l = Lazy.force (lazy 1)
+  > let forced = match lazy 1 with lazy x -> x
+  > let deferred = Lazy.from_fun (fun () -> 1)
+  > let fmt () = format_of_string "%d" ^^ "%s"
+  > let printed = Printf.sprintf (fmt ()) 1 "x" ^ Printf.sprintf "%a%t" (fun () -> string_of_int) 1 (fun () -> "")
+  > let parsed = Scanf.sscanf "1 x" "%d %s" (fun n s -> (n, s))
+  > let boxed = Format.asprintf "@[<v 2>%a@]%!" Format.pp_print_text "x"
+  > let nested = Printf.sprintf "%{%d%}" "%d"
+  > let reread () : (int -> unit, unit, unit) format = Scanf.format_from_string "%d" "%d"
+  > let counter = Atomic.make 0
+  > let () = Atomic.incr counter; ignore (Atomic.fetch_and_add counter 1)
   > let first ic = input_line ic
   > let all ic = In_channel.input_all ic
   > let write oc = Out_channel.output_string oc "x"; flush oc
