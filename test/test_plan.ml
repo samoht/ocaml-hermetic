@@ -114,6 +114,7 @@ let test_unreviewed () =
       "List.unsafe_peek";
       "Odd";
       "Random.Fresh";
+      "Stray";
       "Typed.w";
     ]
     unreviewed;
@@ -134,7 +135,9 @@ let test_unreviewed () =
     ]
     (restated p "Odd");
   Alcotest.check strings "a module with a class type" [ "w:unreviewed" ]
-    (restated p "Typed")
+    (restated p "Typed");
+  Alcotest.check strings "a unit that Stdlib does not name" [ "v:unreviewed" ]
+    (restated p "Stray")
 
 let test_rewired () =
   let refusals = refusals @ [ ("Random.State.make", ambient "Makes.") ] in

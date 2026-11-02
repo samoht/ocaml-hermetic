@@ -3,7 +3,8 @@
 ; submodule, a generative functor, a functor of an anonymous parameter, an
 ; abstract module type, a keyword operator, a value named unsafe, a class,
 ; a class type, a new module that aliases another new one, and values that
-; hand out a channel, a formatter or output closures, or take one. Its
+; hand out a channel, a formatter or output closures, or take one, and a unit
+; that Stdlib does not name and that is not runtime support. Its
 ; interfaces are kept as .sig files, which this rule copies and compiles.
 
 (rule
@@ -15,13 +16,15 @@
   stdlib__Classy.mli
   stdlib__Typed.mli
   stdlib__Labels.mli
+  stray.mli
   stdlib.cmi
   stdlib__List.cmi
   stdlib__Random.cmi
   stdlib__Odd.cmi
   stdlib__Classy.cmi
   stdlib__Typed.cmi
-  stdlib__Labels.cmi)
+  stdlib__Labels.cmi
+  stray.cmi)
  (deps
   stdlib.sig
   stdlib__List.sig
@@ -29,7 +32,8 @@
   stdlib__Odd.sig
   stdlib__Classy.sig
   stdlib__Typed.sig
-  stdlib__Labels.sig)
+  stdlib__Labels.sig
+  stray.sig)
  (action
   (progn
    (copy stdlib.sig stdlib.mli)
@@ -39,6 +43,7 @@
    (copy stdlib__Classy.sig stdlib__Classy.mli)
    (copy stdlib__Typed.sig stdlib__Typed.mli)
    (copy stdlib__Labels.sig stdlib__Labels.mli)
+   (copy stray.sig stray.mli)
    (run
     %{bin:ocamlc}
     -nostdlib
@@ -53,4 +58,5 @@
    (run %{bin:ocamlc} -nostdlib -nopervasives -w -a -c stdlib__Labels.mli)
    (run %{bin:ocamlc} -nostdlib -nopervasives -w -a -c stdlib__Odd.mli)
    (run %{bin:ocamlc} -nostdlib -nopervasives -w -a -c stdlib__Classy.mli)
-   (run %{bin:ocamlc} -nostdlib -nopervasives -w -a -c stdlib__Typed.mli))))
+   (run %{bin:ocamlc} -nostdlib -nopervasives -w -a -c stdlib__Typed.mli)
+   (run %{bin:ocamlc} -nostdlib -nopervasives -w -a -c stray.mli))))
