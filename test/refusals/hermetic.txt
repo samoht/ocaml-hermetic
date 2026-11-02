@@ -17,6 +17,7 @@ ArrayLabels.unsafe_set: unsafe
 Base__: ambient, declared empty
 Base__Import0: ambient, declared empty
 Base__Import: ambient, declared empty
+Base__Obj_local: ambient, declared empty
 Bigarray.Array1.unsafe_get: unsafe
 Bigarray.Array1.unsafe_set: unsafe
 Bigarray.Array2.unsafe_get: unsafe
@@ -107,6 +108,7 @@ Eio_unix__Process: ambient, declared empty
 Eio_unix__Pty: ambient, declared empty
 Eio_unix__Rcfd: ambient, declared empty
 Eio_unix__Resource: ambient, declared empty
+Eio_unix__System_info: ambient, declared empty
 Eio_unix__Thread_pool: ambient, declared empty
 Eio_unix__Types: ambient, declared empty
 Eio_windows: ambient, declared empty
@@ -118,6 +120,7 @@ Eio_windows__Flow: ambient, declared empty
 Eio_windows__Fs: ambient, declared empty
 Eio_windows__Low_level: ambient, declared empty
 Eio_windows__Net: ambient, declared empty
+Eio_windows__Process: ambient, declared empty
 Eio_windows__Sched: ambient, declared empty
 Eio_windows__Time: ambient, declared empty
 Ephemeron.K1.MakeSeeded.create: retyped
@@ -227,6 +230,9 @@ MoreLabels.Hashtbl.of_seq: retyped
 MoreLabels.Hashtbl.rebuild: retyped
 Mtime_clock: ambient, declared empty
 Obj.*: unsafe
+Ocamlformat_format: ambient, declared empty
+Ocamlformat_format__Format_: ambient, declared empty
+Odoc_document__Compat: ambient, declared empty
 Out_channel.flush_all: ambient
 Out_channel.open_bin: ambient
 Out_channel.open_gen: ambient

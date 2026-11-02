@@ -557,11 +557,13 @@ let library lib message ?(overrides = []) units =
          lib message )
   :: List.map (fun u -> (lib ^ "__" ^ u, unit u)) (words units)
 
-(* The units of Eio 1.6's libraries, from its source tree. *)
+(* The units of Eio's libraries, from the source tree of Eio 1.6 and of its
+   main branch at 1fa7762, which adds Eio_unix__System_info and
+   Eio_windows__Process. *)
 let eio_libraries =
   library "Eio_unix" eio_unix
     "Cap Config Err Fd File Fork_action Inherit_fds Net Pi Private Process Pty \
-     Rcfd Resource Thread_pool Types"
+     Rcfd Resource System_info Thread_pool Types"
     ~overrides:
       [
         ( "Private",
@@ -595,7 +597,7 @@ let eio_libraries =
       "Err Fixed Flow Fs Low_level Net Process Sched Time"
       ~overrides:[ ("Low_level", "A unit of Eio_linux: " ^ low_level) ]
   @ library "Eio_windows" backend
-      "Config Domain_mgr Err Flow Fs Low_level Net Sched Time"
+      "Config Domain_mgr Err Flow Fs Low_level Net Process Sched Time"
       ~overrides:[ ("Low_level", "A unit of Eio_windows: " ^ low_level) ]
   @ library "Eio_main" backend "Linux_backend Posix_backend Windows_backend"
   @ library "Iomux"
@@ -627,7 +629,30 @@ let stdlib_reexport =
 let stdlib_reexports =
   List.map
     (fun m -> (m, stdlib_reexport))
-    [ "Base__"; "Base__Import0"; "Base__Import"; "Shadow_stdlib" ]
+    [
+      "Base__";
+      "Base__Import0";
+      "Base__Import";
+      "Shadow_stdlib";
+      "Odoc_document__Compat";
+    ]
+
+(* Units that hand out Obj.magic without an alert, or a fork of Format with
+   its own standard formatter. *)
+let forks =
+  [
+    ( "Base__Obj_local",
+      "Hands out Obj.magic, which escapes the type system: use the prelude's \
+       own modules." );
+    ( "Ocamlformat_format",
+      "A fork of Format, whose standard formatter writes the process's \
+       standard output: use the prelude's Format on a formatter you are \
+       handed." );
+    ( "Ocamlformat_format__Format_",
+      "A fork of Format, whose standard formatter writes the process's \
+       standard output: use the prelude's Format on a formatter you are \
+       handed." );
+  ]
 
 let recording =
   "Records the process's standard output and error in the file CONSOLE_CAST \
@@ -671,7 +696,7 @@ let shadowed =
          Console__Recording: use Console's own modules." );
       ("Console__Recording", "A unit of Console: " ^ recording);
     ]
-  @ stdlib_reexports
+  @ stdlib_reexports @ forks
 
 (* StdLabels refuses nothing of its own: it is restated because it aliases
    ArrayLabels and the other restated modules. *)

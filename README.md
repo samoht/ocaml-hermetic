@@ -176,10 +176,14 @@ Stdlib_original` finds each line that names it, but not the uses of an alias:
 after `module S = Stdlib_original`, a use of `S` does not name it.
 
 A library that re-exports the standard library is `Stdlib_original` under
-another name, which `grep Stdlib_original` does not find. The prelude
-declares empty those it knows: Base's `Base__Import0` and `Base__Import`,
-whose `Stdlib` is the standard library whole, `Base__`, which names them,
-and `Shadow_stdlib`. `Base` itself re-exports many of the values the
+another name, which `grep Stdlib_original` does not find. Such libraries
+cannot be listed exhaustively. The prelude declares empty the units it
+knows: Base's `Base__Import0` and `Base__Import`, whose `Stdlib` is the
+standard library whole, `Base__`, which names them, `Shadow_stdlib`, and
+Odoc's `Odoc_document__Compat`, which includes `Format`. It declares too
+the units that hand out `Obj.magic` or a fork of `Format` with its own
+standard formatter: `Base__Obj_local`, and ocamlformat's
+`Ocamlformat_format` and `Ocamlformat_format__Format_`. `Base` itself re-exports many of the values the
 prelude refuses, among them `Base.Obj`, `Base.Marshal`, `Base.Filename` and
 `Base.open_out`, with only a `deprecated` alert, and the prelude cannot
 declare it empty (see [What it does not cover](#what-it-does-not-cover)).
@@ -279,11 +283,14 @@ As `ambient`, what reaches an Eio capability without being handed it:
   file `CONSOLE_CAST` names, with `Console__Recording`, which opens that
   file, and the modules of aliases that name them, `Console_tty__` and
   `Console__`; the units that re-export the standard library without
-  refusals (see [Escaping the prelude](#escaping-the-prelude)); and the
-  units of Eio's core that reach the standard error past
+  refusals, `Obj.magic` or a fork of `Format` (see
+  [Escaping the prelude](#escaping-the-prelude)); and the units of Eio's
+  core that reach the standard error past
   the executable's `Eio.traceln`, `Eio__core__Debug` and
   `Eio__core__Cancel`, with `Eio__core__`, which names them. The units are
-  those of Eio 1.6 and of the iomux it builds with. Their types are refused
+  those of Eio 1.6 and of Eio's main branch, which adds
+  `Eio_unix__System_info` and `Eio_windows__Process`, and of the iomux
+  Eio builds with. Their types are refused
   with them, only because `hermetic` depends on none of them and so cannot
   restate them. A name is declared whether its library is installed or not.
   Only the clock of mtime is refused: a library that depends on mtime still
@@ -473,7 +480,8 @@ to use instead:
 
 Dependencies also use `unsafe_` accessors, `Obj` and `Marshal`: the prelude
 refuses them only in a file that opens it. It declares empty the units of
-Eio 1.6 and of iomux; a unit another version adds is not covered.
+Eio 1.6, of Eio's main branch at 1fa7762 and of iomux; a unit another
+version adds is not covered.
 
 Eio 1.6's `Eio.Resource.get` and `Eio.Resource.get_opt` can cast a value to
 any type: `Eio.Time.Pi.Clock` leaves the type of its time free, and a
