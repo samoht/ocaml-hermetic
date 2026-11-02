@@ -278,10 +278,12 @@ fields, so a signature can name `Unix.file_descr`, `Unix.sockaddr` or
 can match on it. A value that reaches a capability by name or by address is
 refused as `ambient`: `openfile`, `stat` and the other functions that take a
 path, `getcwd` and `chdir`, `time`, `gettimeofday`, `sleep`, the timers and
-`select`, `socket`, `bind`, `connect`, `sendto` and the name resolvers, the
-functions that spawn a process, wait for one or signal one, and `stdin`,
-`stdout` and `stderr`. The rest stays: I/O on a descriptor, a socket or a process the code
-was handed, the environment, the facts of the process, its user and its
+`select`, `bind`, `connect`, `sendto`, `open_connection`,
+`establish_server` and the name resolvers, the functions that spawn a
+process, wait for one or signal one, and `stdin`, `stdout` and `stderr`.
+The rest stays: `socket`, since a socket neither bound nor connected reaches
+no network, I/O on a descriptor, a socket or a process the code was handed,
+the environment, the facts of the process, its user and its
 host, the time zone, the signal masks and `_exit`, and the pure values, such
 as the conversions of internet addresses. A value a newer compiler adds is
 refused as `unreviewed` until it is reviewed.

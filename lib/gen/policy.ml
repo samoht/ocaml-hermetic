@@ -361,11 +361,15 @@ let processes =
 
 (* Every value of the compiler's Unix, or UnixLabels, at [m] that reaches a
    capability by name or by address. The others are kept, by reviewed.ml
-   or, for a name that says [unsafe], here. *)
+   or, for a name that says [unsafe] and for [socket], here. *)
 let unix m =
   let large = m ^ ".LargeFile" in
   each m "unsafe_environment unsafe_getenv"
     (Keep "It reads the process environment, as getenv does.")
+  @ each m "socket"
+      (Keep
+         "A socket neither bound nor connected reaches no network: bind, \
+          connect and sendto are refused.")
   @ each m "getcwd"
       (ambient
          "Reads the process's working directory: take Eio.Stdenv.cwd as an \
@@ -388,9 +392,9 @@ let unix m =
   @ each large "stat lstat" (ambient reads_fs)
   @ each large "truncate" (ambient writes_fs)
   @ each m
-      "socket bind connect sendto sendto_substring open_connection \
-       establish_server getaddrinfo getnameinfo gethostbyname gethostbyaddr \
-       getprotobyname getprotobynumber getservbyname getservbyport"
+      "bind connect sendto sendto_substring open_connection establish_server \
+       getaddrinfo getnameinfo gethostbyname gethostbyaddr getprotobyname \
+       getprotobynumber getservbyname getservbyport"
       (ambient network)
   @ each m
       "create_process create_process_env execv execve execvp execvpe fork wait \

@@ -252,7 +252,7 @@ Unix.sendto_substring: ambient
 Unix.setitimer: ambient
 Unix.sleep: ambient
 Unix.sleepf: ambient
-Unix.socket: ambient
+Unix.socket: kept
 Unix.stat: ambient
 Unix.stderr: ambient
 Unix.stdin: ambient
@@ -324,7 +324,7 @@ UnixLabels.sendto_substring: ambient
 UnixLabels.setitimer: ambient
 UnixLabels.sleep: ambient
 UnixLabels.sleepf: ambient
-UnixLabels.socket: ambient
+UnixLabels.socket: kept
 UnixLabels.stat: ambient
 UnixLabels.stderr: ambient
 UnixLabels.stdin: ambient
