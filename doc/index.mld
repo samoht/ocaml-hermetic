@@ -1,0 +1,20 @@
+{0 hermetic}
+
+A standard library prelude that refuses ambient authority.
+
+In a file that opens {!Hermetic}, a use of a standard library value that
+reaches the world without being handed it is a type error. A source file
+opens it on its first line:
+
+{[
+open! Hermetic
+]}
+
+{1:api API}
+
+{!modules: Hermetic}
+
+{!Hermetic} is the prelude: the standard library and [Unix], with each
+refused value given a type nothing consumes and an alert that says why. The
+[Hermetic__] units it aliases hold the restated modules; a program names them
+through {!Hermetic}, never directly.

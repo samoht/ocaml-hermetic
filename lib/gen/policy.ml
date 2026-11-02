@@ -92,8 +92,8 @@ let type_escapes =
   @ each "Marshal" "from_bytes from_string from_channel" (unsafe marshalled)
   @ each "Lexing" "engine new_engine"
       (unsafe
-         "Reads and writes past the bounds of the tables it is given: run \
-          the           lexer ocamllex generates, outside the prelude.")
+         "Reads and writes past the bounds of the tables it is given: run the \
+          lexer ocamllex generates outside the prelude.")
   @ each "Parsing" "peek_val yyparse" (unsafe any_type)
 
 let unsafe_refusals =
@@ -282,7 +282,7 @@ let the_process =
          Eio.Switch.on_release on a switch you are given." );
     ("do_at_exit", ambient ("Runs the process's exit actions: " ^ process));
     ( "do_domain_local_at_exit",
-      ambient ("The exit actions of the domain: " ^ process) );
+      ambient "Runs the domain's exit actions: the domain is the caller's." );
     ( "Domain.at_exit",
       ambient
         "Registers an action on the domain's exit: release it with \
@@ -543,25 +543,30 @@ let name = "Hermetic"
 
 let doc =
   "The standard library, restated to refuse ambient authority.\n\n\
-   With [Hermetic], the only way to reach the world is through the \
-   capabilities Eio's [env] hands you: a value of the standard library that \
-   reaches the world without being handed it has the type {!ambient}, a value \
-   that can forge memory or a value of any type has the type {!unsafe}, and a \
-   value that this version of the prelude has not reviewed has the type \
-   {!unreviewed}. A file adopts it with\n\n\
+   In a file that opens [Hermetic], a use of a standard library value that \
+   reaches the world without being handed it is a type error. A file opens it \
+   on its first line:\n\n\
    {[\n\
    open! Hermetic\n\
    ]}\n\n\
-   on its first line. The three types are abstract and nothing in the prelude \
-   consumes them: a refused value can be named, but it cannot be applied or \
-   used at its original type, so such a use is a type error, in every build \
-   profile. Each refused value also carries an alert named after its type, \
-   whose message says why it is refused and, when it can, what to take as an \
-   argument instead.\n\n\
+   [Hermetic] restates the standard library and [Unix], and gives each value \
+   it refuses one of three types: {!ambient} when it reaches the world without \
+   being handed it, {!unsafe} when it can forge memory or a value of any type, \
+   and {!unreviewed} when this version of hermetic has not reviewed it. Each \
+   type is abstract and nothing in the prelude consumes it, so a refused value \
+   can be named but not applied or used at its original type: such a use is a \
+   type error, in every build profile. Passing it to a polymorphic function \
+   such as [ignore] compiles and does nothing.\n\n\
+   A refused value carries an alert named after its type, and the alert is its \
+   documentation: the compiler prints it at each use, and its message says why \
+   the value is refused and, when it can, what to take as an argument \
+   instead.\n\n\
    Library code does not write to the process's standard channels: diagnostics \
    go through Logs or Eio's traceln, data through a sink the code is handed. \
    Every type of the standard library stays, so an interface, which does not \
-   open the prelude, names the standard library's own types."
+   open the prelude, names the standard library's own types.\n\n\
+   The prelude guards against accidents, not against an author trying to \
+   cheat: {!Stdlib_original} is the standard library without refusals."
 
 let unreviewed path =
   {

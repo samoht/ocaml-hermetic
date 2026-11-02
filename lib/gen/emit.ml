@@ -91,12 +91,6 @@ let rec ordered ready = function
       if now = [] then failwith "cyclic aliases between restated modules";
       ordered (List.rev_append now ready) later
 
-(* [Stdlib.Sys] is [Sys]; a runtime support unit is itself. *)
-let strip orig =
-  if String.starts_with ~prefix:"Stdlib." orig then
-    String.sub orig 7 (String.length orig - 7)
-  else orig
-
 let type_params n =
   match List.init n (fun i -> Printf.sprintf "'%c" (Char.chr (97 + i))) with
   | [] -> ""
@@ -182,21 +176,30 @@ let args_text params =
 let type_args params =
   String.concat "" (List.map (fun (p, _) -> Printf.sprintf "(%s)" p) params)
 
+(* The library a module of the original comes from: the unix library's
+   Unix and UnixLabels, or the standard library. *)
+let library orig =
+  if String.starts_with ~prefix:"Unix" orig then "The unix library's"
+  else "The standard library's"
+
 let restated_doc orig = function
   | Plan.Whole (r, _) ->
-      Printf.sprintf "Every value of the standard library's [%s] is refused. %s"
-        (strip orig) r.message
+      Printf.sprintf "Every value of %s {!%s} is refused. %s"
+        (String.lowercase_ascii (library orig))
+        orig r.message
   | Plan.Gone ->
       Printf.sprintf
-        "The standard library's [%s] cannot be restated by this version of \
-         hermetic, so the prelude declares it empty."
-        (strip orig)
+        "%s {!%s} cannot be restated by this version of hermetic, so the \
+         prelude declares it empty."
+        (library orig) orig
   | Plan.Sig { items; _ } | Plan.Functor { items; _ } ->
-      if List.exists (function Plan.Refused _ -> true | _ -> false) items then
-        Printf.sprintf
-          "The standard library's [%s], with some of its values refused."
-          (strip orig)
-      else Printf.sprintf "The standard library's [%s], restated." (strip orig)
+      let what =
+        if List.for_all (function Plan.Refused _ -> true | _ -> false) items
+        then "the values below refused"
+        else "the names below restated"
+      in
+      Printf.sprintf "%s {!%s}, with %s; the others are {!%s}'s." (library orig)
+        orig what orig
 
 let values_include buf depth orig (n : Plan.names) =
   let cs =
@@ -392,13 +395,13 @@ let refused_ml_unit =
 let type_docs =
   [
     ( "ambient",
-      "The type of a value refused because it reaches the world without being \
+      "The type for values refused because they reach the world without being \
        handed it." );
     ( "unsafe",
-      "The type of a refused value that can forge memory or a value of any \
-       type." );
+      "The type for values refused because they can forge memory or a value of \
+       any type." );
     ( "unreviewed",
-      "The type of a value this version of hermetic has not reviewed, which a \
+      "The type for values this version of hermetic has not reviewed, which a \
        newer compiler added." );
   ]
 
@@ -406,11 +409,7 @@ let types_mli buf =
   List.iter
     (fun (k, doc) ->
       line buf 0 "type %s = %s.%s" k refused_unit k;
-      comment buf 0
-        (doc
-       ^ " It is abstract and nothing in the prelude consumes it: such a value \
-          cannot be applied or used at its original type. Passing it to a \
-          polymorphic function such as [ignore] compiles and does nothing.");
+      comment buf 0 doc;
       line buf 0 "")
     type_docs
 
@@ -433,7 +432,8 @@ let preamble_mli buf =
   line buf 0 "";
   comment buf 0
     "[Stdlib_original] is [Stdlib] without refusals. Name it only for an \
-     audited use; [grep Stdlib_original] finds each one.";
+     audited use: [grep Stdlib_original] finds each line that names it, but an \
+     alias such as [module S = Stdlib_original] hides the uses after it.";
   line buf 0 "module Stdlib_original = Stdlib";
   line buf 0 ""
 

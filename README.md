@@ -2,21 +2,23 @@
 
 A standard library prelude that refuses ambient authority.
 
-With `Hermetic`, the only way to reach the world is through the capabilities
-Eio's `env` hands you. A source file that opens the prelude cannot read the
-process environment, the clock or the file system by name, cannot read the
-standard input or write the standard output, cannot spawn a process or a
-domain, and cannot end the process: the standard library values that do so
-are refused at compile time, and their alerts name the `Eio.Stdenv`
-capability to take as an argument instead. So are the values of `Unix` that
-reach the world, and the libraries that reach the system past Eio's
-capabilities, `Eio_main` and `Eio_unix` among them, are refused by name. A
-pure core, such as a protocol state machine or a codec, is the case where no
-capability is handed in at all.
+In a file that opens `Hermetic`, a use of a standard library value that
+reaches the world without being handed it is a type error. Such a file cannot
+read the process environment, the clock or the file system through the
+standard library, cannot read the standard input or write the standard
+output, cannot spawn a process or a domain, and cannot end the process: the
+values that do so are refused at compile time, and their alerts name the
+`Eio.Stdenv` capability to take as an argument instead. The values of `Unix`
+that reach the world are refused too, and the libraries that reach the
+system past Eio's capabilities, `Eio_main` and `Eio_unix` among them, are
+refused by name. A pure core, such as a protocol state machine or a codec,
+is the case where no capability is handed in at all.
 
-What this buys is that a library compiled under the prelude touches only what
-it is handed, so a test can hand it an in-memory file system, a mock clock or
-a recorded network, and a review can read its authority from its arguments.
+What this buys is that a library compiled under the prelude reaches the world
+through the standard library only with what it is handed, so a test can hand
+it an in-memory file system, a mock clock or a recorded network, and a review
+can read that authority from its arguments. It is not a sandbox: see
+[What it guards against](#what-it-guards-against).
 
 `hermetic` also refuses what could forge what it was not handed: `Obj`, the
 readers of `Marshal`, and the accessors that skip a bounds check.
