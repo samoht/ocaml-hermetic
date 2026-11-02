@@ -124,6 +124,11 @@ let fs = "take Eio.Stdenv.fs or Eio.Stdenv.cwd (an Eio.Path) as an argument"
 let opens = "Opens a file by name: " ^ fs ^ ", or the file's contents."
 let reads_fs = "Reads the file system by name: " ^ fs ^ "."
 let writes_fs = "Writes the file system by name: " ^ fs ^ "."
+
+(* A value that reads the host or the process's environment is refused. The
+   runtime's own state is kept, even where OCAMLRUNPARAM sets it, since the
+   program can set it too: Gc.get, Printexc.backtrace_status and
+   Hashtbl.is_randomized. *)
 let fact = "Reads a fact of the process: take the value as an argument."
 
 let stdin =
@@ -163,6 +168,12 @@ let environment =
   @ each "Sys"
       "executable_name runtime_executable runtime_parameters interactive"
       (ambient fact)
+  @ [
+      ( "Domain.recommended_domain_count",
+        ambient
+          "Reads a fact of the host, its number of processors: take the value \
+           as an argument." );
+    ]
 
 let files =
   each "" "open_in open_in_bin open_in_gen open_out open_out_bin open_out_gen"
@@ -358,8 +369,6 @@ let tables m =
     ( m ^ ".randomize",
       ambient ("Seeds every later table from the system's entropy: " ^ process)
     );
-    ( m ^ ".is_randomized",
-      ambient "Reads OCAMLRUNPARAM: take the value as an argument." );
     ( m ^ ".create",
       Retyped
         {

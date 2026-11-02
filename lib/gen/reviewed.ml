@@ -20,7 +20,8 @@
    - concurrency: synchronisation and domain-local state, which reach no
      world;
    - runtime: the runtime's own state (the garbage collector, backtraces,
-     registered printers, counters), which reaches no world;
+     registered printers, counters, whether tables are randomised), which
+     reaches no world; OCAMLRUNPARAM can set it, but so can the program;
    - local: the default generator, which is domain-local and seeded
      deterministically;
    - seeded: a generator made from a seed handed in;
@@ -335,8 +336,8 @@ let kept =
        subbytes substring to_hex" );
     ( "Domain",
       "concurrency",
-      "before_first_spawn count cpu_relax get_id is_main_domain join \
-       recommended_domain_count self self_index" );
+      "before_first_spawn count cpu_relax get_id is_main_domain join self \
+       self_index" );
     ("Domain.DLS", "concurrency", "get new_key set");
     ( "Dynarray",
       "data",
@@ -477,6 +478,7 @@ let kept =
        find_and_replace find_opt fold hash hash_param iter length mem remove \
        replace replace_seq reset seeded_hash seeded_hash_param stats to_seq \
        to_seq_keys to_seq_values" );
+    ("Hashtbl", "runtime", "is_randomized");
     ( "Hashtbl.Make",
       "data",
       "add add_seq clear copy create filter_map_inplace find find_all \
@@ -582,6 +584,7 @@ let kept =
        find_and_replace find_opt fold hash hash_param iter length mem remove \
        replace replace_seq reset seeded_hash seeded_hash_param stats to_seq \
        to_seq_keys to_seq_values" );
+    ("MoreLabels.Hashtbl", "runtime", "is_randomized");
     ( "MoreLabels.Hashtbl.Make",
       "data",
       "add add_seq clear copy create filter_map_inplace find find_all \

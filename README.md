@@ -173,9 +173,10 @@ leave it out of the files a flag opens the prelude in.
 
 As `ambient`, what reaches the world without being handed it:
 
-- the process environment and the process's own facts: `Sys.getenv`,
-  `Sys.argv`, `Sys.executable_name`, `Sys.getcwd`, `Sys.chdir`,
-  `Sys.runtime_parameters` and the rest;
+- the process environment, the process's own facts and the host's:
+  `Sys.getenv`, `Sys.argv`, `Sys.executable_name`, `Sys.getcwd`,
+  `Sys.chdir`, `Sys.runtime_parameters`, `Domain.recommended_domain_count`
+  and the rest;
 - the processor time: `Sys.time`;
 - the file system, reached by name: `open_in*`, `open_out*`, the openers of
   `In_channel` and `Out_channel`, the file functions of `Sys`, the temporary
@@ -196,7 +197,7 @@ As `ambient`, what reaches the world without being handed it:
   `Printexc.set_uncaught_exception_handler`, and `Arg.parse` and the rest of
   what reads the command line;
 - the system's entropy: `Random.self_init`, `Random.State.make_self_init`,
-  `Hashtbl.randomize` and `Hashtbl.is_randomized`, and the `?random`
+  `Hashtbl.randomize`, and the `?random`
   argument of every `create` that has one (`Hashtbl`, `MoreLabels.Hashtbl`,
   their `MakeSeeded`, and the `MakeSeeded` of `Ephemeron`). Those are
   restated without it, and every table the prelude makes, `of_seq` and
@@ -238,6 +239,13 @@ backtraces; `Callback`, `Gc`, `Weak` and `Ephemeron`; the counters behind
 of `Domain`; `Arg.current`; and the switches of `Sys`, `Parsing` and
 `Printexc`.
 
+One rule separates what reads the environment from the runtime's state: a
+value that reads the host or the process's environment is refused, and the
+runtime's own state is kept, even where `OCAMLRUNPARAM` sets it, since the
+program can set it too. So `Sys.runtime_parameters` and
+`Domain.recommended_domain_count` are refused, while `Gc.get`,
+`Printexc.backtrace_status` and `Hashtbl.is_randomized` are kept.
+
 ## Eio code
 
 A function that takes Eio's whole `env` holds all of its authority. Take the
@@ -273,7 +281,13 @@ compiler, is not.
 
 A dependency is outside its reach, and so is a file that forgets the open. A
 top-level `ref` of the library's own is state the whole process shares, and
-no name of the prelude can refuse it. An `OCAMLPARAM` in the environment of
+no name of the prelude can refuse it.
+
+Two kept switches of the runtime make it write to the standard error itself:
+`Gc.set` with a `verbose` flag, and `Sys.enable_runtime_warnings true`. They
+change state the process shares, as the other switches do, so the prelude
+keeps them, but the runtime's messages then reach the standard error that
+the code was not handed. An `OCAMLPARAM` in the environment of
 the build can add compiler options the build files do not show.
 
 Some values carry an identity the process gives them: an object, the

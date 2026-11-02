@@ -47,6 +47,7 @@ Digest.BLAKE512.file: ambient
 Digest.MD5.file: ambient
 Digest.file: ambient
 Domain.at_exit: ambient
+Domain.recommended_domain_count: ambient
 Domain.spawn: ambient
 Dynarray.unsafe_to_iarray: unsafe
 Dynlink: ambient, declared empty
@@ -114,7 +115,6 @@ Format.std_formatter: ambient
 Hashtbl.MakeSeeded.create: retyped
 Hashtbl.MakeSeeded.of_seq: retyped
 Hashtbl.create: retyped
-Hashtbl.is_randomized: ambient
 Hashtbl.of_seq: retyped
 Hashtbl.randomize: ambient
 Hashtbl.rebuild: retyped
@@ -134,7 +134,6 @@ Marshal.from_string: unsafe
 MoreLabels.Hashtbl.MakeSeeded.create: retyped
 MoreLabels.Hashtbl.MakeSeeded.of_seq: retyped
 MoreLabels.Hashtbl.create: retyped
-MoreLabels.Hashtbl.is_randomized: ambient
 MoreLabels.Hashtbl.of_seq: retyped
 MoreLabels.Hashtbl.randomize: ambient
 MoreLabels.Hashtbl.rebuild: retyped
