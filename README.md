@@ -221,9 +221,13 @@ As `ambient`, what reaches an Eio capability without being handed it:
 - the standard input: `stdin`, `read_*`, `In_channel.stdin`, `Scanf.scanf`
   and `Scanf.Scanning.stdin`;
 - the standard output and error: `stdout`, `stderr`, `print_*`, `prerr_*`,
-  `flush_all`, `Out_channel.stdout` and `Out_channel.stderr`,
-  `Printf.printf` and `Printf.eprintf`, the standard formatters of `Format`
-  and every function that prints to them, `Printexc.print`,
+  `flush_all`, `do_at_exit`, which flushes them and runs every `at_exit`
+  function early, `Out_channel.stdout` and `Out_channel.stderr`,
+  `Printf.printf` and `Printf.eprintf`, the standard formatters of `Format`,
+  every function that prints to them, and every function that changes or
+  reads the standard formatter's state, which the executable prints with,
+  such as `Format.set_formatter_output_functions`, `Format.set_margin` and
+  `Format.get_margin`, `Printexc.print`,
   `Printexc.catch`, `Thread.default_uncaught_exception_handler`,
   `Arg.usage`, `Arg.parse` and its two siblings, which print the usage and
   end the process, and `Sys.enable_runtime_warnings`, which makes the

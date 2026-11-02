@@ -194,7 +194,7 @@ let kept =
        seek_out set_binary_mode_in set_binary_mode_out sin sinh snd sqrt \
        string_of_bool string_of_float string_of_format string_of_int succ tan \
        tanh truncate valid_float_lexem" );
-    ("", "process", "at_exit do_at_exit do_domain_local_at_exit exit");
+    ("", "process", "at_exit do_domain_local_at_exit exit");
     ( "Arg",
       "given",
       "align current parse_and_expand_argv_dynamic parse_argv \
@@ -450,36 +450,29 @@ let kept =
        clear_symbolic_output_buffer dprintf flush_str_formatter \
        flush_symbolic_output_buffer format_text formatter_of_buffer \
        formatter_of_out_channel formatter_of_out_functions \
-       formatter_of_symbolic_output_buffer fprintf get_ellipsis_text \
-       get_geometry get_margin get_mark_tags get_max_boxes get_max_indent \
-       get_print_tags get_stdbuf get_str_formatter get_symbolic_output_buffer \
-       ifprintf ikfprintf kasprintf kdprintf kfprintf ksprintf lasprintf \
-       ldprintf lfprintf make_formatter make_symbolic_output_buffer \
-       make_synchronized_formatter over_max_boxes pp_close_box pp_close_stag \
-       pp_close_tbox pp_force_newline pp_get_ellipsis_text \
-       pp_get_formatter_out_functions pp_get_formatter_output_functions \
-       pp_get_formatter_stag_functions pp_get_geometry pp_get_margin \
-       pp_get_mark_tags pp_get_max_boxes pp_get_max_indent pp_get_print_tags \
-       pp_infinity pp_open_box pp_open_hbox pp_open_hovbox pp_open_hvbox \
-       pp_open_stag pp_open_tbox pp_open_vbox pp_over_max_boxes pp_print_array \
-       pp_print_as pp_print_bool pp_print_break pp_print_bytes pp_print_char \
-       pp_print_custom_break pp_print_cut pp_print_either pp_print_float \
-       pp_print_flush pp_print_if_newline pp_print_int pp_print_iter \
-       pp_print_list pp_print_newline pp_print_nothing pp_print_option \
-       pp_print_result pp_print_seq pp_print_space pp_print_string \
-       pp_print_substring pp_print_substring_as pp_print_tab pp_print_tbreak \
-       pp_print_text pp_safe_set_geometry pp_set_ellipsis_text \
-       pp_set_formatter_out_channel pp_set_formatter_out_functions \
-       pp_set_formatter_output_functions pp_set_formatter_stag_functions \
-       pp_set_geometry pp_set_margin pp_set_mark_tags pp_set_max_boxes \
-       pp_set_max_indent pp_set_print_tags pp_set_tab pp_set_tags \
-       pp_update_geometry safe_set_geometry set_ellipsis_text \
-       set_formatter_out_channel set_formatter_out_functions \
-       set_formatter_output_functions set_formatter_stag_functions \
-       set_geometry set_margin set_mark_tags set_max_boxes set_max_indent \
-       set_print_tags set_tags sprintf stdbuf str_formatter \
-       synchronized_formatter_of_out_channel update_geometry \
-       utf_8_scalar_width" );
+       formatter_of_symbolic_output_buffer fprintf get_stdbuf \
+       get_str_formatter get_symbolic_output_buffer ifprintf ikfprintf \
+       kasprintf kdprintf kfprintf ksprintf lasprintf ldprintf lfprintf \
+       make_formatter make_symbolic_output_buffer make_synchronized_formatter \
+       pp_close_box pp_close_stag pp_close_tbox pp_force_newline \
+       pp_get_ellipsis_text pp_get_formatter_out_functions \
+       pp_get_formatter_output_functions pp_get_formatter_stag_functions \
+       pp_get_geometry pp_get_margin pp_get_mark_tags pp_get_max_boxes \
+       pp_get_max_indent pp_get_print_tags pp_infinity pp_open_box \
+       pp_open_hbox pp_open_hovbox pp_open_hvbox pp_open_stag pp_open_tbox \
+       pp_open_vbox pp_over_max_boxes pp_print_array pp_print_as pp_print_bool \
+       pp_print_break pp_print_bytes pp_print_char pp_print_custom_break \
+       pp_print_cut pp_print_either pp_print_float pp_print_flush \
+       pp_print_if_newline pp_print_int pp_print_iter pp_print_list \
+       pp_print_newline pp_print_nothing pp_print_option pp_print_result \
+       pp_print_seq pp_print_space pp_print_string pp_print_substring \
+       pp_print_substring_as pp_print_tab pp_print_tbreak pp_print_text \
+       pp_safe_set_geometry pp_set_ellipsis_text pp_set_formatter_out_channel \
+       pp_set_formatter_out_functions pp_set_formatter_output_functions \
+       pp_set_formatter_stag_functions pp_set_geometry pp_set_margin \
+       pp_set_mark_tags pp_set_max_boxes pp_set_max_indent pp_set_print_tags \
+       pp_set_tab pp_set_tags pp_update_geometry sprintf stdbuf str_formatter \
+       synchronized_formatter_of_out_channel utf_8_scalar_width" );
     ("Format.Args", "format", "@ apply");
     ("Fun", "pure", "compose const flip id negate protect");
     ( "Gc",

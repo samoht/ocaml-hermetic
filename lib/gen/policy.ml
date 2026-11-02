@@ -210,11 +210,32 @@ let std_formatter names =
              n) ))
     (words names)
 
+(* A function of Format that changes or reads the state of the standard
+   formatter, which the executable prints with: its message names the [pp_]
+   function that takes a formatter. *)
+let std_formatter_state ~verb names =
+  List.map
+    (fun n ->
+      ( "Format." ^ n,
+        ambient
+          (Printf.sprintf
+             "%s the process's standard formatter, which the executable prints \
+              with: take a formatter as an argument and use pp_%s on it."
+             verb n) ))
+    (words names)
+
 let standard_output =
   each ""
     "stdout print_char print_string print_bytes print_int print_float \
      print_endline print_newline flush_all"
     (ambient (writes "output"))
+  @ [
+      ( "do_at_exit",
+        ambient
+          "Flushes the process's standard output and error, and runs every \
+           at_exit function now: take Eio.Stdenv.stdout as an argument, and \
+           leave the exit to the executable." );
+    ]
   @ each ""
       "stderr prerr_char prerr_string prerr_bytes prerr_int prerr_float \
        prerr_endline prerr_newline"
@@ -245,6 +266,14 @@ let standard_output =
        open_tbox close_tbox set_tab print_tab print_tbreak open_stag \
        close_stag get_formatter_out_functions get_formatter_output_functions \
        get_formatter_stag_functions"
+  @ std_formatter_state ~verb:"Changes"
+      "set_margin set_max_indent set_max_boxes set_ellipsis_text set_geometry \
+       safe_set_geometry update_geometry set_formatter_out_channel \
+       set_formatter_out_functions set_formatter_output_functions \
+       set_formatter_stag_functions set_tags set_print_tags set_mark_tags"
+  @ std_formatter_state ~verb:"Reads"
+      "get_margin get_max_indent get_max_boxes get_ellipsis_text get_geometry \
+       get_print_tags get_mark_tags over_max_boxes"
 
 let the_process =
   [
