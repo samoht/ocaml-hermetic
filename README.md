@@ -366,6 +366,17 @@ interfaces they are declared in, but none of their code:
 anything. Without that, OCaml 5 finds them itself and prints the
 `ocaml_deprecated_auto_include` alert.
 
+A library that names `unix` or `threads` among its libraries lists it
+before `hermetic`, as in `(libraries unix hermetic)`. The prelude's `Unix`
+and `Thread` are linked from `hermetic` and call the unix and threads
+libraries, so with `hermetic` first the link of a program fails:
+
+<!-- $MDX skip -->
+```
+Error: Wrong link order:
+         Hermetic__Unix (.../hermetic.cma) depends on Unix (.../unix.cma)
+```
+
 ## Eio code
 
 A function that takes Eio's whole `env` holds all of its authority. Take the
@@ -374,6 +385,18 @@ narrowest capability that does the job instead: a directory, such as
 `Eio.Stdenv.fs`; a clock rather than the environment; a sink rather than
 `Eio.Stdenv.stdout`. The executable, which calls `Eio_main.run` outside the
 prelude, hands each library what it needs.
+
+A sink or a source narrows only by convention. `Eio.Resource.get_opt`
+recovers every interface the resource's handler binds, whatever its static
+type says: a sink that is a socket can be read, a sink that is a file read
+back and truncated, and a standard output that is a terminal read. A strict
+boundary needs a wrapper that forwards only the operation meant, such as a
+sink whose handler binds only `Eio.Flow.Pi.Sink`.
+
+Likewise, only the result of `Eio.Path.open_dir` confines. A path such as
+`dir / "sub"` is a pair of `dir` and a string, so `..`, `Eio.Path.split` or
+taking the pair's directory reaches all of `dir`. Hand a library the
+directory `Eio.Path.open_dir` returns, not a path under a wider one.
 
 ## Diagnostics
 
@@ -451,6 +474,28 @@ to use instead:
 Dependencies also use `unsafe_` accessors, `Obj` and `Marshal`: the prelude
 refuses them only in a file that opens it. It declares empty the units of
 Eio 1.6 and of iomux; a unit another version adds is not covered.
+
+Eio 1.6's `Eio.Resource.get` and `Eio.Resource.get_opt` can cast a value to
+any type: `Eio.Time.Pi.Clock` leaves the type of its time free, and a
+handler can be given any tags, so a library builds `Obj.magic` from Eio's
+public interface and forges any capability with it, turning a directory
+`Eio.Path.open_dir` confines into one that is not, for instance. The
+prelude cannot refuse them without depending on Eio (see Eio's issues
+[#964](https://github.com/ocaml-multicore/eio/issues/964) and
+[#774](https://github.com/ocaml-multicore/eio/issues/774)).
+
+The prelude does not restate compiler-libs, nor declare its units empty:
+they have flat names, such as `Env`, `Config`, `Path`, `Parser`, `Main`,
+`Misc` and `Location`, which would shadow a library's own modules. A
+library that names compiler-libs reaches processes (`Ccomp.command`), files
+by name (`Misc`), the standard streams (`Location.formatter_for_warnings`,
+`Emitaux.output_channel` and `Toploop`) and the system's entropy, through
+the temporary files of `Misc`.
+
+An exception left uncaught in a thread that `Thread.create` starts is
+printed on the standard error by the threads library. A writable descriptor
+or file the code is handed gives the time in its times after a write, read
+with `Unix.fstat` or `Eio.File.stat`.
 
 Authority is not always readable from arguments. A top-level reference or
 table can hold a capability the code was handed, and a function that reads
