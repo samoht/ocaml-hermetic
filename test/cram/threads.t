@@ -27,18 +27,30 @@ types.
   $ dune build --root . --display quiet ./lib; echo "exit $?"
   exit 0
 
-A thread reaches no capability, so Thread.create stays. A sleep on the
-process's clock is refused as ambient, and its alert names the capability to
-take.
+A thread reaches no capability, so Thread.create stays. A sleep or a timed
+wait on the process's clock, and a wait for a child process, are refused as
+ambient, and each alert names the capability to take.
 
   $ mkdir refused
   $ echo '(library (name refused) (libraries hermetic))' > refused/dune
   $ printf 'open! Hermetic\nlet () = Thread.delay 1.\n' > refused/delay.ml
+  $ printf 'open! Hermetic\nlet ready fds = Thread.select fds [] [] 1.\n' > refused/select.ml
+  $ printf 'open! Hermetic\nlet readable fd = Thread.wait_timed_read fd 1.\n' > refused/timed_read.ml
+  $ printf 'open! Hermetic\nlet writable fd = Thread.wait_timed_write fd 1.\n' > refused/timed_write.ml
+  $ printf 'open! Hermetic\nlet reap pid = Thread.wait_pid pid\n' > refused/wait_pid.ml
   $ dune build --root . --display quiet ./refused 2>&1 | tr -d '"' | grep -A1 -E '^Alert' | grep -v '^--' | sort
   Alert ambient: Hermetic.Thread.delay
+  Alert ambient: Hermetic.Thread.select
+  Alert ambient: Hermetic.Thread.wait_pid
+  Alert ambient: Hermetic.Thread.wait_timed_read
+  Alert ambient: Hermetic.Thread.wait_timed_write
+  Waits for a child process: take Eio.Stdenv.process_mgr as an argument and use Eio.Process.await.
   Waits on the clock: take Eio.Stdenv.clock as an argument and use Eio.Time.sleep.
+  Waits with a timeout on the clock: take Eio.Stdenv.clock as an argument and use Eio.Time.with_timeout.
+  Waits with a timeout on the clock: take Eio.Stdenv.clock as an argument and use Eio.Time.with_timeout.
+  Waits with a timeout on the clock: take Eio.Stdenv.clock as an argument and use Eio.Time.with_timeout.
   $ dune build --root . --display quiet ./refused 2>&1 | tr -d '"' | grep -c '^Error: This expression has type ambient'
-  1
+  5
 
 Event refuses nothing, so the prelude does not declare it, and a library's
 own module named Event stays its own under the open. A module of the
