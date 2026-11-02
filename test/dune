@@ -1,3 +1,12 @@
+; The tests read the compiler's messages, which a caller forcing colour
+; (CLICOLOR_FORCE, as setup-ocaml sets) would fill with escape codes.
+
+(env
+ (_
+  (env-vars
+   (CLICOLOR_FORCE 0)
+   (OCAML_COLOR never))))
+
 (test
  (name test)
  (package hermetic)
