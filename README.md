@@ -11,16 +11,25 @@ or a child process. Its alert names the `Eio.Stdenv` capability to take
 instead. A value that can forge a capability, such as `Obj.magic` or a
 `Marshal` reader, is refused too. Everything else stays.
 
-The libraries that reach the system past Eio's capabilities, `Eio_main` and
-`Eio_unix` among them, are refused by name. A pure core, such as a protocol
-state machine or a codec, is the case where no capability is handed in at
-all.
+The libraries that reach the system past Eio's capabilities, `Eio_main`,
+`Eio_unix` and the clocks of mtime and ptime among them, are refused by name.
+A pure core, such as a protocol state machine or a codec, is the case where
+no capability is handed in at all.
 
 What this buys is that a library compiled under the prelude reaches Eio's
 capabilities through the standard library only with what it is handed, so a
 test can hand it an in-memory file system, a mock clock or a recorded
 network, and a review can read that authority from its arguments. It is not
 a sandbox: see [What it guards against](#what-it-guards-against).
+
+Eio's [design note on capabilities](https://github.com/ocaml-multicore/eio#design-note-capabilities)
+states the gap this fills: "Since OCaml is not a capability language, code
+can ignore Eio and use the non-capability APIs directly." `hermetic` is
+capability hygiene relative to Eio's env: it refuses what reaches something
+that env provides, and nothing else. It is not an object-capability subset
+of OCaml: mutable globals stay, and so do the process environment, the
+command line and the signals, which Eio's env does not provide (see
+[What it does not cover](#what-it-does-not-cover)).
 
 ## What it guards against
 
@@ -31,7 +40,8 @@ cheat. It is not a sandbox: the standard library without refusals is one
 module away, as `Hermetic.Stdlib_original`, and an `external` declaration
 names a primitive directly. It does not check dependencies either: a function
 of another library that opens a file in its own code is refused only when
-that library is itself compiled under the prelude.
+that library is itself compiled under the prelude (see
+[What it does not cover](#what-it-does-not-cover)).
 
 ## Installation
 
@@ -235,11 +245,20 @@ As `ambient`, what reaches an Eio capability without being handed it:
 - `Thread.delay`, `Thread.select`, `Thread.wait_timed_read` and
   `Thread.wait_timed_write`, which wait on the clock, and `Thread.wait_pid`,
   which waits for a child process;
-- the libraries that reach the system past Eio's capabilities:
-  `Runtime_events`, `Dynlink`, `Eio_unix`, `Eio_posix`, `Eio_linux`,
-  `Eio_windows` and `Eio_main`, which the prelude declares empty. Their types
-  are refused with them, only because `hermetic` does not depend on Eio and
-  so cannot restate the Eio libraries.
+- the libraries, and the units of libraries, that reach the system past
+  Eio's capabilities, which the prelude declares empty: `Runtime_events`,
+  `Dynlink`, `Eio_unix`, `Eio_posix`, `Eio_linux`, `Eio_windows` and
+  `Eio_main`; the clocks `Mtime_clock` and `Ptime_clock`;
+  `Bytesrw_sysrandom`, which reads the system's entropy; `Fmt_tty`, which
+  sets up the standard output and error; and the units of Eio 1.6 that reach
+  a capability by their own names, or the standard error past the
+  executable's `Eio.traceln`: `Eio__core__Debug`, `Eio__core__Cancel`,
+  `Eio_unix__Private`, `Eio_unix__Fd`, `Eio_unix__Net`, `Eio_unix__Process`,
+  `Eio_unix__Thread_pool`, `Eio_posix__Low_level` and `Eio_linux__Low_level`.
+  Their types are refused with them, only because `hermetic` depends on none
+  of them and so cannot restate them. A name is declared whether its library
+  is installed or not. Only the clock of mtime is refused: a library that
+  depends on mtime still names `Mtime.t` and `Mtime.Span`.
 
 Each alert names the `Eio.Stdenv` capability to take instead: a write on the
 standard output, for instance, names `Eio.Stdenv.stdout`, or Logs and
@@ -267,7 +286,8 @@ Everything else stays too, however surprising, since it reaches no
 capability Eio's env provides: the process environment (`Sys.getenv`), the
 command line (`Sys.argv`), `exit` and `at_exit`, the signals, the processor
 time, the facts of the process, its user and its host, I/O on a descriptor,
-a socket or a process the code was handed, and `Thread.create`.
+a socket or a process the code was handed, `Unix.socket`, which makes a
+socket neither bound nor connected, and `Thread.create`.
 
 ## Unix and threads
 
@@ -317,6 +337,16 @@ narrowest capability that does the job instead: a directory, such as
 `Eio.Stdenv.stdout`. The executable, which calls `Eio_main.run` outside the
 prelude, hands each library what it needs.
 
+## Diagnostics
+
+`Eio.traceln` is the one diagnostic channel the prelude sanctions: where it
+writes is the executable's choice, which binds the `traceln` key of
+`Eio.Stdenv.debug` with `Eio.Fiber.with_binding`, and the standard error
+when it binds nothing. It also writes on the standard error, whatever the
+executable binds, where that binding is out of reach: outside an Eio
+scheduler, in a system thread, and inside a nested `Eio_mock.Backend.run`,
+whose fibers start from an empty context.
+
 ## Versions and compatibility
 
 The prelude is generated when `hermetic` is built, from the installed
@@ -348,17 +378,63 @@ compiler, is not.
 
 ## What it does not cover
 
-A dependency is outside its reach, and so is a file that forgets the open.
+The prelude restates the compiler's libraries only. The values of other
+libraries reach capabilities in their own code, and a file under the
+prelude that calls one reaches them too. Those known so far, each with what
+to use instead:
 
-The libraries the prelude declares empty are refused by name only. Dune
-gives the modules of Eio's backends units of their own, named `Eio_unix__*`,
-`Eio_posix__*` and `Eio_linux__*`, and a file that names one directly
-reaches the system past Eio's capabilities. The prelude does not cover them:
-`hermetic` does not depend on Eio, and their names vary from one version of
-Eio to the next.
+- `Fmt.pr`, `Fmt.epr`, `Fmt.stdout` and `Fmt.stderr`: `Fmt.pf` on a
+  formatter the code is handed;
+- `Cstruct.hexdump`: `Cstruct.hexdump_pp`;
+- `Logs_fmt.reporter ()` and `Logs.format_reporter ()`, whose formatters
+  default to the standard output and error: a library logs with `Logs.msg`
+  and leaves `Logs.set_reporter` to the executable;
+- cmdliner's `Arg.file`, `Arg.dir` and `Arg.non_dir_file`, which read the
+  file system, and `Cmd.eval` and its siblings, whose formatters default to
+  the standard output and error: `Cmd.eval_value ~help ~err`;
+- Yojson's readers and writers by file name, such as `from_file` and
+  `to_file`: read the contents through an `Eio.Path` and use `from_string`;
+- `Eio.Private.Debug.default_traceln`, which writes on the standard error:
+  `Eio.traceln`; and `Eio.Exn.register_pp`, which installs a printer for the
+  whole process: leave it to the executable.
 
-An `OCAMLPARAM` in the environment of the build can add compiler options the
-build files do not show.
+Dependencies also use `unsafe_` accessors, `Obj` and `Marshal`: the prelude
+refuses them only in a file that opens it. It declares empty only the
+units of Eio 1.6 it names; a unit another version of Eio adds is not
+covered.
+
+Authority is not always readable from arguments. A top-level reference or
+table can hold a capability the code was handed, and a function that reads
+it later reaches that capability without taking it. An exception can carry
+a capability from where it is raised to where it is caught.
+
+The process environment, the command line, `exit` and the signals are kept
+by design: Eio's env does not provide them, so there is no capability to
+take instead.
+
+A file that forgets the open is not checked, and an `OCAMLPARAM` in the
+environment of the build can add compiler options the build files do not
+show.
+
+## Related work
+
+- Eio's [design note on capabilities](https://github.com/ocaml-multicore/eio#design-note-capabilities)
+  is where the prelude starts: OCaml does not stop code from ignoring Eio.
+- [Emily](https://cs.pomona.edu/~rbull/emily/) (Stiegler and Miller, *How
+  Emily Tamed the Caml*, HPL-2006-116) is a capability-secure subset of
+  OCaml that a verifier checks; `hermetic` uses the stock compiler and keeps
+  mutable globals.
+- [Joe-E](https://people.eecs.berkeley.edu/~daw/papers/joe-e-ndss10.pdf) is
+  a subset of Java that tames its library with an allowlist and allows only
+  immutable globals.
+- [Hardened JavaScript](https://hardenedjs.org/) tames the JavaScript
+  runtime when the program starts, its clock and its randomness included.
+- [cap-std](https://github.com/bytecodealliance/cap-std) is a
+  capability-based standard library for Rust, and Clippy's
+  [`disallowed-methods`](https://doc.rust-lang.org/nightly/clippy/lint_configuration.html)
+  refuses the functions a project names, as the prelude refuses values.
+- Pony's [trust boundary](https://tutorial.ponylang.io/object-capabilities/trust-boundary.html)
+  lets only the packages named with `--safe` call C code.
 
 ## Licence
 
