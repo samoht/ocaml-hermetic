@@ -147,7 +147,11 @@ Some details of this setup matter:
   `Stdlib__` units, those a compiler lacks aside, and the libraries the
   prelude declares empty (see [What it refuses](#what-it-refuses)). Rename
   the module, or name it again after the open through the unit dune gives
-  it: in a library `model`, `module Format = Model__Format`.
+  it: in a library `model`, `module Format = Model__Format`. A module of
+  the library named `Hermetic` is the other way round: dune opens the
+  library's own modules before the source file is read, so `open! Hermetic`
+  in its other files opens that module instead of the prelude, and nothing
+  is refused. Name no module of the library `Hermetic`.
 - A module that extends one of the standard library, with
   `include module type of String` in its interface and `include String` in
   its source file, includes the prelude's `String` in the source file, whose
