@@ -618,6 +618,27 @@ let eio_libraries =
         ^ past_traceln );
     ]
 
+(* Units of other libraries that re-export the standard library without
+   refusals: Stdlib_original under another name. *)
+let stdlib_reexport =
+  "Re-exports the standard library without the prelude's refusals: use the \
+   prelude's own modules, and Stdlib_original for an audited use."
+
+let stdlib_reexports =
+  List.map
+    (fun m -> (m, stdlib_reexport))
+    [ "Base__"; "Base__Import0"; "Base__Import"; "Shadow_stdlib" ]
+
+let recording =
+  "Records the process's standard output and error in the file CONSOLE_CAST \
+   names, and ends the process when it cannot open it: take Eio.Stdenv.fs as \
+   an argument, and leave the recording to the executable."
+
+let console_tty =
+  "Sets up the process's standard output and error, and records them in the \
+   file CONSOLE_CAST names: take Eio.Stdenv.stdout or Eio.Stdenv.stderr as an \
+   argument, and leave the setup to the executable."
+
 let shadowed =
   [
     ( "Runtime_events",
@@ -643,6 +664,14 @@ let shadowed =
          Eio.Stdenv.stdout or Eio.Stdenv.stderr as an argument, and leave the \
          setup to the executable." );
     ]
+  @ library "Console_tty" console_tty "Colour"
+  @ [
+      ( "Console__",
+        "The module of aliases to the units of Console, which names \
+         Console__Recording: use Console's own modules." );
+      ("Console__Recording", "A unit of Console: " ^ recording);
+    ]
+  @ stdlib_reexports
 
 (* StdLabels refuses nothing of its own: it is restated because it aliases
    ArrayLabels and the other restated modules. *)

@@ -171,6 +171,15 @@ audited use, as in `Stdlib_original.Bytes.unsafe_get b i`. `grep
 Stdlib_original` finds each line that names it, but not the uses of an alias:
 after `module S = Stdlib_original`, a use of `S` does not name it.
 
+A library that re-exports the standard library is `Stdlib_original` under
+another name, which `grep Stdlib_original` does not find. The prelude
+declares empty those it knows: Base's `Base__Import0` and `Base__Import`,
+whose `Stdlib` is the standard library whole, `Base__`, which names them,
+and `Shadow_stdlib`. `Base` itself re-exports many of the values the
+prelude refuses, among them `Base.Obj`, `Base.Marshal`, `Base.Filename` and
+`Base.open_out`, with only a `deprecated` alert, and the prelude cannot
+declare it empty (see [What it does not cover](#what-it-does-not-cover)).
+
 ## Other ways to apply it
 
 The prelude can be opened for every file of a library by a flag:
@@ -262,7 +271,12 @@ As `ambient`, what reaches an Eio capability without being handed it:
   makes for it, such as `Eio_unix__`, which names each unit by a short name;
   the clocks `Mtime_clock` and `Ptime_clock`; `Bytesrw_sysrandom`, which
   reads the system's entropy; `Fmt_tty`, which sets up the standard output
-  and error; and the units of Eio's core that reach the standard error past
+  and error, and `Console_tty`, which does the same and records them in the
+  file `CONSOLE_CAST` names, with `Console__Recording`, which opens that
+  file, and the modules of aliases that name them, `Console_tty__` and
+  `Console__`; the units that re-export the standard library without
+  refusals (see [Escaping the prelude](#escaping-the-prelude)); and the
+  units of Eio's core that reach the standard error past
   the executable's `Eio.traceln`, `Eio__core__Debug` and
   `Eio__core__Cancel`, with `Eio__core__`, which names them. The units are
   those of Eio 1.6 and of the iomux it builds with. Their types are refused
@@ -414,6 +428,18 @@ to use instead:
   the standard output and error: `Cmd.eval_value ~help ~err`;
 - Yojson's readers and writers by file name, such as `from_file` and
   `to_file`: read the contents through an `Eio.Path` and use `from_string`;
+- `Base`'s re-exports of the standard library, such as `Base.Obj.magic`,
+  `Base.open_out`, `Base.print_endline` and `Base.Marshal`, which carry only
+  a `deprecated` alert, `Base.Random.self_init` and
+  `Base.Random.State.make_self_init`, which read the system's entropy, and
+  `Base.Exn.handle_uncaught`, which prints on the standard error: Base's own
+  modules and the prelude's;
+- Stdio's `stdout`, `stderr`, `print_*` and readers and writers by file
+  name: take the channel or an `Eio.Path`;
+- console-eio's `Console_eio.run` without `~ppf`, and `Console_eio.print`
+  and `Console_eio.with_output` outside a run, which write on the standard
+  error, and `Console_eio.run`, which records in the file `CONSOLE_CAST`
+  names: pass `~ppf`, and leave the recording to the executable;
 - `Eio.Private.Debug.default_traceln`, which writes on the standard error:
   `Eio.traceln`; and `Eio.Exn.register_pp`, which installs a printer for the
   whole process: leave it to the executable.

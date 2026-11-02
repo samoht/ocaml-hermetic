@@ -14,6 +14,9 @@ ArrayLabels.Floatarray.unsafe_get: unsafe
 ArrayLabels.Floatarray.unsafe_set: unsafe
 ArrayLabels.unsafe_get: unsafe
 ArrayLabels.unsafe_set: unsafe
+Base__: ambient, declared empty
+Base__Import0: ambient, declared empty
+Base__Import: ambient, declared empty
 Bigarray.Array1.unsafe_get: unsafe
 Bigarray.Array1.unsafe_set: unsafe
 Bigarray.Array2.unsafe_get: unsafe
@@ -43,6 +46,11 @@ CamlinternalLazy.*: unsafe
 CamlinternalMod.*: unsafe
 CamlinternalOO.*: unsafe
 Char.unsafe_chr: unsafe
+Console__: ambient, declared empty
+Console__Recording: ambient, declared empty
+Console_tty: ambient, declared empty
+Console_tty__: ambient, declared empty
+Console_tty__Colour: ambient, declared empty
 Digest.BLAKE128.file: ambient
 Digest.BLAKE256.file: ambient
 Digest.BLAKE512.file: ambient
@@ -248,6 +256,7 @@ Scanf.Scanning.open_in_bin: ambient
 Scanf.Scanning.stdin: ambient
 Scanf.scanf: ambient
 Scanf.scanf_opt: ambient
+Shadow_stdlib: ambient, declared empty
 String.unsafe_blit: unsafe
 String.unsafe_get: unsafe
 StringLabels.unsafe_blit: unsafe
