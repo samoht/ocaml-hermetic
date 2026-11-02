@@ -129,7 +129,7 @@ Some details of this setup matter:
   by its own name. Those modules are `Arg`, `Array`, `ArrayLabels`,
   `Bigarray`, `Bytes`, `BytesLabels`, `CamlinternalMod`, `CamlinternalOO`,
   `Char`, `Digest`, `Domain`, `Dynarray`, `Ephemeron`, `Filename`, `Float`,
-  `Format`, `Hashtbl`, `Iarray`, `In_channel`, `Lexing`, `Marshal`,
+  `Format`, `Gc`, `Hashtbl`, `Iarray`, `In_channel`, `Lexing`, `Marshal`,
   `MoreLabels`, `Obj`, `Out_channel`, `Parsing`, `Printexc`, `Printf`,
   `Random`, `Scanf`, `StdLabels`, `Stdlib`, `Stdlib_original`, `String`,
   `StringLabels`, `Sys`, `Thread`, `Uchar`, `Unix`, `UnixLabels` and the
@@ -364,12 +364,8 @@ A dependency is outside its reach, and so is a file that forgets the open. A
 top-level `ref` of the library's own is state the whole process shares, and
 no name of the prelude can refuse it.
 
-Two kept switches of the runtime make it write to the standard error itself:
-`Gc.set` with a `verbose` flag, and `Sys.enable_runtime_warnings true`. They
-change state the process shares, as the other switches do, so the prelude
-keeps them, but the runtime's messages then reach the standard error that
-the code was not handed. An `OCAMLPARAM` in the environment of
-the build can add compiler options the build files do not show.
+An `OCAMLPARAM` in the environment of the build can add compiler options the
+build files do not show.
 
 Some values carry an identity the process gives them: an object, the
 constructor of a local exception, a type identifier, a channel and a closure.

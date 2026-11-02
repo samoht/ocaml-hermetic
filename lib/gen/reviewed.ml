@@ -487,7 +487,7 @@ let kept =
       "allocated_bytes compact counters create_alarm delete_alarm \
        eventlog_pause eventlog_resume finalise finalise_last finalise_release \
        full_major get get_minor_free major major_slice minor minor_words \
-       print_stat quick_stat ramp_down ramp_up set stat" );
+       print_stat quick_stat ramp_down ramp_up stat" );
     ( "Gc.Memprof",
       "runtime",
       "discard is_sampling null_tracker start stop string_of_allocation_source"
@@ -793,15 +793,14 @@ let kept =
        uncapitalize_ascii uppercase_ascii" );
     ( "Sys",
       "constant",
-      "backend_type big_endian cygwin development_version \
-       enable_runtime_warnings int_size io_buffer_size max_array_length \
-       max_floatarray_length max_string_length ocaml_release ocaml_version \
-       opaque_identity os_type runtime_variant runtime_warnings_enabled \
-       sigabrt sigalrm sigbus sigchld sigcont sigfpe sighup sigill sigint \
-       sigio sigkill signal_of_int signal_to_int signal_to_string sigpipe \
-       sigpoll sigprof sigquit sigsegv sigstop sigsys sigterm sigtrap sigtstp \
-       sigttin sigttou sigurg sigusr1 sigusr2 sigvtalrm sigwinch sigxcpu \
-       sigxfsz unix win32 word_size" );
+      "backend_type big_endian cygwin development_version int_size \
+       io_buffer_size max_array_length max_floatarray_length max_string_length \
+       ocaml_release ocaml_version opaque_identity os_type runtime_variant \
+       runtime_warnings_enabled sigabrt sigalrm sigbus sigchld sigcont sigfpe \
+       sighup sigill sigint sigio sigkill signal_of_int signal_to_int \
+       signal_to_string sigpipe sigpoll sigprof sigquit sigsegv sigstop sigsys \
+       sigterm sigtrap sigtstp sigttin sigttou sigurg sigusr1 sigusr2 \
+       sigvtalrm sigwinch sigxcpu sigxfsz unix win32 word_size" );
     ( "Sys",
       "process",
       "argv catch_break executable_name getenv getenv_opt interactive \

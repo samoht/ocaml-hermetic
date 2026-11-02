@@ -105,6 +105,7 @@ Format.print_tbreak: ambient
 Format.printf: ambient
 Format.set_tab: ambient
 Format.std_formatter: ambient
+Gc.set: retyped
 Hashtbl.MakeSeeded.create: retyped
 Hashtbl.MakeSeeded.of_seq: retyped
 Hashtbl.create: retyped
@@ -163,6 +164,7 @@ StringLabels.unsafe_blit: unsafe
 StringLabels.unsafe_get: unsafe
 Sys.chdir: ambient
 Sys.command: ambient
+Sys.enable_runtime_warnings: ambient
 Sys.file_exists: ambient
 Sys.getcwd: ambient
 Sys.is_directory: ambient

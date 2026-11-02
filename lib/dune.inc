@@ -37,6 +37,8 @@
   hermetic__Float.mli
   hermetic__Format.ml
   hermetic__Format.mli
+  hermetic__Gc.ml
+  hermetic__Gc.mli
   hermetic__Hashtbl.ml
   hermetic__Hashtbl.mli
   hermetic__Iarray.ml

@@ -227,6 +227,13 @@ let standard_output =
   @ each "Printexc" "print default_uncaught_exception_handler"
       (ambient (writes "error"))
   @ each "Arg" "usage" (ambient (writes "error"))
+  @ [
+      ( "Sys.enable_runtime_warnings",
+        ambient
+          "Makes the runtime write warnings on the process's standard error: \
+           leave the switch to the executable, which holds Eio.Stdenv.stderr."
+      );
+    ]
   @ std_formatter
       "open_box close_box open_hbox open_vbox open_hvbox open_hovbox \
        print_string print_substring print_bytes print_as print_substring_as \
@@ -398,8 +405,24 @@ let threads =
       (ambient timed_waits)
   @ [ ("Thread.default_uncaught_exception_handler", ambient (writes "error")) ]
 
+(* [verbose] makes the runtime write on the process's standard error, so
+   [Gc.set] leaves it as it is. *)
+let gc =
+  [
+    ( "Gc.set",
+      Retyped
+        {
+          typ = "{orig}.control -> unit";
+          impl = "fun c -> set { c with verbose = (get ()).verbose }";
+          doc =
+            "[set c] is [Stdlib.Gc.set c] with [c.verbose] ignored: the \
+             runtime's verbosity, which writes on the process's standard \
+             error, stays as it is.";
+        } );
+  ]
+
 let refusals =
-  unsafe_refusals @ environment @ files @ standard_input @ standard_output
+  unsafe_refusals @ environment @ files @ standard_input @ standard_output @ gc
   @ the_process @ randomness @ unix "Unix" @ unix "UnixLabels" @ threads
 
 (* Libraries that reach the system past Eio's capabilities, which the prelude
