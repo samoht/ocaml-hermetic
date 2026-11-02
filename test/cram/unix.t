@@ -42,9 +42,11 @@ standard library's own values are: opening a file by name, reading the clock,
 binding a socket to an address or connecting it to one. So is a descriptor
 the code was not handed: listen on a fresh socket binds it to a port on
 every interface, and the times fstat reads of a fresh socket or pipe are the
-clock's. So are listen, which binds a socket that is not bound, and
+clock's. So are listen, which binds a socket that is not bound,
 setsockopt_float, whose only options make a receive or a send a timed wait
-on the clock.
+on the clock, and setsockopt_optint, whose only option, SO_LINGER, makes
+close one. umask is refused for the reason chdir is: it changes the mode of
+every file the executable creates later.
 
   $ mkdir refused
   $ echo '(library (name refused) (libraries hermetic))' > refused/dune
@@ -58,18 +60,23 @@ on the clock.
   $ printf 'open! Hermetic\nlet r, w = Unix.pipe ()\n' > refused/pipe.ml
   $ printf 'open! Hermetic\nlet listen fd = Unix.listen fd 1\n' > refused/listen.ml
   $ printf 'open! Hermetic\nlet wait fd = Unix.setsockopt_float fd Unix.SO_RCVTIMEO 1.\n' > refused/timeout.ml
+  $ printf 'open! Hermetic\nlet linger fd = Unix.setsockopt_optint fd Unix.SO_LINGER (Some 2)\n' > refused/linger.ml
+  $ printf 'open! Hermetic\nlet mask () = UnixLabels.umask 0o077\n' > refused/umask.ml
   $ dune build --root . --display quiet ./refused 2>&1 | tr -d '"' | grep -A1 -E '^Alert' | grep -v '^--' | sort
   Alert ambient: Hermetic.Unix.connect
   Alert ambient: Hermetic.Unix.listen
   Alert ambient: Hermetic.Unix.openfile
   Alert ambient: Hermetic.Unix.pipe
   Alert ambient: Hermetic.Unix.setsockopt_float
+  Alert ambient: Hermetic.Unix.setsockopt_optint
   Alert ambient: Hermetic.Unix.socket
   Alert ambient: Hermetic.Unix.socketpair
   Alert ambient: Hermetic.Unix.time
   Alert ambient: Hermetic.UnixLabels.bind
   Alert ambient: Hermetic.UnixLabels.socket
+  Alert ambient: Hermetic.UnixLabels.umask
   Binds a socket that is not bound to a port on every interface: take Eio.Stdenv.net as an argument and use Eio.Net.listen.
+  Changes the process's file-creation mask, which sets the mode of every file the executable creates later: take Eio.Stdenv.fs or Eio.Stdenv.cwd (an Eio.Path) as an argument and give each file its ~perm.
   Makes a pair of sockets the code was not handed, whose fstat reads the clock: take the sockets as arguments, which the executable makes with Eio_unix.Net.socketpair_stream.
   Makes a pipe the code was not handed, whose fstat reads the clock: take its ends as arguments, which the executable makes with Eio_unix.pipe.
   Makes a socket the code was not handed, which listen binds to every interface and whose fstat reads the clock: take Eio.Stdenv.net as an argument.
@@ -78,9 +85,10 @@ on the clock.
   Reaches the network: take Eio.Stdenv.net as an argument.
   Reaches the network: take Eio.Stdenv.net as an argument.
   Reads the clock: take Eio.Stdenv.clock as an argument.
+  Sets SO_LINGER on a socket, which makes close a timed wait on the clock: take Eio.Stdenv.clock as an argument and use Eio.Time.with_timeout.
   Sets a timeout on a socket, which makes a receive or a send a timed wait on the clock: take Eio.Stdenv.clock as an argument and use Eio.Time.with_timeout.
   $ dune build --root . --display quiet ./refused 2>&1 | tr -d '"' | grep -c '^Error: This expression has type ambient'
-  10
+  12
 
 A program that names only Unix's types links no code of Unix: neither the
 unix library nor the prelude's restated Unix. The unix library forces its
