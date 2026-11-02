@@ -4,7 +4,7 @@
   (package hermetic)))
 
 (cram
- (applies_to link unix)
+ (applies_to link unix threads)
  (deps %{bin:ocamlobjinfo}))
 
 (cram
