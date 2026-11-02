@@ -180,6 +180,10 @@ let type_args params =
    Unix and UnixLabels, or the standard library. *)
 let library orig =
   if String.starts_with ~prefix:"Unix" orig then "The unix library's"
+  else if
+    String.starts_with ~prefix:"Thread" orig
+    || String.starts_with ~prefix:"Event" orig
+  then "The threads library's"
   else "The standard library's"
 
 let restated_doc orig = function
@@ -559,7 +563,8 @@ let dune ~gen =
   line buf 0 " )";
   line buf 0 " (deps";
   line buf 0 "  (glob_files %%{ocaml_where}/*.cmi)";
-  line buf 0 "  (glob_files %%{ocaml_where}/unix/*.cmi))";
+  line buf 0 "  (glob_files %%{ocaml_where}/unix/*.cmi)";
+  line buf 0 "  (glob_files %%{ocaml_where}/threads/*.cmi))";
   line buf 0 " (action";
   line buf 0 "  (run %s %%{ocaml_where} .)))" gen;
   Buffer.contents buf

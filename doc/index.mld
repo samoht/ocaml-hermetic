@@ -14,7 +14,7 @@ open! Hermetic
 
 {!modules: Hermetic}
 
-{!Hermetic} is the prelude: the standard library and [Unix], with each
-refused value given a type nothing consumes and an alert that says why. The
-[Hermetic__] units it aliases hold the restated modules; a program names them
-through {!Hermetic}, never directly.
+{!Hermetic} is the prelude: the standard library, [Unix] and [Thread], with
+each refused value given a type nothing consumes and an alert that says why.
+The [Hermetic__] units it aliases hold the restated modules; a program names
+them through {!Hermetic}, never directly.

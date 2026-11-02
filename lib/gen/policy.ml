@@ -507,9 +507,24 @@ let unix m =
            process: catch Unix_error and return an outcome." );
     ]
 
+(* {1 Thread: its types and Event stay, what bypasses a capability is
+   refused} *)
+
+let threads =
+  [
+    ( "Thread.create",
+      ambient
+        "Spawns a thread outside Eio's domain manager: take \
+         Eio.Stdenv.domain_mgr as an argument, or fork a fiber with Eio.Fiber."
+    );
+    ("Thread.delay", ambient waits);
+    ("Thread.default_uncaught_exception_handler", ambient (writes "error"));
+  ]
+
 let refusals =
   unsafe_refusals @ environment @ files @ standard_input @ standard_output
   @ the_process @ command_line @ randomness @ unix "Unix" @ unix "UnixLabels"
+  @ threads
 
 (* Libraries that reach the system past Eio's capabilities, which the prelude
    declares empty, so that a name of theirs is unbound. *)
@@ -521,8 +536,6 @@ let shadowed =
   List.map
     (fun m -> (m, past))
     [
-      "Thread";
-      "Event";
       "Runtime_events";
       "Dynlink";
       "Eio_unix";
@@ -549,14 +562,14 @@ let doc =
    {[\n\
    open! Hermetic\n\
    ]}\n\n\
-   [Hermetic] restates the standard library and [Unix], and gives each value \
-   it refuses one of three types: {!ambient} when it reaches the world without \
-   being handed it, {!unsafe} when it can forge memory or a value of any type, \
-   and {!unreviewed} when this version of hermetic has not reviewed it. Each \
-   type is abstract and nothing in the prelude consumes it, so a refused value \
-   can be named but not applied or used at its original type: such a use is a \
-   type error, in every build profile. Passing it to a polymorphic function \
-   such as [ignore] compiles and does nothing.\n\n\
+   [Hermetic] restates the standard library, [Unix] and [Thread], and gives \
+   each value it refuses one of three types: {!ambient} when it reaches the \
+   world without being handed it, {!unsafe} when it can forge memory or a \
+   value of any type, and {!unreviewed} when this version of hermetic has not \
+   reviewed it. Each type is abstract and nothing in the prelude consumes it, \
+   so a refused value can be named but not applied or used at its original \
+   type: such a use is a type error, in every build profile. Passing it to a \
+   polymorphic function such as [ignore] compiles and does nothing.\n\n\
    A refused value carries an alert named after its type, and the alert is its \
    documentation: the compiler prints it at each use, and its message says why \
    the value is refused and, when it can, what to take as an argument \

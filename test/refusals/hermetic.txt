@@ -62,7 +62,6 @@ Ephemeron.K2.MakeSeeded.create: retyped
 Ephemeron.K2.MakeSeeded.of_seq: retyped
 Ephemeron.Kn.MakeSeeded.create: retyped
 Ephemeron.Kn.MakeSeeded.of_seq: retyped
-Event: ambient, declared empty
 Filename.get_temp_dir_name: ambient
 Filename.open_temp_file: ambient
 Filename.set_temp_dir_name: ambient
@@ -194,7 +193,9 @@ Sys.runtime_parameters: ambient
 Sys.set_signal: ambient
 Sys.signal: ambient
 Sys.time: ambient
-Thread: ambient, declared empty
+Thread.create: ambient
+Thread.default_uncaught_exception_handler: ambient
+Thread.delay: ambient
 Uchar.unsafe_of_int: unsafe
 Uchar.unsafe_to_char: unsafe
 Unix.LargeFile.fstat: ambient

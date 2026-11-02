@@ -13,9 +13,11 @@ Initial release.
   `Eio_unix`, are declared empty.
 - `Unix` and `UnixLabels` restated: their types and the exception
   `Unix_error` are kept, equal to the originals, their pure values are kept,
-  and every value that reaches the world is refused. `hermetic` does not
-  depend on the unix library, so a program that names only its types links
-  none of it.
+  and every value that reaches the world is refused. `Thread` restated too:
+  its types are kept, and `Thread.create` and `Thread.delay` are refused;
+  `Event` is left whole. `hermetic` depends on neither the unix nor the
+  threads library, so a program that names only their types links none of
+  them.
 - The prelude is generated from the installed compiler's standard library,
   for OCaml 5.3 to 5.5. A value a newer compiler adds is refused as
   unreviewed until the policy reviews it.

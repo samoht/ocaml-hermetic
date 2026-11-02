@@ -187,16 +187,17 @@ let units sg =
       | _ -> None)
     sg
 
-(* The directories read: the standard library's, and the unix library's
-   beside it, which the compiler ships too. *)
+(* The directories read: the standard library's, and the unix and threads
+   libraries' beside it, which the compiler ships too. *)
 let dirs dir =
-  let unix = Filename.concat dir "unix" in
-  if Sys.file_exists unix && Sys.is_directory unix then [ dir; unix ]
-  else [ dir ]
+  dir
+  :: List.filter
+       (fun d -> Sys.file_exists d && Sys.is_directory d)
+       (List.map (Filename.concat dir) [ "unix"; "threads" ])
 
 (* Every unit in [dirs dir] that [Stdlib] does not name: its runtime
-   support, CamlinternalOO and the rest, Std_exit, Unix and UnixLabels, and
-   any unit a newer compiler adds, which the policy then reviews or refuses
+   support, CamlinternalOO and the rest, Std_exit, Unix, UnixLabels, Thread
+   and Event, and any unit a newer compiler adds, which the policy then reviews or refuses
    like any other module. *)
 let internal_units dir units =
   List.concat_map

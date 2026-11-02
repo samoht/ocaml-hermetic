@@ -2,17 +2,18 @@
 ; library and the policy in gen/policy.ml. The library is not wrapped: each
 ; unit is named Hermetic__X already, and Hermetic is a module of aliases to
 ; them, so that a program links only the units it uses. The restated Unix
-; is compiled against the interface of the compiler's unix library, but the
-; library does not depend on unix, which forces its link: a program that
-; names only Unix's types links none of it, and one that uses a value of
-; Unix names unix among its libraries, as it would without the prelude.
+; and the restated Thread and Event are compiled against the interfaces of
+; the compiler's unix and threads libraries, but the library depends on
+; neither, since both force their link: a program that names only their
+; types links none of them, and one that uses a value of theirs names the
+; library among its own, as it would without the prelude.
 
 (library
  (name hermetic)
  (public_name hermetic)
  (wrapped false)
  (flags
-  (:standard -I +unix)))
+  (:standard -I +unix -I +threads)))
 
 (include dune.inc)
 

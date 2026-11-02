@@ -69,6 +69,7 @@ let modules =
     "Effect.Shallow";
     "Either";
     "Ephemeron";
+    "Event";
     "Ephemeron.K1";
     "Ephemeron.K1.Bucket";
     "Ephemeron.K1.Make";
@@ -155,6 +156,7 @@ let modules =
     "Sys";
     "Sys.Immediate64";
     "Sys.Immediate64.Make";
+    "Thread";
     "Type";
     "Type.Id";
     "Uchar";
@@ -398,6 +400,10 @@ let kept =
       "runtime",
       "add add_seq clean clear copy find find_all find_opt length mem remove \
        replace replace_seq reset stats stats_alive" );
+    ( "Event",
+      "concurrency",
+      "always choose guard new_channel poll receive select send sync wrap \
+       wrap_abort" );
     ( "Filename",
       "pure",
       "basename check_suffix chop_extension chop_suffix chop_suffix_opt concat \
@@ -787,6 +793,11 @@ let kept =
        sigttin sigttou sigurg sigusr1 sigusr2 sigvtalrm sigwinch sigxcpu \
        sigxfsz unix win32 word_size" );
     ("Sys.Immediate64.Make", "constant", "repr");
+    ( "Thread",
+      "concurrency",
+      "exit id join select self set_current_thread_name \
+       set_uncaught_exception_handler sigmask wait_pid wait_signal \
+       wait_timed_read wait_timed_write yield" );
     ("Type.Id", "runtime", "make provably_equal uid");
     ( "Uchar",
       "pure",
@@ -830,6 +841,7 @@ let version_specific =
     "Printf.leprintf";
     "Format.lprintf";
     "Format.leprintf";
+    "Thread.set_current_thread_name";
     "Unix.sigwait";
     "Unix.unsetenv";
     "UnixLabels.sigwait";

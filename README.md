@@ -42,9 +42,10 @@ $ opam install hermetic
 ```
 
 It supports OCaml 5.3, 5.4 and 5.5. It does not depend on Eio, nor on any
-library it refuses: they are named in its messages only. Its `Unix` is
-compiled against the interface of the compiler's unix library, without
-depending on it (see [Unix](#unix)).
+library it refuses: they are named in its messages only. Its `Unix` and its
+`Thread` are compiled against the interfaces of the compiler's unix and
+threads libraries, without depending on them (see
+[Unix and threads](#unix-and-threads)).
 
 ## Setup
 
@@ -131,7 +132,7 @@ Some details of this setup matter:
   `Format`, `Hashtbl`, `Iarray`, `In_channel`, `Lexing`, `Marshal`,
   `MoreLabels`, `Obj`, `Out_channel`, `Parsing`, `Printexc`, `Printf`,
   `Random`, `Scanf`, `StdLabels`, `Stdlib`, `Stdlib_original`, `String`,
-  `StringLabels`, `Sys`, `Uchar`, `Unix`, `UnixLabels` and the
+  `StringLabels`, `Sys`, `Thread`, `Uchar`, `Unix`, `UnixLabels` and the
   `Stdlib__` units, those a compiler lacks aside, and the libraries the
   prelude declares empty (see [What it refuses](#what-it-refuses)). Rename
   the module, or name it again after the open through the unit dune gives
@@ -217,7 +218,8 @@ As `ambient`, what reaches the world without being handed it:
 - the standard output and error: `stdout`, `stderr`, `print_*`, `prerr_*`,
   `flush_all`, `Out_channel.stdout` and `Out_channel.stderr`,
   `Printf.printf` and `Printf.eprintf`, the standard formatters of `Format`
-  and every function that prints to them, `Printexc.print` and `Arg.usage`.
+  and every function that prints to them, `Printexc.print`,
+  `Thread.default_uncaught_exception_handler` and `Arg.usage`.
   Library code does not write to the process's standard channels:
   diagnostics go through Logs or Eio's `traceln`, which writes with the
   function the fiber's context holds, and data through a sink the code is
@@ -239,11 +241,13 @@ As `ambient`, what reaches the world without being handed it:
   descriptors, sockets and the network, processes and signals, the clock and
   the time zone, the environment, users and the host, and the standard
   descriptors;
-- the libraries that reach the system past Eio's capabilities: `Thread`,
-  `Event`, `Runtime_events`, `Dynlink`, `Eio_unix`, `Eio_posix`, `Eio_linux`,
-  `Eio_windows` and `Eio_main`, which the prelude declares empty. The types
-  of the Eio libraries are refused with them, only because `hermetic` does
-  not depend on Eio and so cannot restate them.
+- `Thread.create`, which spawns a thread outside Eio's domain manager, and
+  `Thread.delay`, which sleeps on the process's clock;
+- the libraries that reach the system past Eio's capabilities:
+  `Runtime_events`, `Dynlink`, `Eio_unix`, `Eio_posix`, `Eio_linux`,
+  `Eio_windows` and `Eio_main`, which the prelude declares empty. Their types
+  are refused with them, only because `hermetic` does not depend on Eio and
+  so cannot restate the Eio libraries.
 
 As `unsafe`, what can forge memory or a value of any type: `Obj`,
 `CamlinternalMod`, `CamlinternalOO`, the readers of `Marshal` and
@@ -283,7 +287,7 @@ program can set it too. So `Sys.runtime_parameters` and
 `Domain.recommended_domain_count` are refused, while `Gc.get`,
 `Printexc.backtrace_status` and `Hashtbl.is_randomized` are kept.
 
-## Unix
+## Unix and threads
 
 The prelude restates `Unix` and `UnixLabels` as it restates the standard
 library. Every type stays, equal to the original with its constructors and
@@ -297,14 +301,23 @@ conversions between a channel and its descriptor, which perform no I/O.
 Every other value is refused as `ambient`, and a value a newer compiler adds
 is refused as `unreviewed` until it is reviewed.
 
-The unix library forces its own link: a program that names it among its
-libraries links all of it, and the standard library modules it uses, whether
-it uses a value of it or not. So `hermetic` does not depend on it. A program
-that uses a value of `Unix`, or matches on `Unix_error`, names `unix` among
-its libraries, as it would without the prelude. A file that names only
-`Unix`'s types needs the interfaces they are declared in, but none of its
-code: `(flags (:standard -I +unix))` finds them without linking anything.
-Without either, OCaml 5 finds them itself and prints the
+It restates the threads library's `Thread` too: every type stays, so a
+signature can name `Thread.t`, and so do the values that act only on the
+thread they are given or the current one (`self`, `id`, `join`, `yield` and
+the rest). `Thread.create` and `Thread.delay` are refused, since they bypass
+Eio's domain manager and its clock. `Event` refuses nothing, since its values
+work only on the channels they are handed, so the prelude does not declare
+it, and a library's own module named `Event` stays its own.
+
+The unix and threads libraries force their own link: a program that names
+one among its libraries links all of it, and the standard library modules it
+uses, whether it uses a value of it or not. So `hermetic` depends on
+neither. A program that uses a value of `Unix` or `Thread`, or matches on
+`Unix_error`, names `unix` or `threads` among its libraries, as it would
+without the prelude. A file that names only their types needs the
+interfaces they are declared in, but none of their code:
+`(flags (:standard -I +unix -I +threads))` finds them without linking
+anything. Without that, OCaml 5 finds them itself and prints the
 `ocaml_deprecated_auto_include` alert.
 
 ## Eio code

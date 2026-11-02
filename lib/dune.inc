@@ -73,6 +73,8 @@
   hermetic__StringLabels.mli
   hermetic__Sys.ml
   hermetic__Sys.mli
+  hermetic__Thread.ml
+  hermetic__Thread.mli
   hermetic__Uchar.ml
   hermetic__Uchar.mli
   hermetic__Unix.ml
@@ -84,6 +86,7 @@
  )
  (deps
   (glob_files %{ocaml_where}/*.cmi)
-  (glob_files %{ocaml_where}/unix/*.cmi))
+  (glob_files %{ocaml_where}/unix/*.cmi)
+  (glob_files %{ocaml_where}/threads/*.cmi))
  (action
   (run %{exe:gen/gen.exe} %{ocaml_where} .)))
