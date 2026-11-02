@@ -258,7 +258,7 @@ let standard_output =
        print_int print_float print_char print_bool print_space print_cut \
        print_break force_newline print_if_newline print_flush print_newline \
        open_tbox close_tbox set_tab print_tab print_tbreak open_stag \
-       close_stag"
+       close_stag get_formatter_out_functions get_formatter_output_functions"
 
 let the_process =
   [

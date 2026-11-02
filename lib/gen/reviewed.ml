@@ -429,7 +429,6 @@ let kept =
        flush_symbolic_output_buffer format_text formatter_of_buffer \
        formatter_of_out_channel formatter_of_out_functions \
        formatter_of_symbolic_output_buffer fprintf get_ellipsis_text \
-       get_formatter_out_functions get_formatter_output_functions \
        get_formatter_stag_functions get_geometry get_margin get_mark_tags \
        get_max_boxes get_max_indent get_print_tags get_stdbuf \
        get_str_formatter get_symbolic_output_buffer ifprintf ikfprintf \
