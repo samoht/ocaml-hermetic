@@ -267,7 +267,9 @@ As `ambient`, what reaches an Eio capability without being handed it:
   processes they spawn, wait for or signal, and the standard descriptors;
   and those that make a descriptor the code was not handed, or that turn
   one into a way to the network or the clock: `socket`, `socketpair`,
-  `pipe`, `listen` and `setsockopt_float`;
+  `pipe`, `listen`, `setsockopt_float` and `setsockopt_optint`; and
+  `umask`, which changes the mode of every file the executable creates
+  later;
 - `Thread.delay`, `Thread.select`, `Thread.wait_timed_read` and
   `Thread.wait_timed_write`, which wait on the clock, and `Thread.wait_pid`,
   which waits for a child process;
@@ -344,9 +346,12 @@ is a value that makes a descriptor the code was not handed: `socket`,
 `socketpair` and `pipe`. A fresh socket reaches the network, since `listen`
 on a socket that is not bound binds it to a port on every interface, and
 the times `fstat` reads of a fresh socket or pipe are the clock's. `listen`
-is refused for the same reason, and `setsockopt_float`, whose only options,
+is refused for the same reason, `setsockopt_float`, whose only options,
 `SO_RCVTIMEO` and `SO_SNDTIMEO`, make a receive or a send a timed wait on
-the clock. The rest stays: I/O on a descriptor, a socket or a process the
+the clock, and `setsockopt_optint`, whose only option, `SO_LINGER`, makes
+`close` one. `umask` is refused for the reason `chdir` is: it changes
+state of the whole process, the mode of every file the executable creates
+later. The rest stays: I/O on a descriptor, a socket or a process the
 code was handed, `accept` on a listening socket it was handed,
 the environment, the facts of the process, its user and its
 host, the time zone, the signal masks and `_exit`, and the pure values, such

@@ -345,6 +345,7 @@ Unix.sendto: ambient
 Unix.sendto_substring: ambient
 Unix.setitimer: ambient
 Unix.setsockopt_float: ambient
+Unix.setsockopt_optint: ambient
 Unix.sleep: ambient
 Unix.sleepf: ambient
 Unix.socket: ambient
@@ -357,6 +358,7 @@ Unix.symlink: ambient
 Unix.system: ambient
 Unix.time: ambient
 Unix.truncate: ambient
+Unix.umask: ambient
 Unix.unlink: ambient
 Unix.unsafe_environment: kept
 Unix.unsafe_getenv: kept
@@ -421,6 +423,7 @@ UnixLabels.sendto: ambient
 UnixLabels.sendto_substring: ambient
 UnixLabels.setitimer: ambient
 UnixLabels.setsockopt_float: ambient
+UnixLabels.setsockopt_optint: ambient
 UnixLabels.sleep: ambient
 UnixLabels.sleepf: ambient
 UnixLabels.socket: ambient
@@ -433,6 +436,7 @@ UnixLabels.symlink: ambient
 UnixLabels.system: ambient
 UnixLabels.time: ambient
 UnixLabels.truncate: ambient
+UnixLabels.umask: ambient
 UnixLabels.unlink: ambient
 UnixLabels.unsafe_environment: kept
 UnixLabels.unsafe_getenv: kept

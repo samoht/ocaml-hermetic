@@ -432,6 +432,17 @@ let unix m =
          "Sets a timeout on a socket, which makes a receive or a send a timed \
           wait on the clock: take Eio.Stdenv.clock as an argument and use \
           Eio.Time.with_timeout.")
+  @ each m "setsockopt_optint"
+      (ambient
+         "Sets SO_LINGER on a socket, which makes close a timed wait on the \
+          clock: take Eio.Stdenv.clock as an argument and use \
+          Eio.Time.with_timeout.")
+  @ each m "umask"
+      (ambient
+         "Changes the process's file-creation mask, which sets the mode of \
+          every file the executable creates later: take Eio.Stdenv.fs or \
+          Eio.Stdenv.cwd (an Eio.Path) as an argument and give each file its \
+          ~perm.")
   @ each m "getcwd"
       (ambient
          "Reads the process's working directory: take Eio.Stdenv.cwd as an \

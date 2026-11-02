@@ -810,10 +810,10 @@ let kept =
        isatty lockf lseek map_file out_channel_of_descr process_full_pid \
        process_in_pid process_out_pid process_pid read read_bigarray readdir \
        recv recvfrom rewinddir send send_substring set_close_on_exec \
-       set_nonblock setsockopt setsockopt_int setsockopt_optint shutdown \
-       shutdown_connection single_write single_write_bigarray \
-       single_write_substring tcdrain tcflow tcflush tcgetattr tcsendbreak \
-       tcsetattr write write_bigarray write_substring" );
+       set_nonblock setsockopt setsockopt_int shutdown shutdown_connection \
+       single_write single_write_bigarray single_write_substring tcdrain \
+       tcflow tcflush tcgetattr tcsendbreak tcsetattr write write_bigarray \
+       write_substring" );
     ("Unix.LargeFile", "given", "fstat ftruncate lseek");
     ( "Unix",
       "process",
@@ -821,7 +821,7 @@ let kept =
        getgrnam gethostname getlogin getpid getppid getpwnam getpwuid getuid \
        has_symlink initgroups localtime mktime nice pause putenv setgid \
        setgroups setsid setuid sigpending sigprocmask sigsuspend sigwait times \
-       umask unsetenv" );
+       unsetenv" );
     ( "UnixLabels",
       "pure",
       "domain_of_sockaddr error_message gmtime inet6_addr_any \
@@ -837,10 +837,10 @@ let kept =
        isatty lockf lseek map_file out_channel_of_descr process_full_pid \
        process_in_pid process_out_pid process_pid read read_bigarray readdir \
        recv recvfrom rewinddir send send_substring set_close_on_exec \
-       set_nonblock setsockopt setsockopt_int setsockopt_optint shutdown \
-       shutdown_connection single_write single_write_bigarray \
-       single_write_substring tcdrain tcflow tcflush tcgetattr tcsendbreak \
-       tcsetattr write write_bigarray write_substring" );
+       set_nonblock setsockopt setsockopt_int shutdown shutdown_connection \
+       single_write single_write_bigarray single_write_substring tcdrain \
+       tcflow tcflush tcgetattr tcsendbreak tcsetattr write write_bigarray \
+       write_substring" );
     ("UnixLabels.LargeFile", "given", "fstat ftruncate lseek");
     ( "UnixLabels",
       "process",
@@ -848,7 +848,7 @@ let kept =
        getgrnam gethostname getlogin getpid getppid getpwnam getpwuid getuid \
        has_symlink initgroups localtime mktime nice pause putenv setgid \
        setgroups setsid setuid sigpending sigprocmask sigsuspend sigwait times \
-       umask unsetenv" );
+       unsetenv" );
     ("Weak", "runtime", "blit check create fill get get_copy length set");
     ( "Weak.Make",
       "runtime",
