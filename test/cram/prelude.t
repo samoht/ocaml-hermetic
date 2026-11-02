@@ -107,11 +107,15 @@ Entropy from the system, which would seed a generator or a hash table.
   $ put random_state_self 'let s = Random.State.make_self_init ()'
   $ put table_randomize 'let () = Hashtbl.randomize ()'
 
-The libraries that reach the system past Eio's capabilities: the prelude
-declares them empty, without depending on them, so each of their names is
-unbound.
+Unix, which the prelude restates as it restates the standard library: its
+types stay, and what reaches the world is refused (see unix.t).
 
-  $ put past_unix 'let home = Unix.getenv "HOME"'
+  $ put unix_getenv 'let home = Unix.getenv "HOME"'
+
+The libraries that reach the system past Eio's capabilities and that ship
+apart from the compiler: the prelude declares them empty, without depending
+on them, so each of their names is unbound.
+
   $ put past_eio_main 'let run = Eio_main.run'
   $ put past_eio_unix 'let () = Eio_unix.sleep 1.'
 
@@ -196,7 +200,6 @@ profile as in the development one.
   output_stdout: Hermetic.stdout (ambient)
   past_eio_main: module Hermetic.Eio_main (error)
   past_eio_unix: module Hermetic.Eio_unix (error)
-  past_unix: module Hermetic.Unix (error)
   proc_arg: Hermetic.Arg.parse (ambient)
   proc_at_exit: Hermetic.at_exit (ambient)
   proc_catch: Hermetic.Printexc.catch (ambient)
@@ -209,6 +212,7 @@ profile as in the development one.
   random_self_init: Hermetic.Random.self_init (ambient)
   random_state_self: Hermetic.Random.State.make_self_init (ambient)
   table_randomize: Hermetic.Hashtbl.randomize (ambient)
+  unix_getenv: Hermetic.Unix.getenv (ambient)
   unsafe_array_get: Hermetic.Array.unsafe_get (unsafe)
   unsafe_bigarray: Hermetic.Bigarray.Array1.unsafe_get (unsafe)
   unsafe_bytes_get: Hermetic.Bytes.unsafe_get (unsafe)
