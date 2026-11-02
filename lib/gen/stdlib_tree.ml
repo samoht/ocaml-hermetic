@@ -23,6 +23,7 @@ type t = {
   values : string list;
   modules : (string * node) list;
   in_stdlib : string list;
+  channels : string list;
 }
 
 (* The top-level name of a unit: [Stdlib__Sys] is [Sys]. *)
@@ -193,6 +194,99 @@ let internal_units dir =
   |> List.filter_map unit_of_file
   |> List.filter (String.starts_with ~prefix:"Camlinternal")
 
+(* {1 Values that hand out a channel} *)
+
+let channel_types = [ "in_channel"; "out_channel"; "formatter" ]
+
+(* Whether [ty] is a closure whose last result is [unit]: an output
+   function. *)
+let output_closure env ty =
+  let rec result ty =
+    match Types.get_desc (Ctype.expand_head env ty) with
+    | Types.Tarrow (_, _, r, _) -> result r
+    | Types.Tconstr (p, [], _) -> Path.same p Predef.path_unit
+    | _ -> false
+  in
+  match Types.get_desc (Ctype.expand_head env ty) with
+  | Types.Tarrow (_, _, r, _) -> result r
+  | _ -> false
+
+(* Whether [ty], expanded, is a channel, a formatter, or a record or a tuple
+   that holds an output closure, such as [Format.formatter_out_functions]. *)
+let channel_like env ty =
+  match Types.get_desc ty with
+  | Types.Tconstr (p, _, _) -> (
+      List.mem (Path.last p) channel_types
+      ||
+      match (Env.find_type p env).type_kind with
+      | Types.Type_record (fields, _) ->
+          List.exists
+            (fun (l : Types.label_declaration) -> output_closure env l.ld_type)
+            fields
+      | _ -> false
+      | exception Not_found -> false)
+  | Types.Ttuple _ ->
+      let found = ref false in
+      Btype.iter_type_expr
+        (fun t -> if output_closure env t then found := true)
+        ty;
+      !found
+  | _ -> false
+
+(* [(gives, takes)]: whether a channel-like type occurs in a positive
+   position of [ty], so that the value hands one out (as a result, or to a
+   callback), and whether one occurs in a negative position, so that the
+   value takes one as an argument. *)
+let polarities env ty =
+  let gives = ref false and takes = ref false in
+  let seen = Hashtbl.create 16 in
+  let rec go pos ty =
+    let ty = Ctype.expand_head env ty in
+    let key = (Types.get_id ty, pos) in
+    if not (Hashtbl.mem seen key) then (
+      Hashtbl.add seen key ();
+      if channel_like env ty then if pos then gives := true else takes := true;
+      match Types.get_desc ty with
+      | Types.Tarrow (_, a, r, _) ->
+          go (not pos) a;
+          go pos r
+      | _ -> Btype.iter_type_expr (go pos) ty)
+  in
+  go true ty;
+  (!gives, !takes)
+
+(* The values of the signature at [prefix] whose type hands out a channel,
+   a formatter or output closures and takes none, by their path as {!Policy}
+   spells it. An alias in [Stdlib] itself is followed to the unit it names;
+   an alias below it is skipped, since the module it names is read on its
+   own. *)
+let rec channels_of env prefix mty =
+  let join n = if prefix = "" then n else prefix ^ "." ^ n in
+  match mty with
+  | Types.Mty_alias p -> channels_of env prefix (Env.find_module p env).md_type
+  | _ -> (
+      match Mtype.scrape env mty with
+      | Types.Mty_signature sg ->
+          let env = Env.add_signature sg env in
+          List.concat_map
+            (function
+              | Types.Sig_value (id, vd, Types.Exported) -> (
+                  match polarities env vd.Types.val_type with
+                  | true, false -> [ join (Ident.name id) ]
+                  | _ -> [])
+              | Types.Sig_module (id, _, md, _, Types.Exported) -> (
+                  match md.Types.md_type with
+                  | Types.Mty_alias p when prefix = "" ->
+                      channels_of env (Ident.name id)
+                        (Env.find_module p env).md_type
+                  | Types.Mty_alias _ -> []
+                  | mty -> channels_of env (join (Ident.name id)) mty)
+              | _ -> [])
+            sg
+      | Types.Mty_functor (Types.Named (Some id, pty), res) ->
+          channels_of (Env.add_module id Types.Mp_present pty env) prefix res
+      | _ -> [])
+
 let read dir =
   Clflags.no_std_include := true;
   Clflags.include_dirs := [ dir ];
@@ -223,7 +317,16 @@ let read dir =
         (fun u -> (u, find (Longident.Lident u) units))
         (internal_units dir)
   in
+  let channels =
+    channels_of env "" stdlib.md_type
+    @ List.concat_map
+        (fun u ->
+          channels_of env u
+            (snd (Env.find_module_by_name (Longident.Lident u) env)).md_type)
+        (internal_units dir)
+  in
   {
+    channels;
     types =
       List.filter_map (function Type (t, n) -> Some (t, n) | _ -> None) items;
     values = List.filter_map (function Value v -> Some v | _ -> None) items;

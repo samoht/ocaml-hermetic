@@ -6,10 +6,11 @@
 (** The names of the installed standard library, read from its compiled
     interfaces.
 
-    Only names are read: the values, the submodules and the functors of each
-    module, and the names and arities of the types of [Stdlib] itself. No type
-    expression is read, since the preludes restate a refused value with a type
-    of their own. *)
+    Names are read: the values, the submodules and the functors of each module,
+    and the names and arities of the types of [Stdlib] itself. The type of a
+    value is read only to find the values that hand out a channel (see
+    {!field-channels}), since the prelude restates a refused value with a type
+    of its own. *)
 
 type node =
   | Sig of item list  (** A signature, its items in declaration order. *)
@@ -49,6 +50,12 @@ type t = {
           the rest), in that order. *)
   in_stdlib : string list;
       (** The names in {!field-modules} that [Stdlib] names. *)
+  channels : string list;
+      (** The values, by their path as {!Policy} spells it, whose type hands out
+          a channel, a formatter, or a record or a tuple of output closures (a
+          closure whose result is [unit]), as a result or to a callback, and
+          takes none as an argument. Such a value can reach a standard channel
+          without being handed it. *)
 }
 
 val pp : Format.formatter -> t -> unit

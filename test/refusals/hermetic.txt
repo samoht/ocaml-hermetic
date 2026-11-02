@@ -80,6 +80,7 @@ Format.force_newline: ambient
 Format.get_err_formatter: ambient
 Format.get_formatter_out_functions: ambient
 Format.get_formatter_output_functions: ambient
+Format.get_formatter_stag_functions: ambient
 Format.get_std_formatter: ambient
 Format.leprintf: ambient
 Format.lprintf: ambient

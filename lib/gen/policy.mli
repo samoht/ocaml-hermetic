@@ -65,6 +65,9 @@ type reviewed = {
   kept : (string * string list) list;
       (** The values each reviewed module keeps, by module path, [""] for the
           top level of [Stdlib]. *)
+  channels : string list;
+      (** The paths of the kept values in {!Stdlib_tree.field-channels},
+          reviewed as making their channel from what they are handed. *)
 }
 (** What the policy has reviewed. A value or a module that is neither refused
     nor reviewed is refused as {!Unreviewed}. *)

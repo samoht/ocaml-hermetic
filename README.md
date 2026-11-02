@@ -258,7 +258,12 @@ refuse it. A module whose contents the generator cannot open, such as a
 generative functor, is removed and reported as unreviewed. The package's
 upper bound on the compiler moves with each release, after a review. The test
 suite runs the generator with `--strict` in the development profile, which
-fails instead and lists the names to review.
+fails instead and lists the names to review. It also fails on a kept value
+whose type hands out a channel, a formatter, or a record or a tuple of output
+closures, as a result or to a callback, without taking one as an argument:
+such a value can reach a standard channel, so it is refused, or reviewed as
+making what it hands out from what it is handed, as `Format.formatter_of_buffer`
+does.
 
 Adding a refusal can break a library that builds today, so it is a breaking
 change. Keeping a value the prelude refused, or widening the bound on the

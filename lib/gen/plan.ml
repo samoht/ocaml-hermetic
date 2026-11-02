@@ -250,3 +250,38 @@ let mistakes ?(refusals = Policy.refusals)
       if Stdlib_tree.mem tree path || List.mem path version_specific then None
       else Some path)
     refusals
+
+(* A value is kept when no refusal names it or a module above it, and the
+   policy keeps it, by an entry or by the table of reviewed names. *)
+let channels ?(refusals = Policy.refusals) ?(reviewed = Policy.reviewed)
+    (tree : Stdlib_tree.t) =
+  let refused path =
+    List.exists
+      (fun (p, e) ->
+        match e with
+        | Policy.Value _ | Policy.Retyped _ -> p = path
+        | Policy.Module _ -> String.starts_with ~prefix:(p ^ ".") path
+        | Policy.Keep _ -> false)
+      refusals
+  in
+  let kept path =
+    match List.assoc_opt path refusals with
+    | Some (Policy.Keep _) -> true
+    | _ -> (
+        let m, v =
+          match String.rindex_opt path '.' with
+          | Some i ->
+              ( String.sub path 0 i,
+                String.sub path (i + 1) (String.length path - i - 1) )
+          | None -> ("", path)
+        in
+        (not (contains ~sub:"unsafe" v))
+        &&
+        match List.assoc_opt m reviewed.kept with
+        | Some names -> List.mem v names
+        | None -> false)
+  in
+  List.filter
+    (fun path ->
+      (not (refused path)) && kept path && not (List.mem path reviewed.channels))
+    tree.channels

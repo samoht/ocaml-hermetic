@@ -258,7 +258,8 @@ let standard_output =
        print_int print_float print_char print_bool print_space print_cut \
        print_break force_newline print_if_newline print_flush print_newline \
        open_tbox close_tbox set_tab print_tab print_tbreak open_stag \
-       close_stag get_formatter_out_functions get_formatter_output_functions"
+       close_stag get_formatter_out_functions get_formatter_output_functions \
+       get_formatter_stag_functions"
 
 let the_process =
   [
@@ -464,7 +465,11 @@ let unreviewed path =
          else "Stdlib." ^ path);
   }
 
-type reviewed = { modules : string list; kept : (string * string list) list }
+type reviewed = {
+  modules : string list;
+  kept : (string * string list) list;
+  channels : string list;
+}
 
 let reviewed =
   {
@@ -477,6 +482,7 @@ let reviewed =
           | Some old -> (path, old @ names) :: List.remove_assoc path acc
           | None -> (path, names) :: acc)
         [] Reviewed.kept;
+    channels = List.map fst Reviewed.channels;
   }
 
 let version_specific = Reviewed.version_specific

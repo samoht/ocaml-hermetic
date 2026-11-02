@@ -7,7 +7,9 @@
 
    gen STDLIB DIR        writes the prelude's files into DIR.
    gen --strict STDLIB   checks that the policy has reviewed every name of
-                         STDLIB and names nothing STDLIB lacks but should have.
+                         STDLIB, names nothing STDLIB lacks but should have,
+                         and keeps no value that hands out a channel without
+                         taking one, unless it is reviewed as such.
    gen --review STDLIB   prints the names of STDLIB the policy keeps, to merge
                          into reviewed.ml.
    gen --absent STDLIB   prints the refusals whose path STDLIB lacks.
@@ -55,7 +57,12 @@ let strict stdlib =
   let tree = Stdlib_tree.read stdlib in
   let _, unreviewed = Plan.v tree in
   let mistakes = Plan.mistakes tree in
+  let channels = Plan.channels tree in
   List.iter (Printf.eprintf "Stdlib.%s is not reviewed\n") unreviewed;
+  List.iter
+    (Printf.eprintf
+       "Stdlib.%s is kept, but hands out a channel without taking one\n")
+    channels;
   List.iter
     (Printf.eprintf "%s is refused, but no supported compiler has it\n")
     mistakes;
@@ -63,7 +70,12 @@ let strict stdlib =
     prerr_endline
       "Review each name: refuse it in lib/gen/policy.ml or keep it in \
        lib/gen/reviewed.ml.";
-  if unreviewed <> [] || mistakes <> [] then exit 1
+  if channels <> [] then
+    prerr_endline
+      "Refuse each value that hands out a channel in lib/gen/policy.ml, or \
+       review it in Reviewed.channels if it makes the channel from what it is \
+       handed.";
+  if unreviewed <> [] || mistakes <> [] || channels <> [] then exit 1
 
 (* The names the policy keeps, one per line: [M path] for a module, [V path
    name] for a value or a class. A module the policy refuses as a whole is

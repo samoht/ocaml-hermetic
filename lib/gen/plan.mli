@@ -77,3 +77,14 @@ val mistakes :
 (** [mistakes tree] is the refusal paths that [tree] lacks and that no supported
     compiler is known to lack: a typo such as ["Sys.getevn"], which would
     otherwise refuse nothing and keep the real value. *)
+
+val channels :
+  ?refusals:(string * Policy.entry) list ->
+  ?reviewed:Policy.reviewed ->
+  Stdlib_tree.t ->
+  string list
+(** [channels tree] is the values of {!Stdlib_tree.field-channels} that the
+    policy keeps and has not reviewed in {!Policy.field-channels}: each can
+    reach a standard channel without being handed it, so it must be refused or
+    reviewed. [refusals] defaults to {!Policy.refusals} and [reviewed] to
+    {!Policy.reviewed}. *)
