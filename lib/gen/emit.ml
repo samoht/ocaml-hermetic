@@ -37,8 +37,9 @@ let comment = Doc.comment
 (* {1 Units} *)
 
 (* The top-level modules that have a unit of their own: every one the policy
-   names. A restated module the policy does not name, which only a newer
-   compiler has, goes to the overflow unit. *)
+   names, by a refusal or as an alias of restated modules. A restated module
+   the policy does not name, which only a newer compiler has, goes to the
+   overflow unit. *)
 let units =
   let heads =
     List.filter_map
@@ -48,7 +49,7 @@ let units =
         else None)
       Policy.refusals
   in
-  List.sort_uniq String.compare heads
+  List.sort_uniq String.compare (heads @ Policy.aliases)
 
 let unit_path m =
   if List.mem m units then unit_module m else unit_module overflow ^ "." ^ m

@@ -49,6 +49,11 @@ val shadowed : (string * string) list
     such as [Unix], which the prelude declares empty, and the message of its
     [ambient] alert. *)
 
+val aliases : string list
+(** The top-level modules that the prelude restates only because they alias
+    modules it restates, such as [StdLabels]. Each has a unit of its own, as the
+    modules {!refusals} names do. *)
+
 val name : string
 (** The prelude's module name, ["Hermetic"]. *)
 

@@ -65,6 +65,8 @@
   hermetic__Refused.mli
   hermetic__Scanf.ml
   hermetic__Scanf.mli
+  hermetic__StdLabels.ml
+  hermetic__StdLabels.mli
   hermetic__String.ml
   hermetic__String.mli
   hermetic__StringLabels.ml

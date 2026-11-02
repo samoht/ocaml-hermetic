@@ -536,6 +536,9 @@ let shadowed =
          arguments from the executable's Eio_main.run." );
     ]
 
+(* StdLabels refuses nothing of its own: it is restated because it aliases
+   ArrayLabels and the other restated modules. *)
+let aliases = [ "StdLabels" ]
 let name = "Hermetic"
 
 let doc =

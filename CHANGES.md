@@ -18,5 +18,6 @@ Initial release.
 - The prelude is generated from the installed compiler's standard library,
   for OCaml 5.3 to 5.5. A value a newer compiler adds is refused as
   unreviewed until the policy reviews it.
-- Each restated module is a unit of its own, so a program links only the
-  units it uses.
+- Each restated module the policy names is a unit of its own, `StdLabels`
+  included, so a program links only the units it uses. A module that only a
+  newer compiler has goes in `Hermetic__Unreviewed` until it is reviewed.
