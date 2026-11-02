@@ -177,6 +177,18 @@ CONSOLE_CAST names.
   $ put past_console_recording 'let start = Console__Recording.start'
   $ put past_console_alias 'module R = Console__.Recording'
 
+A unit that hands out Obj.magic, or a fork of Format with its standard
+formatter, is declared empty the same way: Base__Obj_local, Odoc's
+Odoc_document__Compat, which includes Format, and ocamlformat's fork of
+Format. So are the units of Eio's backends that Eio adds after 1.6.
+
+  $ put past_base_obj_local 'let cast x : int = Base__Obj_local.magic x'
+  $ put past_odoc_compat 'let () = Odoc_document__Compat.Format.printf "x"'
+  $ put past_ocamlformat_format 'let () = Ocamlformat_format__Format_.printf "x"'
+  $ put past_ocamlformat_format_main 'let () = Ocamlformat_format.Format_.printf "x"'
+  $ put past_eio_unix_system_info 'let info = Eio_unix__System_info.get'
+  $ put past_eio_windows_process 'let spawn = Eio_windows__Process.spawn'
+
 What can forge memory or a value of any type: the escapes from the type
 system, and every accessor that skips the check its safe version makes.
 
@@ -267,6 +279,7 @@ profile as in the development one.
   past_base_alias: module Hermetic.Base__ (error)
   past_base_import: module Hermetic.Base__Import (error)
   past_base_import0: module Hermetic.Base__Import0 (error)
+  past_base_obj_local: module Hermetic.Base__Obj_local (error)
   past_console_alias: module Hermetic.Console__ (error)
   past_console_recording: module Hermetic.Console__Recording (error)
   past_console_tty: module Hermetic.Console_tty (error)
@@ -296,12 +309,17 @@ profile as in the development one.
   past_eio_unix_private: module Hermetic.Eio_unix__Private (error)
   past_eio_unix_process: module Hermetic.Eio_unix__Process (error)
   past_eio_unix_pty: module Hermetic.Eio_unix__Pty (error)
+  past_eio_unix_system_info: module Hermetic.Eio_unix__System_info (error)
   past_eio_unix_thread_pool: module Hermetic.Eio_unix__Thread_pool (error)
   past_eio_windows_alias: module Hermetic.Eio_windows__ (error)
+  past_eio_windows_process: module Hermetic.Eio_windows__Process (error)
   past_fmt_tty: module Hermetic.Fmt_tty (error)
   past_iomux: module Hermetic.Iomux (error)
   past_iomux_util: module Hermetic.Iomux__Util (error)
   past_mtime_clock: module Hermetic.Mtime_clock (error)
+  past_ocamlformat_format: module Hermetic.Ocamlformat_format__Format_ (error)
+  past_ocamlformat_format_main: module Hermetic.Ocamlformat_format (error)
+  past_odoc_compat: module Hermetic.Odoc_document__Compat (error)
   past_ptime_clock: module Hermetic.Ptime_clock (error)
   past_shadow_stdlib: module Hermetic.Shadow_stdlib (error)
   past_sysrandom: module Hermetic.Bytesrw_sysrandom (error)
