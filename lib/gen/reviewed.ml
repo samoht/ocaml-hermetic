@@ -810,9 +810,8 @@ let kept =
     ("Sys.Immediate64.Make", "constant", "repr");
     ( "Thread",
       "concurrency",
-      "create exit id join select self set_current_thread_name \
-       set_uncaught_exception_handler sigmask wait_pid wait_signal \
-       wait_timed_read wait_timed_write yield" );
+      "create exit id join self set_current_thread_name \
+       set_uncaught_exception_handler sigmask wait_signal yield" );
     ("Type.Id", "runtime", "make provably_equal uid");
     ( "Uchar",
       "pure",

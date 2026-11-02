@@ -382,11 +382,21 @@ let unix m =
 (* {1 Thread: its types and Event stay, what bypasses a capability is
    refused} *)
 
+let timed_waits =
+  "Waits with a timeout on the clock: take Eio.Stdenv.clock as an argument and \
+   use Eio.Time.with_timeout."
+
 let threads =
   [
     ("Thread.delay", ambient waits);
-    ("Thread.default_uncaught_exception_handler", ambient (writes "error"));
+    ( "Thread.wait_pid",
+      ambient
+        "Waits for a child process: take Eio.Stdenv.process_mgr as an argument \
+         and use Eio.Process.await." );
   ]
+  @ each "Thread" "select wait_timed_read wait_timed_write"
+      (ambient timed_waits)
+  @ [ ("Thread.default_uncaught_exception_handler", ambient (writes "error")) ]
 
 let refusals =
   unsafe_refusals @ environment @ files @ standard_input @ standard_output
