@@ -83,6 +83,7 @@ The standard input, output and error, which the code was not handed.
   $ put output_format_stag_functions 'let () = let f = Format.get_formatter_stag_functions () in f.print_open_stag (Format.String_tag "x")'
   $ put output_flush 'let () = flush_all ()'
   $ put output_do_at_exit 'let () = do_at_exit ()'
+  $ put output_domain_at_exit 'let () = !do_domain_local_at_exit ()'
   $ put output_format_set_output 'let capture b = Format.set_formatter_output_functions (Buffer.add_substring b) ignore'
   $ put output_format_set_out_channel 'let redirect oc = Format.set_formatter_out_channel oc'
   $ put output_format_set_max_boxes 'let () = Format.set_max_boxes 2'
@@ -256,6 +257,7 @@ profile as in the development one.
   input_stdin: Hermetic.stdin (ambient)
   named: Hermetic.Sys.file_exists (builds)
   output_do_at_exit: Hermetic.do_at_exit (ambient)
+  output_domain_at_exit: Hermetic.do_domain_local_at_exit (ambient)
   output_flush: Hermetic.flush_all (ambient)
   output_format: Hermetic.Format.printf (ambient)
   output_format_get_margin: Hermetic.Format.get_margin (ambient)
