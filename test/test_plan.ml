@@ -187,7 +187,9 @@ let test_compiles () =
     match Sys.getenv_opt "OCAMLC" with Some c -> c | None -> "ocamlc"
   in
   let p, _ = plan (without [ "Classy" ] (Lazy.force tree)) in
-  let dir = Filename.temp_dir "hermetic" "fake" in
+  let dir = Filename.temp_file "hermetic" "fake" in
+  Sys.remove dir;
+  Sys.mkdir dir 0o700;
   List.iter
     (fun (name, contents) ->
       Out_channel.with_open_bin (Filename.concat dir name) (fun oc ->

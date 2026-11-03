@@ -17,6 +17,8 @@
   hermetic__Bytes.mli
   hermetic__BytesLabels.ml
   hermetic__BytesLabels.mli
+  hermetic__CamlinternalAtomic.ml
+  hermetic__CamlinternalAtomic.mli
   hermetic__CamlinternalFormat.ml
   hermetic__CamlinternalFormat.mli
   hermetic__CamlinternalFormatBasics.ml
@@ -63,6 +65,8 @@
   hermetic__Out_channel.mli
   hermetic__Parsing.ml
   hermetic__Parsing.mli
+  hermetic__Pervasives.ml
+  hermetic__Pervasives.mli
   hermetic__Printexc.ml
   hermetic__Printexc.mli
   hermetic__Printf.ml
@@ -75,6 +79,8 @@
   hermetic__Scanf.mli
   hermetic__StdLabels.ml
   hermetic__StdLabels.mli
+  hermetic__Stream.ml
+  hermetic__Stream.mli
   hermetic__String.ml
   hermetic__String.mli
   hermetic__StringLabels.ml
@@ -83,6 +89,8 @@
   hermetic__Sys.mli
   hermetic__Thread.ml
   hermetic__Thread.mli
+  hermetic__ThreadUnix.ml
+  hermetic__ThreadUnix.mli
   hermetic__Uchar.ml
   hermetic__Uchar.mli
   hermetic__Unix.ml

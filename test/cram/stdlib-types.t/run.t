@@ -80,10 +80,10 @@ for each source file, which does not open the prelude, avoids both.
   $ ocamlc -I bare -c consumer/inferred.ml; echo "exit $?"
   exit 0
   $ echo 'let _ = Digest.to_hex Bare.named' > consumer/named.ml
-  $ ocamlc -I bare -c consumer/named.ml 2>&1 | tr -d '"' | grep -o 'Hermetic.Digest.t is abstract'
+  $ ocamlc -I bare -c consumer/named.ml 2>&1 | sed 's/"//g; s/Hermetic__Refused\.//g' | grep -o 'Hermetic.Digest.t is abstract'
   Hermetic.Digest.t is abstract
   $ echo 'let _ = Bare.signal = Sys.Signal_ignore' > consumer/constructor.ml
-  $ ocamlc -I bare -c consumer/constructor.ml 2>&1 | tr -d '"' | grep -o 'Hermetic.Sys.signal_behavior is abstract'
+  $ ocamlc -I bare -c consumer/constructor.ml 2>&1 | sed 's/"//g; s/Hermetic__Refused\.//g' | grep -o 'Hermetic.Sys.signal_behavior is abstract'
   Hermetic.Sys.signal_behavior is abstract
   $ ocamlc -I bare -I "$HERMETIC" -c consumer/named.ml consumer/constructor.ml; echo "exit $?"
   exit 0
@@ -92,5 +92,5 @@ for each source file, which does not open the prelude, avoids both.
   $ echo 'val digest : string -> Digest.t' > flagged/flagged.mli
   $ ocamlc -I "$HERMETIC" -open Hermetic -c flagged/flagged.mli
   $ echo 'let _ = Digest.to_hex (Flagged.digest "")' > consumer/use_flagged.ml
-  $ ocamlc -I flagged -c consumer/use_flagged.ml 2>&1 | tr -d '"' | grep -o 'Hermetic.Digest.t is abstract'
+  $ ocamlc -I flagged -c consumer/use_flagged.ml 2>&1 | sed 's/"//g; s/Hermetic__Refused\.//g' | grep -o 'Hermetic.Digest.t is abstract'
   Hermetic.Digest.t is abstract

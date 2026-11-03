@@ -80,7 +80,7 @@ type reviewed = {
     nor reviewed is refused as {!Unreviewed}. *)
 
 val reviewed : reviewed
-(** The names reviewed on OCaml 5.3, 5.4 and 5.5. *)
+(** The names reviewed on OCaml 4.14 and 5.0 to 5.5. *)
 
 val version_specific : string list
 (** The paths of {!refusals} that some supported compiler lacks. Any other

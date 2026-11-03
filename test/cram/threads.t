@@ -38,7 +38,7 @@ ambient, and each alert names the capability to take.
   $ printf 'open! Hermetic\nlet readable fd = Thread.wait_timed_read fd 1.\n' > refused/timed_read.ml
   $ printf 'open! Hermetic\nlet writable fd = Thread.wait_timed_write fd 1.\n' > refused/timed_write.ml
   $ printf 'open! Hermetic\nlet reap pid = Thread.wait_pid pid\n' > refused/wait_pid.ml
-  $ dune build --root . --display quiet ./refused 2>&1 | tr -d '"' | grep -A1 -E '^Alert' | grep -v '^--' | sort
+  $ dune build --root . --display quiet ./refused 2>&1 | sed 's/"//g; s/Hermetic__Refused\.//g' | grep -A1 -E '^Alert' | grep -v '^--' | sort
   Alert ambient: Hermetic.Thread.delay
   Alert ambient: Hermetic.Thread.select
   Alert ambient: Hermetic.Thread.wait_pid
@@ -49,7 +49,7 @@ ambient, and each alert names the capability to take.
   Waits with a timeout on the clock: take Eio.Stdenv.clock as an argument and use Eio.Time.with_timeout.
   Waits with a timeout on the clock: take Eio.Stdenv.clock as an argument and use Eio.Time.with_timeout.
   Waits with a timeout on the clock: take Eio.Stdenv.clock as an argument and use Eio.Time.with_timeout.
-  $ dune build --root . --display quiet ./refused 2>&1 | tr -d '"' | grep -c '^Error: This expression has type ambient'
+  $ dune build --root . --display quiet ./refused 2>&1 | sed 's/"//g; s/Hermetic__Refused\.//g' | grep -c '^Error: This expression has type ambient'
   5
 
 Event refuses nothing, so the prelude does not declare it, and a library's

@@ -23,6 +23,7 @@ first line is a control, made with the standard library itself.
   >   type t = int
   >   let equal = Int.equal
   >   let seeded_hash s x = seed := !seed lor s; Hashtbl.hash x
+  >   let hash = seeded_hash (* OCaml 4.14 names it hash *)
   > end
   > module T = Hashtbl.MakeSeeded (H)
   > module L = MoreLabels.Hashtbl.MakeSeeded (H)
@@ -73,11 +74,11 @@ first line is a control, made with the standard library itself.
   Ephemeron.Kn.MakeSeeded.create: not seeded
 
 Since create is restated without its ?random argument, passing one is an
-error that carries no alert.
+error that carries no alert. Compilers word the error differently.
 
   $ cat > tables/tables.ml <<'EOF'
   > open! Hermetic
   > let t : (int, int) Hashtbl.t = Hashtbl.create ~random:false 1
   > EOF
-  $ dune build --root . --display quiet --profile dev ./tables 2>&1 | grep -oE '^(Alert|Error: The function)'
-  Error: The function
+  $ dune build --root . --display quiet --profile dev ./tables 2>&1 | grep -oE '^(Alert|Error)'
+  Error

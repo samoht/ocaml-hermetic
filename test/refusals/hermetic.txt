@@ -41,6 +41,7 @@ BytesLabels.unsafe_of_string: unsafe
 BytesLabels.unsafe_set: unsafe
 BytesLabels.unsafe_to_string: unsafe
 Bytesrw_sysrandom: ambient, declared empty
+CamlinternalAtomic.*: unsafe
 CamlinternalFormat.*: unsafe
 CamlinternalFormatBasics.*: unsafe
 CamlinternalLazy.*: unsafe
@@ -123,6 +124,7 @@ Eio_windows__Net: ambient, declared empty
 Eio_windows__Process: ambient, declared empty
 Eio_windows__Sched: ambient, declared empty
 Eio_windows__Time: ambient, declared empty
+Ephemeron.GenHashTable.*: unreviewed
 Ephemeron.K1.MakeSeeded.create: retyped
 Ephemeron.K1.MakeSeeded.of_seq: retyped
 Ephemeron.K2.MakeSeeded.create: retyped
@@ -139,15 +141,18 @@ Float.ArrayLabels.unsafe_set: unsafe
 Fmt_tty: ambient, declared empty
 Format.close_box: ambient
 Format.close_stag: ambient
+Format.close_tag: ambient
 Format.close_tbox: ambient
 Format.eprintf: ambient
 Format.err_formatter: ambient
 Format.force_newline: ambient
+Format.get_all_formatter_output_functions: ambient
 Format.get_ellipsis_text: ambient
 Format.get_err_formatter: ambient
 Format.get_formatter_out_functions: ambient
 Format.get_formatter_output_functions: ambient
 Format.get_formatter_stag_functions: ambient
+Format.get_formatter_tag_functions: ambient
 Format.get_geometry: ambient
 Format.get_margin: ambient
 Format.get_mark_tags: ambient
@@ -162,6 +167,7 @@ Format.open_hbox: ambient
 Format.open_hovbox: ambient
 Format.open_hvbox: ambient
 Format.open_stag: ambient
+Format.open_tag: ambient
 Format.open_tbox: ambient
 Format.open_vbox: ambient
 Format.over_max_boxes: ambient
@@ -184,11 +190,13 @@ Format.print_tab: ambient
 Format.print_tbreak: ambient
 Format.printf: ambient
 Format.safe_set_geometry: ambient
+Format.set_all_formatter_output_functions: ambient
 Format.set_ellipsis_text: ambient
 Format.set_formatter_out_channel: ambient
 Format.set_formatter_out_functions: ambient
 Format.set_formatter_output_functions: ambient
 Format.set_formatter_stag_functions: ambient
+Format.set_formatter_tag_functions: ambient
 Format.set_geometry: ambient
 Format.set_margin: ambient
 Format.set_mark_tags: ambient
@@ -244,6 +252,7 @@ Out_channel.with_open_gen: ambient
 Out_channel.with_open_text: ambient
 Parsing.peek_val: unsafe
 Parsing.yyparse: unsafe
+Pervasives.*: ambient
 Printexc.catch: ambient
 Printexc.default_uncaught_exception_handler: ambient
 Printexc.print: ambient
@@ -259,14 +268,20 @@ Scanf.Scanning.from_file: ambient
 Scanf.Scanning.from_file_bin: ambient
 Scanf.Scanning.open_in: ambient
 Scanf.Scanning.open_in_bin: ambient
+Scanf.Scanning.stdib: ambient
 Scanf.Scanning.stdin: ambient
 Scanf.scanf: ambient
 Scanf.scanf_opt: ambient
 Shadow_stdlib: ambient, declared empty
+Stream.dump: ambient
 String.unsafe_blit: unsafe
+String.unsafe_fill: unsafe
 String.unsafe_get: unsafe
+String.unsafe_set: unsafe
 StringLabels.unsafe_blit: unsafe
+StringLabels.unsafe_fill: unsafe
 StringLabels.unsafe_get: unsafe
+StringLabels.unsafe_set: unsafe
 Sys.chdir: ambient
 Sys.command: ambient
 Sys.enable_runtime_warnings: ambient
@@ -285,6 +300,7 @@ Thread.select: ambient
 Thread.wait_pid: ambient
 Thread.wait_timed_read: ambient
 Thread.wait_timed_write: ambient
+ThreadUnix.*: ambient
 Uchar.unsafe_of_int: unsafe
 Uchar.unsafe_to_char: unsafe
 Unix.LargeFile.lstat: ambient

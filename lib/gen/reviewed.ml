@@ -4,7 +4,7 @@
   ---------------------------------------------------------------------------*)
 
 (* The names of the standard library that the policy has reviewed and keeps,
-   read from OCaml 5.3, 5.4 and 5.5 with [gen --review] and merged. A name
+   read from OCaml 4.14 and 5.0 to 5.5 with [gen --review] and merged. A name
    that policy.ml refuses or names is not listed here, and neither is a value
    whose name says [unsafe], which only policy.ml can keep. A newer
    compiler's names are missing until they are reviewed; until then the
@@ -89,6 +89,7 @@ let modules =
     "Fun";
     "Gc";
     "Gc.Memprof";
+    "Genlex";
     "Gc.Tweak";
     "Hashtbl";
     "Hashtbl.Make";
@@ -149,6 +150,7 @@ let modules =
     "Stack";
     "StdLabels";
     "Std_exit";
+    "Stream";
     "String";
     "StringLabels";
     "Sys";
@@ -854,6 +856,68 @@ let kept =
       "runtime",
       "add clear count create find find_all find_opt fold iter mem merge \
        remove stats" );
+    (* The names of OCaml 4.14 that later compilers removed. *)
+    ("", "core", "& or");
+    ("Array", "data", "create create_matrix make_float");
+    ("ArrayLabels", "data", "create create_matrix make_float");
+    ("Bytes", "pure", "capitalize lowercase uncapitalize uppercase");
+    ("BytesLabels", "pure", "capitalize lowercase uncapitalize uppercase");
+    ("Char", "pure", "lowercase uppercase");
+    ( "Ephemeron.K1",
+      "runtime",
+      "blit_data blit_key check_data check_key create get_data get_data_copy \
+       get_key get_key_copy set_data set_key unset_data unset_key" );
+    ( "Ephemeron.K2",
+      "runtime",
+      "blit_data blit_key1 blit_key12 blit_key2 check_data check_key1 \
+       check_key2 create get_data get_data_copy get_key1 get_key1_copy \
+       get_key2 get_key2_copy set_data set_key1 set_key2 unset_data unset_key1 \
+       unset_key2" );
+    ( "Ephemeron.Kn",
+      "runtime",
+      "blit_data blit_key check_data check_key create get_data get_data_copy \
+       get_key get_key_copy set_data set_key unset_data unset_key" );
+    ( "Ephemeron.K1.Make",
+      "runtime",
+      "filter_map_inplace fold iter to_seq to_seq_keys to_seq_values" );
+    ( "Ephemeron.K1.MakeSeeded",
+      "runtime",
+      "filter_map_inplace fold iter to_seq to_seq_keys to_seq_values" );
+    ( "Ephemeron.K2.Make",
+      "runtime",
+      "filter_map_inplace fold iter to_seq to_seq_keys to_seq_values" );
+    ( "Ephemeron.K2.MakeSeeded",
+      "runtime",
+      "filter_map_inplace fold iter to_seq to_seq_keys to_seq_values" );
+    ( "Ephemeron.Kn.Make",
+      "runtime",
+      "filter_map_inplace fold iter to_seq to_seq_keys to_seq_values" );
+    ( "Ephemeron.Kn.MakeSeeded",
+      "runtime",
+      "filter_map_inplace fold iter to_seq to_seq_keys to_seq_values" );
+    ("Filename", "process", "temp_dir_name");
+    ( "Format",
+      "format",
+      "bprintf kprintf pp_close_tag pp_get_all_formatter_output_functions \
+       pp_get_formatter_tag_functions pp_open_tag \
+       pp_set_all_formatter_output_functions pp_set_formatter_tag_functions" );
+    ("Gc", "runtime", "get_bucket get_credit huge_fallback_count");
+    ("Genlex", "pure", "make_lexer");
+    ("Int32", "pure", "format");
+    ("Int64", "pure", "format");
+    ("Nativeint", "pure", "format");
+    ("Lazy", "concurrency", "lazy_from_fun lazy_from_val lazy_is_val");
+    ("Scanf", "given", "fscanf kfscanf");
+    ( "Stream",
+      "given",
+      "count empty from iapp icons ising iter junk lapp lcons lsing next npeek \
+       of_bytes of_channel of_list of_string peek sempty slazy" );
+    ("String", "pure", "capitalize copy lowercase uncapitalize uppercase");
+    ("String", "data", "create fill set");
+    ("StringLabels", "pure", "capitalize copy lowercase uncapitalize uppercase");
+    ("StringLabels", "data", "create fill set");
+    ("Thread", "concurrency", "kill");
+    ("Thread", "given", "wait_read wait_write");
   ]
 
 let version_specific =
@@ -864,7 +928,38 @@ let version_specific =
     "Printf.leprintf";
     "Format.lprintf";
     "Format.leprintf";
+    "Format.print_substring";
+    "Format.print_substring_as";
     "Thread.set_current_thread_name";
+    "Sys.is_regular_file";
+    "Filename.temp_dir";
+    "Digest.BLAKE128.file";
+    "Digest.BLAKE256.file";
+    "Digest.BLAKE512.file";
+    "Digest.MD5.file";
+    "Bytes.unsafe_escape";
+    "BytesLabels.unsafe_escape";
+    "Scanf.scanf_opt";
+    "do_domain_local_at_exit";
+    "Format.get_std_formatter";
+    "Format.get_err_formatter";
+    "Domain.spawn";
+    "Format.open_tag";
+    "Format.close_tag";
+    "Format.get_formatter_tag_functions";
+    "Format.get_all_formatter_output_functions";
+    "Format.set_formatter_tag_functions";
+    "Format.set_all_formatter_output_functions";
+    "String.unsafe_set";
+    "String.unsafe_fill";
+    "StringLabels.unsafe_set";
+    "StringLabels.unsafe_fill";
+    "Scanf.Scanning.stdib";
+    "Stream.dump";
+    "Pervasives";
+    "ThreadUnix";
+    "CamlinternalAtomic";
+    "Ephemeron.GenHashTable";
   ]
 
 (* The kept values that hand out a channel, a formatter or output closures

@@ -7,16 +7,14 @@ dir=uses.tmp
 rm -rf "$dir"
 mkdir "$dir"
 failed=0
-while read -r path kind; do
-  # An operator, such as Args.@, is spelled in parentheses: Args.( @ ).
-  use=$(printf '%s' "$path" | sed 's/\.\([^A-Za-z_.][^.]*\)$/.( \1 )/')
+while read -r kind use; do
   printf 'open! Hermetic\nlet _ : int = %s\n' "$use" > "$dir/use.ml"
   if ocamlc -I "$objs" -c -o "$dir/use.cmo" "$dir/use.ml" > "$dir/log" 2>&1; then
-    echo "$path: builds"
+    echo "$use: builds"
     failed=1
   elif ! tr -d '"' < "$dir/log" | tr '\n' ' ' | tr -s ' ' |
       grep -q "has type [A-Za-z_.]*$kind"; then
-    echo "$path: not refused as $kind"
+    echo "$use: not refused as $kind"
     failed=1
   fi
 done < "$uses"

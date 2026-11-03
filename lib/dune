@@ -6,14 +6,16 @@
 ; the compiler's unix and threads libraries, but the library depends on
 ; neither, since both force their link: a program that names only their
 ; types links none of them, and one that uses a value of theirs names the
-; library among its own, as it would without the prelude.
+; library among its own, as it would without the prelude. A unit restates its
+; module with the deprecated names of an older compiler too, so it is
+; compiled without the deprecation alert; a value it restates keeps its own.
 
 (library
  (name hermetic)
  (public_name hermetic)
  (wrapped false)
  (flags
-  (:standard -I +unix -I +threads)))
+  (:standard -I +unix -I +threads -alert -deprecated)))
 
 (include dune.inc)
 

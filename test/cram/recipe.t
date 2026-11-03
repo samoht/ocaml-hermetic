@@ -26,7 +26,7 @@ The library itself builds, and the check refuses it, at the original file.
 
   $ dune build --root . --display quiet --profile dev ./lib; echo "exit $?"
   exit 0
-  $ dune build --root . --display quiet --profile dev ./check 2>&1 | tr -d '"' | grep -E '^(File|Alert|Error)'
+  $ dune build --root . --display quiet --profile dev ./check 2>&1 | sed 's/"//g; s/Hermetic__Refused\.//g' | grep -E '^(File|Alert|Error)'
   File lib/load.ml, line 1, characters 14-21:
   Alert ambient: Hermetic.open_in
   File lib/load.ml, line 1, characters 14-21:

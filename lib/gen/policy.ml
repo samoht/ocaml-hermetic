@@ -565,9 +565,56 @@ let gc =
         } );
   ]
 
+(* {1 OCaml 4.14: what later compilers removed} *)
+
+let ocaml_4_14 =
+  std_formatter
+    "open_tag close_tag get_formatter_tag_functions \
+     get_all_formatter_output_functions"
+  @ std_formatter_state ~verb:"Changes"
+      "set_formatter_tag_functions set_all_formatter_output_functions"
+  @ no_check "bounds" "String"
+      [ ("unsafe_set", "set"); ("unsafe_fill", "fill") ]
+  @ no_check "bounds" "StringLabels"
+      [ ("unsafe_set", "set"); ("unsafe_fill", "fill") ]
+  @ [
+      ("Scanf.Scanning.stdib", ambient stdin);
+      ("Stream.dump", ambient (writes "output"));
+      ( "Pervasives",
+        Module
+          {
+            kind = Ambient;
+            message =
+              "Restates the standard library without the prelude's refusals: \
+               use the prelude's own names.";
+          } );
+      ( "ThreadUnix",
+        Module
+          {
+            kind = Ambient;
+            message =
+              "Restates Unix's blocking calls, which reach the file system, \
+               the network, the clock and child processes: use the prelude's \
+               Unix and take the Eio.Stdenv capability you need as an \
+               argument.";
+          } );
+      ( "CamlinternalAtomic",
+        unsafe_module "The runtime support of atomics: use Atomic." );
+      ( "Ephemeron.GenHashTable",
+        Module
+          {
+            kind = Unreviewed;
+            message =
+              "Its functor takes an anonymous signature, which the prelude \
+               cannot restate: use Ephemeron.K1.Make or \
+               Ephemeron.K1.MakeSeeded.";
+          } );
+    ]
+
 let refusals =
   unsafe_refusals @ environment @ files @ standard_input @ standard_output @ gc
   @ the_process @ randomness @ unix "Unix" @ unix "UnixLabels" @ threads
+  @ ocaml_4_14
 
 (* Libraries, and units of libraries, that reach the system past Eio's
    capabilities, which the prelude declares empty, so that a name of theirs

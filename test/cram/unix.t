@@ -62,7 +62,7 @@ every file the executable creates later.
   $ printf 'open! Hermetic\nlet wait fd = Unix.setsockopt_float fd Unix.SO_RCVTIMEO 1.\n' > refused/timeout.ml
   $ printf 'open! Hermetic\nlet linger fd = Unix.setsockopt_optint fd Unix.SO_LINGER (Some 2)\n' > refused/linger.ml
   $ printf 'open! Hermetic\nlet mask () = UnixLabels.umask 0o077\n' > refused/umask.ml
-  $ dune build --root . --display quiet ./refused 2>&1 | tr -d '"' | grep -A1 -E '^Alert' | grep -v '^--' | sort
+  $ dune build --root . --display quiet ./refused 2>&1 | sed 's/"//g; s/Hermetic__Refused\.//g' | grep -A1 -E '^Alert' | grep -v '^--' | sort
   Alert ambient: Hermetic.Unix.connect
   Alert ambient: Hermetic.Unix.listen
   Alert ambient: Hermetic.Unix.openfile
@@ -87,7 +87,7 @@ every file the executable creates later.
   Reads the clock: take Eio.Stdenv.clock as an argument.
   Sets SO_LINGER on a socket, which makes close a timed wait on the clock: take Eio.Stdenv.clock as an argument and use Eio.Time.with_timeout.
   Sets a timeout on a socket, which makes a receive or a send a timed wait on the clock: take Eio.Stdenv.clock as an argument and use Eio.Time.with_timeout.
-  $ dune build --root . --display quiet ./refused 2>&1 | tr -d '"' | grep -c '^Error: This expression has type ambient'
+  $ dune build --root . --display quiet ./refused 2>&1 | sed 's/"//g; s/Hermetic__Refused\.//g' | grep -c '^Error: This expression has type ambient'
   12
 
 A program that names only Unix's types links no code of Unix: neither the

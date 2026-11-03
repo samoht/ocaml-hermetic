@@ -31,21 +31,21 @@ let top_name units unit =
   match List.assoc_opt unit units with Some name -> name | None -> unit
 
 (* A path as the generated prelude spells it, before it shadows any name: the
-   head unit is named through [Stdlib]. *)
+   head unit is named through [Stdlib]. A path that applies a functor has no
+   such spelling. *)
 let path_name units path =
-  let rec go = function
-    | Path.Pident id ->
-        let name = Ident.name id in
-        if Ident.global id then
-          match List.assoc_opt name units with
-          | Some top -> "Stdlib." ^ top
-          | None -> name
-        else name
-    | Path.Pdot (p, s) -> go p ^ "." ^ s
-    | Path.Papply (f, x) -> go f ^ "(" ^ go x ^ ")"
-    | Path.Pextra_ty (p, _) -> go p
-  in
-  go path
+  match Path.flatten path with
+  | `Ok (id, rest) ->
+      let name = Ident.name id in
+      let head =
+        match List.assoc_opt name units with
+        | Some top when Ident.global id -> "Stdlib." ^ top
+        | _ -> name
+      in
+      String.concat "." (head :: rest)
+  | `Contains_apply ->
+      failwith
+        ("cannot spell the path " ^ Path.name path ^ ", which applies a functor")
 
 (* A class declares a class type of the same name too: keep the class. *)
 let classes_once items =
@@ -59,18 +59,18 @@ let classes_once items =
 (* The path of a module of the standard library as the policy spells it:
    [Stdlib__Random.State] and [Stdlib.Random.State] are [Random.State]. *)
 let policy_path units p =
-  let rec go = function
-    | Path.Pident u when Ident.global u -> (
+  match Path.flatten p with
+  | `Ok (u, rest) when Ident.global u -> (
+      let head =
         match List.assoc_opt (Ident.name u) units with
         | Some top -> Some [ top ]
         | None when Ident.name u = "Stdlib" -> Some []
-        | None -> None)
-    | Path.Pdot (p, s) -> Option.map (fun l -> l @ [ s ]) (go p)
-    | Path.Pident _ | Path.Papply _ | Path.Pextra_ty _ -> None
-  in
-  match go p with
-  | Some (_ :: _ as l) -> Some (String.concat "." l)
-  | Some [] | None -> None
+        | None -> None
+      in
+      match Option.map (fun h -> h @ rest) head with
+      | Some (_ :: _ as l) -> Some (String.concat "." l)
+      | Some [] | None -> None)
+  | `Ok _ | `Contains_apply -> None
 
 let rec node units env mty =
   match mty with
@@ -115,6 +115,10 @@ and alias units env id p =
 
 and item units env = function
   | Types.Sig_value (id, _, Types.Exported) -> Some (Value (Ident.name id))
+  (* OCaml 4.14 declares the type [#c] of a class [c] beside it. *)
+  | Types.Sig_type (id, _, _, _)
+    when String.starts_with ~prefix:"#" (Ident.name id) ->
+      None
   | Types.Sig_type (id, decl, _, Types.Exported) ->
       Some (Type (Ident.name id, List.length decl.type_params))
   | Types.Sig_modtype (id, _, Types.Exported) ->
@@ -195,6 +199,10 @@ let dirs dir =
        (fun d -> Sys.file_exists d && Sys.is_directory d)
        (List.map (Filename.concat dir) [ "unix"; "threads" ])
 
+(* The units of other libraries that OCaml 4.14 installs beside the standard
+   library, and later compilers in a directory of their own. *)
+let other_libraries = [ "Bigarray"; "Dynlink"; "Profiling"; "Str"; "Topdirs" ]
+
 (* Every unit in [dirs dir] that [Stdlib] does not name: its runtime
    support, CamlinternalOO and the rest, Std_exit, Unix, UnixLabels, Thread
    and Event, and any unit a newer compiler adds, which the policy then reviews or refuses
@@ -205,7 +213,10 @@ let internal_units dir units =
       Sys.readdir d |> Array.to_list |> List.sort String.compare
       |> List.filter_map unit_of_file)
     (dirs dir)
-  |> List.filter (fun u -> u <> "Stdlib" && not (List.mem_assoc u units))
+  |> List.filter (fun u ->
+      u <> "Stdlib"
+      && (not (List.mem_assoc u units))
+      && not (List.mem u other_libraries))
 
 (* {1 Values that hand out a channel} *)
 

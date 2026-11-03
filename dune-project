@@ -28,7 +28,7 @@ and Sys.command are refused. Its alert names the Eio.Stdenv capability to take i
 operations that could forge a capability, such as Obj.magic or a Marshal
 reader, are refused too.")
  (depends
-  (ocaml (and (>= 5.3) (< 5.6)))
+  (ocaml (and (>= 4.14) (< 5.6)))
   (alcotest (and :with-test (>= 1.7.0)))
   (mdx (and :with-test (>= 2.3.0)))
   (ocamlfind :with-test)))

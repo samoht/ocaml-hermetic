@@ -25,3 +25,18 @@
  (applies_to eio-units)
  (enabled_if %{lib-available:eio.unix})
  (deps %{bin:ocamlc} %{bin:ocamlfind}))
+
+; A domain is new in OCaml 5.0.
+
+(cram
+ (applies_to domain)
+ (enabled_if
+  (>= %{ocaml_version} 5.0)))
+
+; ocamlobjinfo lists the units of a bytecode executable from OCaml 5.2;
+; link-native.t checks the same on every compiler.
+
+(cram
+ (applies_to link)
+ (enabled_if
+  (>= %{ocaml_version} 5.2)))

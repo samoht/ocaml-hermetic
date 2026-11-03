@@ -20,7 +20,7 @@ Eio.Stdenv.mono_clock, so the prelude declares it empty.
   > open! Hermetic
   > let now () = Mtime_clock.now ()
   > EOF
-  $ dune build --root . --display quiet ./lib 2>&1 | tr -d '"' | grep -A1 -E '^(Alert|Error)'
+  $ dune build --root . --display quiet ./lib 2>&1 | sed 's/"//g; s/Hermetic__Refused\.//g' | grep -A1 -E '^(Alert|Error)'
   Alert ambient: module Hermetic.Mtime_clock
   Reads the monotonic clock: take Eio.Stdenv.mono_clock (an Eio.Time.Mono) as an argument.
   --

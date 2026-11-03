@@ -38,7 +38,7 @@ The alert names the value and says what to take instead; the build stops on
 the value's type.
 
   $ put exists 'let here = Sys.file_exists "model.bin"'
-  $ dune build --root . --display quiet --profile dev ./lib 2>&1 | tr -d '"' | grep -A1 -E '^(Alert|Error)'
+  $ dune build --root . --display quiet --profile dev ./lib 2>&1 | sed 's/"//g; s/Hermetic__Refused\.//g' | grep -A1 -E '^(Alert|Error)'
   Alert ambient: Hermetic.Sys.file_exists
   Reads the file system by name: take Eio.Stdenv.fs or Eio.Stdenv.cwd (an Eio.Path) as an argument.
   --
@@ -46,7 +46,7 @@ the value's type.
          This is not a function; it cannot be applied.
   $ rm lib/exists.ml
   $ put print 'let () = print_endline "x"'
-  $ dune build --root . --display quiet --profile dev ./lib 2>&1 | tr -d '"' | grep -A1 '^Alert'
+  $ dune build --root . --display quiet --profile dev ./lib 2>&1 | sed 's/"//g; s/Hermetic__Refused\.//g' | grep -A1 '^Alert'
   Alert ambient: Hermetic.print_endline
   Writes the process's standard output: take Eio.Stdenv.stdout as an argument, or log with Logs or Eio.traceln.
   $ rm lib/print.ml
@@ -83,7 +83,6 @@ The standard input, output and error, which the code was not handed.
   $ put output_format_stag_functions 'let () = let f = Format.get_formatter_stag_functions () in f.print_open_stag (Format.String_tag "x")'
   $ put output_flush 'let () = flush_all ()'
   $ put output_do_at_exit 'let () = do_at_exit ()'
-  $ put output_domain_at_exit 'let () = !do_domain_local_at_exit ()'
   $ put output_format_set_output 'let capture b = Format.set_formatter_output_functions (Buffer.add_substring b) ignore'
   $ put output_format_set_out_channel 'let redirect oc = Format.set_formatter_out_channel oc'
   $ put output_format_set_max_boxes 'let () = Format.set_max_boxes 2'
@@ -94,12 +93,11 @@ The standard input, output and error, which the code was not handed.
   $ put output_format_over_max_boxes 'let b = Format.over_max_boxes ()'
   $ put output_runtime_warnings 'let () = Sys.enable_runtime_warnings true'
 
-A child process and a domain, which Eio's process and domain managers hand
-out, and what parses the command line or ends the process by printing on the
-standard error.
+A child process, which Eio's process manager hands out, and what parses the
+command line or ends the process by printing on the standard error. A domain
+is in domain.t, since OCaml 4.14 has none.
 
   $ put proc_command 'let n = Sys.command "true"'
-  $ put proc_spawn 'let d = Domain.spawn ignore'
   $ put proc_arg 'let () = Arg.parse [] ignore ""'
   $ put proc_catch 'let run f = Printexc.catch f ()'
 
@@ -265,7 +263,6 @@ profile as in the development one.
   input_stdin: Hermetic.stdin (ambient)
   named: Hermetic.Sys.file_exists (builds)
   output_do_at_exit: Hermetic.do_at_exit (ambient)
-  output_domain_at_exit: Hermetic.do_domain_local_at_exit (ambient)
   output_flush: Hermetic.flush_all (ambient)
   output_format: Hermetic.Format.printf (ambient)
   output_format_get_margin: Hermetic.Format.get_margin (ambient)
@@ -339,7 +336,6 @@ profile as in the development one.
   proc_arg: Hermetic.Arg.parse (ambient)
   proc_catch: Hermetic.Printexc.catch (ambient)
   proc_command: Hermetic.Sys.command (ambient)
-  proc_spawn: Hermetic.Domain.spawn (ambient)
   random_self_init: Hermetic.Random.self_init (ambient)
   random_state_self: Hermetic.Random.State.make_self_init (ambient)
   unix_connect: Hermetic.Unix.connect (ambient)
@@ -381,7 +377,7 @@ type.
 
   $ rm lib/*.ml
   $ put silenced 'let here = (Sys.file_exists [@alert "-ambient"]) "f"'
-  $ dune build --root . --display quiet --profile dev ./lib 2>&1 | tr -d '"' | grep -E '^(Alert|Error)'
+  $ dune build --root . --display quiet --profile dev ./lib 2>&1 | sed 's/"//g; s/Hermetic__Refused\.//g' | grep -E '^(Alert|Error)'
   Error: This expression has type ambient
 
 The way out is Hermetic.Unsafe, the standard library without
@@ -414,7 +410,7 @@ registered printers, backtraces, the process's counters and synchronisation.
   > let seen = Hashtbl.create 1
   > let () = Hashtbl.replace seen "a" ()
   > let keys t = Hashtbl.fold (fun k _ acc -> k :: acc) t []
-  > module T = Hashtbl.MakeSeeded (struct type t = int let equal = Int.equal let seeded_hash _ x = x end)
+  > module T = Hashtbl.MakeSeeded (struct [@@@warning "-32"] type t = int let equal = Int.equal let seeded_hash _ x = x let hash = seeded_hash end)
   > let s = Printf.sprintf "%d" 1 ^ Format.asprintf "%a" Format.pp_print_int 1
   > let pp ppf x = Format.fprintf ppf "%d" x
   > let roll () = Random.int 6
@@ -426,22 +422,19 @@ registered printers, backtraces, the process's counters and synchronisation.
   > let e = Printexc.to_string Exit
   > let get a = a.(0) + Array.get a 0
   > let c = "x".[0] = Bytes.get (Bytes.make 1 'x') 0
-  > let m = Mutex.create ()
   > let a = Atomic.make 0
-  > let self () = Domain.self ()
   > let () = Gc.compact ()
   > let tuned = (Gc.get ()).space_overhead + Bool.to_int (Printexc.backtrace_status ())
   > let randomized = Hashtbl.is_randomized ()
   > let id o = Oo.id o
-  > let terminal ic = In_channel.isatty ic
+  > let line ic = In_channel.input_line ic
   > let parse argv = Arg.parse_argv argv [] ignore ""
   > let home = Sys.getenv_opt "HOME"
   > let program = Sys.argv.(0) ^ Sys.executable_name ^ Sys.runtime_parameters ()
   > let t = Sys.time ()
   > let stop () = exit 1
-  > let () = at_exit ignore; Domain.at_exit ignore
+  > let () = at_exit ignore
   > let () = Sys.set_signal Sys.sigint Sys.Signal_ignore
-  > let n = Domain.recommended_domain_count ()
   > let () = Hashtbl.randomize ()
   > class c = object method m = 1 end
   > let o = (new c)#m
@@ -488,7 +481,7 @@ that indexes nothing can.
   > (library (name u) (libraries hermetic) (flags (:standard -unsafe)))
   > EOF
   $ printf 'open! Hermetic\nlet first a = a.(0)\n' > unsafe/u.ml
-  $ dune build --root . --display quiet --profile dev ./unsafe 2>&1 | tr -d '"' | grep -E '^(Alert|Error)'
+  $ dune build --root . --display quiet --profile dev ./unsafe 2>&1 | sed 's/"//g; s/Hermetic__Refused\.//g' | grep -E '^(Alert|Error)'
   Alert unsafe: Hermetic.Array.unsafe_get
   Error: This expression has type unsafe
   $ printf 'open! Hermetic\nlet first l = List.hd l\n' > unsafe/u.ml
@@ -513,7 +506,7 @@ enables. open! is neither.
   $ echo '(lang dune 3.0)' > old/dune-project
   $ echo '(library (name constant) (libraries hermetic))' > old/lib/dune
   $ printf 'open Hermetic\nlet answer = 42\n' > old/lib/constant.ml
-  $ dune build --root old --no-print-directory --display quiet --profile dev ./lib 2>&1 | tr -d '"' | grep '^Error'
+  $ dune build --root old --no-print-directory --display quiet --profile dev ./lib 2>&1 | sed 's/"//g; s/Hermetic__Refused\.//g' | grep '^Error'
   Error (warning 33 [unused-open]): unused open Hermetic.
   $ printf 'open! Hermetic\nlet answer = 42\n' > old/lib/constant.ml
   $ dune build --root old --no-print-directory --display quiet --profile dev ./lib; echo "exit $?"
@@ -538,6 +531,6 @@ the standard library's own.
   >  (flags (:standard -open Hermetic)))
   > EOF
   $ echo 'let here = Sys.file_exists "f"' > flag/flagged.ml
-  $ dune build --root . --display quiet --profile release ./flag 2>&1 | tr -d '"' | grep -E '^(Alert|Error)'
+  $ dune build --root . --display quiet --profile release ./flag 2>&1 | sed 's/"//g; s/Hermetic__Refused\.//g' | grep -E '^(Alert|Error)'
   Alert ambient: Hermetic.Sys.file_exists
-  Error: This expression has type Hermetic__Refused.ambient
+  Error: This expression has type ambient

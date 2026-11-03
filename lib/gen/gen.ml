@@ -35,12 +35,12 @@ let check_names (tree : Stdlib_tree.t) =
         fail "Stdlib declares the module %s, which the prelude declares" m)
     tree.modules
 
-(* The policy is reviewed on OCaml 5.3 and later. A newer compiler builds,
+(* The policy is reviewed on OCaml 4.14 and later. A newer compiler builds,
    and its new names are refused as unreviewed; an older one is refused. *)
 let check_compiler () =
   let v = Scanf.sscanf Sys.ocaml_version "%d.%d" (fun a b -> (a, b)) in
-  if v < (5, 3) then
-    fail "hermetic needs OCaml 5.3 or later, but this compiler is OCaml %s"
+  if v < (4, 14) then
+    fail "hermetic needs OCaml 4.14 or later, but this compiler is OCaml %s"
       Sys.ocaml_version
 
 let write stdlib dir =
@@ -132,16 +132,18 @@ let review stdlib =
     tree.values;
   List.iter (fun (m, n) -> module_ m n) tree.modules
 
-(* A use of each refused value the installed compiler has, one per line with
-   the type of its refusal, for a test to compile. A value of a functor's
-   result cannot be named, so it is left out. *)
+(* A use of each refused value the installed compiler has, one per line after
+   the type of its refusal, for a test to compile: an operator is spelled in
+   parentheses, as in [Pervasives.( or )]. A value of a functor's result
+   cannot be named, so it is left out. *)
 let uses stdlib =
   let plan, _ = Plan.v (Stdlib_tree.read stdlib) in
   let join p n = if p = "" then n else p ^ "." ^ n in
   let rec items p =
     List.iter (function
       | Plan.Refused (v, r) ->
-          Printf.printf "%s %s\n" (join p v) (Policy.kind_name r.kind)
+          Printf.printf "%s %s\n" (Policy.kind_name r.kind)
+            (join p (Emit.value_name v))
       | Plan.Sub (m, (Plan.Sig { items = is; _ } | Plan.Whole (_, is))) ->
           items (join p m) is
       | Plan.Sub (_, (Plan.Functor _ | Plan.Gone))

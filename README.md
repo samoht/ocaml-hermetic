@@ -198,10 +198,12 @@ refusal, one per line.
 
 ## Supported compilers
 
-`hermetic` supports OCaml 5.3, 5.4 and 5.5, and an older compiler fails the
-build. The prelude is generated at
-build time from the installed compiler's standard library and a policy that
-names every value it has reviewed. The upper bound moves only after a review
+`hermetic` supports OCaml 4.14 and 5.0 to 5.5, and an older compiler fails
+the build. Eio itself needs OCaml 5.2. Compilers before 5.3 name the type of
+a refused value by its unit in the error, as in `Hermetic__Refused.ambient`.
+
+The prelude is generated at build time from the installed compiler's
+standard library and a policy that names every value it has reviewed. The upper bound moves only after a review
 of each new compiler, because until then its new values are refused as
 `unreviewed`.
 

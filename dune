@@ -2,7 +2,13 @@
  (dev
   (flags :standard %{dune-warnings})))
 
+; Compilers before 5.3 name the refusal type by its unit in the error the
+; README shows, so the README runs on 5.3 and later; test/cram/readme.t checks
+; the same message on every supported compiler.
+
 (mdx
  (package hermetic)
  (files README.md)
+ (enabled_if
+  (>= %{ocaml_version} 5.3))
  (libraries hermetic))
