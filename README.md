@@ -36,11 +36,15 @@ such as `Obj.magic` and the `Marshal` readers. Each error names the
 `Eio.Stdenv` capability to use instead.
 
 `hermetic` catches mistakes, such as an `open_in` written out of habit. It
-does not stop an author who wants to cheat: `Hermetic.Unsafe` and
-`external` declarations are still available. The protection is also still
-partial. Any C binding can reach the system directly, and so can libraries
-other than the standard library, Eio included. See
-[eio#964](https://github.com/ocaml-multicore/eio/issues/964) for an example.
+does not stop an author who wants to cheat, and its protection is still
+partial:
+
+- `Hermetic.Unsafe` gives back the whole standard library.
+- An `external` declaration binds a C function, which can reach the system
+  directly.
+- Libraries other than the standard library can reach around it, Eio
+  included. See [eio#964](https://github.com/ocaml-multicore/eio/issues/964)
+  for an example.
 
 ## Installation
 
