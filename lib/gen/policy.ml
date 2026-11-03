@@ -236,7 +236,9 @@ let std_formatter_state ~verb names =
              verb n) ))
     (words names)
 
-let standard_output =
+(* The standard channels of Stdlib and Out_channel, and the functions of
+   Stdlib that write on them or flush them. *)
+let standard_channels =
   each ""
     "stdout print_char print_string print_bytes print_int print_float \
      print_endline print_newline flush_all"
@@ -260,7 +262,10 @@ let standard_output =
       (ambient (writes "error"))
   @ each "Out_channel" "stdout flush_all" (ambient (writes "output"))
   @ each "Out_channel" "stderr" (ambient (writes "error"))
-  @ each "Printf" "printf lprintf" (ambient (writes "output"))
+
+(* The printers of other modules that write on a standard channel. *)
+let standard_printers =
+  each "Printf" "printf lprintf" (ambient (writes "output"))
   @ each "Printf" "eprintf leprintf" (ambient (writes "error"))
   @ each "Format" "std_formatter get_std_formatter printf lprintf"
       (ambient (writes "output"))
@@ -276,14 +281,18 @@ let standard_output =
            leave the switch to the executable, which holds Eio.Stdenv.stderr."
       );
     ]
-  @ std_formatter
-      "open_box close_box open_hbox open_vbox open_hvbox open_hovbox \
-       print_string print_substring print_bytes print_as print_substring_as \
-       print_int print_float print_char print_bool print_space print_cut \
-       print_break force_newline print_if_newline print_flush print_newline \
-       open_tbox close_tbox set_tab print_tab print_tbreak open_stag \
-       close_stag get_formatter_out_functions get_formatter_output_functions \
-       get_formatter_stag_functions"
+
+(* The functions of Format that print on, or change or read the state of,
+   the standard formatter. *)
+let standard_formatter =
+  std_formatter
+    "open_box close_box open_hbox open_vbox open_hvbox open_hovbox \
+     print_string print_substring print_bytes print_as print_substring_as \
+     print_int print_float print_char print_bool print_space print_cut \
+     print_break force_newline print_if_newline print_flush print_newline \
+     open_tbox close_tbox set_tab print_tab print_tbreak open_stag close_stag \
+     get_formatter_out_functions get_formatter_output_functions \
+     get_formatter_stag_functions"
   @ std_formatter_state ~verb:"Changes"
       "set_margin set_max_indent set_max_boxes set_ellipsis_text set_geometry \
        safe_set_geometry update_geometry set_formatter_out_channel \
@@ -292,6 +301,8 @@ let standard_output =
   @ std_formatter_state ~verb:"Reads"
       "get_margin get_max_indent get_max_boxes get_ellipsis_text get_geometry \
        get_print_tags get_mark_tags over_max_boxes"
+
+let standard_output = standard_channels @ standard_printers @ standard_formatter
 
 let the_process =
   [
@@ -406,19 +417,14 @@ let timed_waits =
 let processes =
   "Runs or controls a process: take Eio.Stdenv.process_mgr as an argument."
 
-(* Every value of the compiler's Unix, or UnixLabels, at [m] that reaches a
-   capability by name or by address, or makes a descriptor the code was not
-   handed. The others are kept, by reviewed.ml or, for a name that says
-   [unsafe], here. *)
-let unix m =
-  let large = m ^ ".LargeFile" in
-  each m "unsafe_environment unsafe_getenv"
-    (Keep "It reads the process environment, as getenv does.")
-  @ each m "socket"
-      (ambient
-         "Makes a socket the code was not handed, which listen binds to every \
-          interface and whose fstat reads the clock: take Eio.Stdenv.net as an \
-          argument.")
+(* The functions of Unix at [m] that make a descriptor the code was not
+   handed, or set a socket option that makes a wait timed. *)
+let unix_descriptors m =
+  each m "socket"
+    (ambient
+       "Makes a socket the code was not handed, which listen binds to every \
+        interface and whose fstat reads the clock: take Eio.Stdenv.net as an \
+        argument.")
   @ each m "socketpair"
       (ambient
          "Makes a pair of sockets the code was not handed, whose fstat reads \
@@ -443,12 +449,15 @@ let unix m =
          "Sets SO_LINGER on a socket, which makes close a timed wait on the \
           clock: take Eio.Stdenv.clock as an argument and use \
           Eio.Time.with_timeout.")
-  @ each m "umask"
-      (ambient
-         "Changes the process's file-creation mask, which sets the mode of \
-          every file the executable creates later: take Eio.Stdenv.fs or \
-          Eio.Stdenv.cwd (an Eio.Path) as an argument and give each file its \
-          ~perm.")
+
+(* The functions of Unix at [m] that change or read the process's state. *)
+let unix_process_state m =
+  each m "umask"
+    (ambient
+       "Changes the process's file-creation mask, which sets the mode of every \
+        file the executable creates later: take Eio.Stdenv.fs or \
+        Eio.Stdenv.cwd (an Eio.Path) as an argument and give each file its \
+        ~perm.")
   @ each m "getcwd"
       (ambient
          "Reads the process's working directory: take Eio.Stdenv.cwd as an \
@@ -457,10 +466,18 @@ let unix m =
       (ambient
          "Changes the process's working directory: take Eio.Stdenv.cwd (an \
           Eio.Path) as an argument.")
-  @ each m "time gettimeofday" (ambient clock)
+
+(* The functions of Unix at [m] that read or wait on the clock. *)
+let unix_clock m =
+  each m "time gettimeofday" (ambient clock)
   @ each m "sleep sleepf alarm getitimer setitimer" (ambient waits)
   @ each m "select" (ambient timed_waits)
-  @ each m "openfile opendir" (ambient opens)
+
+(* The functions of Unix at [m], and of its LargeFile, that reach the file
+   system by name. *)
+let unix_file_system m =
+  let large = m ^ ".LargeFile" in
+  each m "openfile opendir" (ambient opens)
   @ each m "access stat lstat readlink realpath" (ambient reads_fs)
   @ each m
       "chmod chown link mkdir mkfifo rename rmdir symlink truncate unlink \
@@ -470,22 +487,32 @@ let unix m =
       (ambient ("Changes the process's root directory: " ^ fs ^ "."))
   @ each large "stat lstat" (ambient reads_fs)
   @ each large "truncate" (ambient writes_fs)
-  @ each m
-      "bind connect sendto sendto_substring open_connection establish_server \
-       getaddrinfo getnameinfo gethostbyname gethostbyaddr getprotobyname \
-       getprotobynumber getservbyname getservbyport"
-      (ambient network)
-  @ each m
-      "create_process create_process_env execv execve execvp execvpe fork wait \
-       waitpid system open_process open_process_in open_process_out \
-       open_process_full open_process_args open_process_args_in \
-       open_process_args_out open_process_args_full"
-      (ambient processes)
+
+(* The functions of Unix at [m] that reach the network by address or by
+   name. *)
+let unix_network m =
+  each m
+    "bind connect sendto sendto_substring open_connection establish_server \
+     getaddrinfo getnameinfo gethostbyname gethostbyaddr getprotobyname \
+     getprotobynumber getservbyname getservbyport"
+    (ambient network)
+
+(* The functions of Unix at [m] that run, wait for or signal a process. *)
+let unix_processes m =
+  each m
+    "create_process create_process_env execv execve execvp execvpe fork wait \
+     waitpid system open_process open_process_in open_process_out \
+     open_process_full open_process_args open_process_args_in \
+     open_process_args_out open_process_args_full"
+    (ambient processes)
   @ each m "kill"
       (ambient
          "Signals a process by its identifier: take Eio.Stdenv.process_mgr as \
           an argument and use Eio.Process.signal.")
-  @ each m "stdin" (ambient stdin)
+
+(* The standard descriptors of Unix at [m], and what writes on them. *)
+let unix_standard_descriptors m =
+  each m "stdin" (ambient stdin)
   @ each m "stdout" (ambient (writes "output"))
   @ each m "stderr" (ambient (writes "error"))
   @ [
@@ -495,6 +522,17 @@ let unix m =
            process: take Eio.Stdenv.stderr as an argument, or catch Unix_error \
            and return an outcome." );
     ]
+
+(* Every value of the compiler's Unix, or UnixLabels, at [m] that reaches a
+   capability by name or by address, or makes a descriptor the code was not
+   handed. The others are kept, by reviewed.ml or, for a name that says
+   [unsafe], here. *)
+let unix m =
+  each m "unsafe_environment unsafe_getenv"
+    (Keep "It reads the process environment, as getenv does.")
+  @ unix_descriptors m @ unix_process_state m @ unix_clock m
+  @ unix_file_system m @ unix_network m @ unix_processes m
+  @ unix_standard_descriptors m
 
 (* {1 Thread: its types and Event stay, what bypasses a capability is
    refused} *)
@@ -574,10 +612,10 @@ let library lib message ?(overrides = []) units =
          lib message )
   :: List.map (fun u -> (lib ^ "__" ^ u, unit u)) (words units)
 
-(* The units of Eio's libraries, from the source tree of Eio 1.6 and of its
+(* The units of Eio's libraries are from the source tree of Eio 1.6 and of its
    main branch at 1fa7762, which adds Eio_unix__System_info and
-   Eio_windows__Process, and of the iomux and uring its backends use. *)
-let eio_libraries =
+   Eio_windows__Process. *)
+let eio_unix_library =
   library "Eio_unix" eio_unix
     "Cap Config Err Fd File Fork_action Inherit_fds Net Pi Private Process Pty \
      Rcfd Resource System_info Thread_pool Types"
@@ -607,9 +645,12 @@ let eio_libraries =
            Eio.traceln writes on the process's standard error " ^ past_traceln
         );
       ]
-  @ library "Eio_posix" backend
-      "Config Domain_mgr Err Flow Fs Low_level Net Path Process Sched Time"
-      ~overrides:[ ("Low_level", "A unit of Eio_posix: " ^ low_level) ]
+
+(* Eio's backends, and Eio_main, which picks one. *)
+let eio_backends =
+  library "Eio_posix" backend
+    "Config Domain_mgr Err Flow Fs Low_level Net Path Process Sched Time"
+    ~overrides:[ ("Low_level", "A unit of Eio_posix: " ^ low_level) ]
   @ library "Eio_linux" backend
       "Err Fixed Flow Fs Low_level Net Process Sched Time"
       ~overrides:[ ("Low_level", "A unit of Eio_linux: " ^ low_level) ]
@@ -617,31 +658,40 @@ let eio_libraries =
       "Config Domain_mgr Err Flow Fs Low_level Net Process Sched Time"
       ~overrides:[ ("Low_level", "A unit of Eio_windows: " ^ low_level) ]
   @ library "Eio_main" backend "Linux_backend Posix_backend Windows_backend"
-  @ library "Iomux"
-      "Waits on descriptors past Eio's capabilities, with a timeout on the \
-       clock, and makes a descriptor from an integer: take Eio.Stdenv.clock as \
-       an argument and use Eio.Time.with_timeout, and take the descriptor as \
-       an argument."
-      "Config Poll Util"
+
+(* The iomux and uring that Eio's backends use. *)
+let backend_libraries =
+  library "Iomux"
+    "Waits on descriptors past Eio's capabilities, with a timeout on the \
+     clock, and makes a descriptor from an integer: take Eio.Stdenv.clock as \
+     an argument and use Eio.Time.with_timeout, and take the descriptor as an \
+     argument."
+    "Config Poll Util"
   (* uring 2.15.0, which Eio_linux submits its requests with. *)
   @ library "Uring"
       "Opens files by name, waits on the clock and reaches the network past \
        Eio's capabilities: take Eio.Stdenv.fs, Eio.Stdenv.clock or \
        Eio.Stdenv.net as an argument."
       "Config Heap Region"
-  @ [
-      ( "Eio__core__",
-        "The module of aliases to the units of Eio's core, which names \
-         Eio__core__Debug and Eio__core__Cancel: use Eio's own modules, and \
-         log with Eio.traceln, which writes where the executable says." );
-      ( "Eio__core__Debug",
-        "A unit of Eio: its default_traceln writes on the process's standard \
-         error " ^ past_traceln );
-      ( "Eio__core__Cancel",
-        "A unit of Eio: a fiber context it makes drops the executable's \
-         Eio.traceln, which then writes on the process's standard error "
-        ^ past_traceln );
-    ]
+
+(* The units of Eio's core that write past the executable's Eio.traceln. *)
+let eio_core_units =
+  [
+    ( "Eio__core__",
+      "The module of aliases to the units of Eio's core, which names \
+       Eio__core__Debug and Eio__core__Cancel: use Eio's own modules, and log \
+       with Eio.traceln, which writes where the executable says." );
+    ( "Eio__core__Debug",
+      "A unit of Eio: its default_traceln writes on the process's standard \
+       error " ^ past_traceln );
+    ( "Eio__core__Cancel",
+      "A unit of Eio: a fiber context it makes drops the executable's \
+       Eio.traceln, which then writes on the process's standard error "
+      ^ past_traceln );
+  ]
+
+let eio_libraries =
+  eio_unix_library @ eio_backends @ backend_libraries @ eio_core_units
 
 (* Units of other libraries that re-export the standard library without
    refusals: Stdlib_original under another name. *)
