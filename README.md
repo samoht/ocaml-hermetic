@@ -38,8 +38,8 @@ such as `Obj.magic` and the `Marshal` readers. Each error names the
 `hermetic` catches mistakes, such as an `open_in` written out of habit. It
 does not stop an author who wants to cheat: `Hermetic.Unsafe` and
 `external` declarations are still available. The protection is also still
-partial: code can reach around it through libraries other than the
-standard library, Eio included. See
+partial. Any C binding can reach the system directly, and so can libraries
+other than the standard library, Eio included. See
 [eio#964](https://github.com/ocaml-multicore/eio/issues/964) for an example.
 
 ## Installation
