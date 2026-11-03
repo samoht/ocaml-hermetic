@@ -16,7 +16,7 @@ first line is a control, made with the standard library itself.
   > let keys = List.init 200 Fun.id
   > let order t = List.of_seq (Hashtbl.to_seq_keys t)
   > let fill t = List.iter (fun k -> Hashtbl.replace t k ()) keys; t
-  > let reference () = fill (Stdlib_original.Hashtbl.create ~random:false 16)
+  > let reference () = fill (Unsafe.Hashtbl.create ~random:false 16)
   > let unseeded t = order t = order (reference ())
   > let seed = ref 0
   > module H = struct
@@ -32,7 +32,7 @@ first line is a control, made with the standard library itself.
   > let seeded make = seed := 0; make (); !seed = 0
   > let pairs = List.to_seq [ (1, ()); (2, ()) ]
   > let checks () =
-  >   [ ("control", unseeded (fill (Stdlib_original.Hashtbl.create 16)));
+  >   [ ("control", unseeded (fill (Unsafe.Hashtbl.create 16)));
   >     ("Hashtbl.create", unseeded (fill (Hashtbl.create 16)));
   >     ("Hashtbl.rebuild", unseeded (Hashtbl.rebuild (reference ())));
   >     ("Hashtbl.of_seq",

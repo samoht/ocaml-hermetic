@@ -694,10 +694,10 @@ let eio_libraries =
   eio_unix_library @ eio_backends @ backend_libraries @ eio_core_units
 
 (* Units of other libraries that re-export the standard library without
-   refusals: Stdlib_original under another name. *)
+   refusals: Unsafe under another name. *)
 let stdlib_reexport =
   "Re-exports the standard library without the prelude's refusals: use the \
-   prelude's own modules, and Stdlib_original for an audited use."
+   prelude's own modules, and Unsafe for an audited use."
 
 let stdlib_reexports =
   List.map
@@ -804,7 +804,7 @@ let doc =
    Every type of the standard library stays, so an interface, which does not \
    open the prelude, names the standard library's own types.\n\n\
    The prelude guards against accidents, not against an author trying to \
-   cheat: {!Stdlib_original} is the standard library without refusals."
+   cheat: {!Unsafe} is the standard library without refusals."
 
 let unreviewed path =
   {

@@ -48,7 +48,7 @@ let test_constants () =
   Alcotest.(check string) "Sys.os_type" Stdlib.Sys.os_type Hermetic.Sys.os_type
 
 let test_original () =
-  same "Stdlib_original.Sys.getenv_opt" Hermetic.Stdlib_original.Sys.getenv_opt
+  same "Unsafe.Sys.getenv_opt" Hermetic.Unsafe.Sys.getenv_opt
     Stdlib.Sys.getenv_opt
 
 let prelude =
@@ -61,8 +61,7 @@ let prelude =
       Alcotest.test_case "kept values are the originals" `Quick test_kept_values;
       Alcotest.test_case "kept constants are the originals" `Quick
         test_constants;
-      Alcotest.test_case "Stdlib_original is the standard library" `Quick
-        test_original;
+      Alcotest.test_case "Unsafe is the standard library" `Quick test_original;
     ] )
 
 let () = Alcotest.run "hermetic" [ prelude; Test_plan.suite ]

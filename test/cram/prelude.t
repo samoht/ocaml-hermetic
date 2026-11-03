@@ -171,7 +171,7 @@ Eio_posix does.
   $ put past_uring_alias 'module H = Uring__.Heap'
   $ put past_uring_region 'let free = Uring__Region.free'
 
-A unit that re-exports the standard library is Stdlib_original under
+A unit that re-exports the standard library is Unsafe under
 another name: Base's Import0 and Import, which Base__ names, and
 Shadow_stdlib. Console_tty sets up the standard formatters, as Fmt_tty
 does, and with Console__Recording, which Console__ names, opens the file
@@ -384,12 +384,12 @@ type.
   $ dune build --root . --display quiet --profile dev ./lib 2>&1 | tr -d '"' | grep -E '^(Alert|Error)'
   Error: This expression has type ambient
 
-The way out is Hermetic.Stdlib_original, the standard library without
+The way out is Hermetic.Unsafe, the standard library without
 refusals. A use of it is a visible exception, which a review can find with
 grep.
 
   $ rm lib/*.ml
-  $ put audited 'let here = Stdlib_original.Sys.file_exists "f" let c b = Stdlib_original.Bytes.unsafe_get b 0'
+  $ put audited 'let here = Unsafe.Sys.file_exists "f" let c b = Unsafe.Bytes.unsafe_get b 0'
   $ dune build --root . --display quiet --profile dev ./lib; echo "exit $?"
   exit 0
   $ rm lib/*.ml

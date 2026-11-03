@@ -435,10 +435,10 @@ let preamble_mli buf =
   line buf 0 "(** {1:escape Escaping the prelude} *)";
   line buf 0 "";
   comment buf 0
-    "[Stdlib_original] is [Stdlib] without refusals. Name it only for an \
-     audited use: [grep Stdlib_original] finds each line that names it, but an \
-     alias such as [module S = Stdlib_original] hides the uses after it.";
-  line buf 0 "module Stdlib_original = Stdlib";
+    "[Unsafe] is [Stdlib] without refusals. Name it only for an audited use: \
+     [grep -w Unsafe] finds each line that names it, but an alias such as \
+     [module S = Unsafe] hides the uses after it.";
+  line buf 0 "module Unsafe = Stdlib";
   line buf 0 ""
 
 (* The libraries and units that reach the system past Eio's capabilities,
@@ -502,7 +502,7 @@ let main_ml (plan : Plan.prelude) =
     (fun (k, _) -> line buf 0 "type %s = %s.%s" k refused_unit k)
     type_docs;
   line buf 0 "";
-  line buf 0 "module Stdlib_original = Stdlib";
+  line buf 0 "module Unsafe = Stdlib";
   aliases buf 0 (List.map fst plan.modules);
   items_ml buf 0 "Stdlib" plan.values;
   List.iter

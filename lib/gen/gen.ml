@@ -31,7 +31,7 @@ let check_names (tree : Stdlib_tree.t) =
     tree.types;
   List.iter
     (fun (m, _) ->
-      if m = "Stdlib_original" || String.starts_with ~prefix:Policy.name m then
+      if m = "Unsafe" || String.starts_with ~prefix:Policy.name m then
         fail "Stdlib declares the module %s, which the prelude declares" m)
     tree.modules
 
