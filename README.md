@@ -2,23 +2,41 @@
 
 Enforce Eio's capabilities at compile time.
 
-`hermetic` is a prelude that restates OCaml's standard library. In a file
-that opens it, a standard library, `Unix` or `Thread` value that reaches the
-file system, a clock or the network on its own is a type error. So is one
-that reaches the standard streams, the system's entropy, a new domain or a
-child process. This covers `Sys` too, so `Sys.remove` and `Sys.command` are
-refused. The error comes with an alert that names the `Eio.Stdenv`
-capability to take instead. The unsafe
-operations that could forge a capability, such as `Obj.magic` or a
-`Marshal` reader, are refused too. A library written this way reaches these
-resources only through what it is handed. A test can hand
-it a mock clock, an in-memory file system or a recorded network. A reviewer
-can read what the library may touch from its arguments.
+Eio gives an application its access to the outside world as ordinary
+values. The `env` that `Eio_main.run` passes to the application holds the
+file system, the clocks and the network. The application hands each
+function only the part it needs, such as `Eio.Stdenv.fs env`. Eio calls
+these values capabilities. A function can then do I/O, but only on what it
+was given. A test can give it a mock clock or an in-memory file system, and
+a reviewer can see what it touches from its arguments.
 
-The prelude guards against accidents, such as an `open_in` or a
-`print_endline` written out of habit. It does not stop an author who wants
-to cheat, since `Hermetic.Stdlib_original` and `external` declarations stay
-available.
+OCaml does not enforce this. The standard library lets any function call
+`open_in`, `Unix.gettimeofday` or `Sys.command` without being given
+anything, so code can bypass Eio. Eio's
+[design note](https://github.com/ocaml-multicore/eio#design-note-capabilities)
+says so, and the
+[discussions](https://discuss.ocaml.org/t/monadic-library-for-eio-capabilities/14202)
+on the OCaml forum come back to it: without the compiler's help, passing
+capabilities is only a convention.
+
+`hermetic` adds that check. It replaces the standard library in each source
+file that starts with `open! Hermetic`. In that file, a call that reaches
+one of these resources without being given it no longer compiles:
+
+- the file system, as with `open_in` or `Sys.remove`;
+- the clock, as with `Unix.gettimeofday`;
+- the network, as with `Unix.socket`;
+- the standard streams, as with `print_endline`;
+- the system's entropy, as with `Random.self_init`;
+- new domains and processes, as with `Domain.spawn` or `Sys.command`.
+
+The compiler also rejects unsafe operations that could forge a capability,
+such as `Obj.magic` and the `Marshal` readers. Each error names the
+`Eio.Stdenv` capability to use instead.
+
+`hermetic` catches mistakes, such as an `open_in` written out of habit. It
+does not stop an author who wants to cheat: `Hermetic.Unsafe` and
+`external` declarations are still available.
 
 ## Installation
 
@@ -117,17 +135,17 @@ With `hermetic` first, the link fails with `Error: Wrong link order`.
 
 ## Escaping the prelude
 
-`Hermetic.Stdlib_original` is the standard library without refusals. Use it
+`Hermetic.Unsafe` is the standard library without refusals. Use it
 only where you have checked the call:
 
 ```ocaml
 open! Hermetic
 
-let get b i = Stdlib_original.Bytes.unsafe_get b i
+let get b i = Unsafe.Bytes.unsafe_get b i
 ```
 
-`grep Stdlib_original` finds every such use, unless a module alias such as
-`module S = Stdlib_original` hides the uses that follow it.
+`grep -w Unsafe` finds every such use, unless a module alias such as
+`module S = Unsafe` hides the uses that follow it.
 
 ## What it refuses
 
@@ -191,13 +209,11 @@ of each new compiler, because until then its new values are refused as
   `exit` and the signals stay. Eio's env does not provide them, so there is
   no capability to take instead.
 - Nothing checks that a file opens the prelude.
+- `open! Hermetic` hides any module of your own library named `Unsafe`, or
+  named like a standard library module.
 
 ## Related work
 
-Eio's
-[design note on capabilities](https://github.com/ocaml-multicore/eio#design-note-capabilities)
-describes the gap the prelude fills: "Since OCaml is not a capability
-language, code can ignore Eio and use the non-capability APIs directly."
 [Emily](https://cs.pomona.edu/~rbull/emily/) is a capability-secure subset
 of OCaml checked by a verifier. `hermetic` uses the stock compiler and keeps
 mutable globals. [Joe-E](https://people.eecs.berkeley.edu/~daw/papers/joe-e-ndss10.pdf)
