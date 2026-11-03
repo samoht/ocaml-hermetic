@@ -1,21 +1,16 @@
 ; The prelude's units are generated from the installed compiler's standard
-; library and the policy in gen/policy.ml. The library is not wrapped: each
-; unit is named Hermetic__X already, and Hermetic is a module of aliases to
-; them, so that a program links only the units it uses. The restated Unix
-; and the restated Thread and Event are compiled against the interfaces of
-; the compiler's unix and threads libraries, but the library depends on
-; neither, since both force their link: a program that names only their
-; types links none of them, and one that uses a value of theirs names the
-; library among its own, as it would without the prelude. A unit restates its
-; module with the deprecated names of an older compiler too, so it is
+; library and the policy in gen/policy.ml, and so are the library stanzas in
+; dune.inc. The libraries are not wrapped: each unit is named Hermetic__X
+; already, and Hermetic is a module of aliases to them, so that a program
+; links only the units it uses. The restated Unix and UnixLabels are the
+; library hermetic.unix, which depends on unix, and the restated Thread is
+; hermetic.threads, which depends on threads, so hermetic depends on the
+; standard library only and links where unix does not, as on wasm. Hermetic
+; still aliases Unix, UnixLabels and Thread: an alias costs nothing until a
+; file uses it, and a file that uses one without the sub-library fails on the
+; missing unit rather than reaching the unix library's own. A unit restates
+; its module with the deprecated names of an older compiler too, so it is
 ; compiled without the deprecation alert; a value it restates keeps its own.
-
-(library
- (name hermetic)
- (public_name hermetic)
- (wrapped false)
- (flags
-  (:standard -I +unix -I +threads -alert -deprecated)))
 
 (include dune.inc)
 

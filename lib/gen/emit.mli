@@ -9,7 +9,11 @@
     of aliases, a unit for the types of refused values, and a unit for each
     top-level module the policy names, which is empty when the module stays as
     it is. A restated module the policy does not name goes to an overflow unit.
-    A program then links only the units it uses. *)
+    A program then links only the units it uses.
+
+    The units of the restated Unix and UnixLabels are the library
+    [hermetic.unix], and those of Thread and ThreadUnix are [hermetic.threads],
+    so that [hermetic] depends on the standard library only. *)
 
 val value_name : string -> string
 (** [value_name v] is [v] as a declaration spells it: an operator, a keyword
@@ -26,5 +30,5 @@ val file_names : string list
     compiler. *)
 
 val dune : gen:string -> string
-(** [dune ~gen] is the dune rule that runs the generator [gen] and lists
-    {!file_names} as its targets. *)
+(** [dune ~gen] is the library stanzas of the prelude's units, and the dune rule
+    that runs the generator [gen] and lists {!file_names} as its targets. *)

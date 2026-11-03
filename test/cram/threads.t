@@ -1,5 +1,6 @@
-The threads library's types reach nothing, so the prelude keeps them, as it
-keeps Unix's: a signature can name Thread.t or Event.channel, and Event,
+The restated Thread is the library hermetic.threads, which a library that
+uses it names among its libraries. The threads library's types reach
+nothing, so the prelude keeps them, as it keeps Unix's: a signature can name Thread.t or Event.channel, and Event,
 whose values work only on the channels they are handed, stays whole. The types are
 the originals, so an interface that does not open the prelude names the same
 types.
@@ -9,7 +10,7 @@ types.
   > EOF
   $ mkdir lib
   $ cat > lib/dune <<EOF
-  > (library (name work) (libraries hermetic threads.posix))
+  > (library (name work) (libraries hermetic hermetic.threads))
   > EOF
   $ cat > lib/work.mli <<'EOF'
   > val me : unit -> Thread.t
@@ -32,7 +33,7 @@ wait on the process's clock, and a wait for a child process, are refused as
 ambient, and each alert names the capability to take.
 
   $ mkdir refused
-  $ echo '(library (name refused) (libraries hermetic))' > refused/dune
+  $ echo '(library (name refused) (libraries hermetic hermetic.threads))' > refused/dune
   $ printf 'open! Hermetic\nlet () = Thread.delay 1.\n' > refused/delay.ml
   $ printf 'open! Hermetic\nlet ready fds = Thread.select fds [] [] 1.\n' > refused/select.ml
   $ printf 'open! Hermetic\nlet readable fd = Thread.wait_timed_read fd 1.\n' > refused/timed_read.ml
@@ -59,7 +60,7 @@ prelude's after the open, as a library's own Format would be; named again
 through the unit dune gives it, it is the library's own.
 
   $ mkdir own
-  $ echo '(library (name queue) (libraries hermetic))' > own/dune
+  $ echo '(library (name queue) (libraries hermetic hermetic.threads))' > own/dune
   $ echo 'type t = Landed | Refused' > own/event.ml
   $ echo 'let start () = 1' > own/thread.ml
   $ printf 'open! Hermetic\nlet landed = Event.Landed\n' > own/log.ml
@@ -72,14 +73,13 @@ through the unit dune gives it, it is the library's own.
   $ dune build --root . --display quiet ./own; echo "exit $?"
   exit 0
 
-A program that names only Thread's types links no code of the threads
-library, which forces its own link, so the program does not name it among
-its libraries: -I +threads finds the interfaces.
+A program that names only Thread's types links no code of the prelude's
+restated Thread, although it names hermetic.threads, whose interfaces declare
+the types.
 
   $ mkdir types
   $ cat > types/dune <<EOF
-  > (executable (name main) (modes byte) (libraries hermetic)
-  >  (flags (:standard -I +threads -I +unix)))
+  > (executable (name main) (modes byte) (libraries hermetic hermetic.threads))
   > EOF
   $ cat > types/main.ml <<'EOF'
   > open! Hermetic
@@ -88,6 +88,6 @@ its libraries: -I +threads finds the interfaces.
   > EOF
   $ dune build --root . --display quiet --profile release ./types/main.bc
   $ ocamlobjinfo _build/default/types/main.bc |
-  >   sed -n 's/.*compilation unit .\([A-Za-z_]*\).*/\1/p' | grep -cE 'Thread|Event'
+  >   sed -n 's/.*compilation unit .\([A-Za-z_]*\).*/\1/p' | grep -c Hermetic__Thread
   0
   [1]

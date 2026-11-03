@@ -18,6 +18,14 @@
   uses.sh
   uses.txt
   %{bin:ocamlc}
-  (glob_files ../../lib/.hermetic.objs/byte/*.cmi))
+  (glob_files ../../lib/.hermetic.objs/byte/*.cmi)
+  (glob_files ../../lib/.hermetic_unix.objs/byte/*.cmi)
+  (glob_files ../../lib/.hermetic_threads.objs/byte/*.cmi))
  (action
-  (run sh uses.sh ../../lib/.hermetic.objs/byte uses.txt)))
+  (run
+   sh
+   uses.sh
+   uses.txt
+   ../../lib/.hermetic.objs/byte
+   ../../lib/.hermetic_unix.objs/byte
+   ../../lib/.hermetic_threads.objs/byte)))

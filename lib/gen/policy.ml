@@ -844,6 +844,11 @@ let doc =
    so a refused value can be named but not applied or used at its original \
    type: such a use is a type error, in every build profile. Passing it to a \
    polymorphic function such as [ignore] compiles and does nothing.\n\n\
+   The restated [Unix] and [UnixLabels] are the library [hermetic.unix], and \
+   the restated [Thread] is [hermetic.threads]: a library that uses them names \
+   the sub-library among its libraries. Without it, a use of [Unix] in a file \
+   that opens [Hermetic] fails on the missing unit, and never reaches the unix \
+   library's own [Unix].\n\n\
    A refused value carries an alert named after its type, and the alert is its \
    documentation: the compiler prints it at each use, and its message says why \
    the value is refused and, when it can, the [Eio.Stdenv] capability to take \

@@ -53,7 +53,11 @@ partial:
 $ opam install hermetic
 ```
 
-`hermetic` does not depend on Eio.
+`hermetic` depends on the standard library only, so it links wherever
+OCaml does, js_of_ocaml and wasm_of_ocaml included. It does not depend on
+Eio. Its restated `Unix` and `UnixLabels` are the library `hermetic.unix`,
+and its restated `Thread` is `hermetic.threads`; see
+[Unix and threads](#unix-and-threads).
 
 ## Usage
 
@@ -136,10 +140,24 @@ original files:
 
 ### Unix and threads
 
-The prelude restates `Unix`, `UnixLabels` and `Thread` as well, but
-`hermetic` does not depend on the unix and threads libraries. A library that
-uses them lists them before `hermetic`, as in `(libraries unix hermetic)`.
-With `hermetic` first, the link fails with `Error: Wrong link order`.
+The prelude restates `Unix`, `UnixLabels` and `Thread` as well, in the
+libraries `hermetic.unix` and `hermetic.threads`, which depend on unix and
+threads. A library whose files use them through the prelude names the
+sub-library too:
+
+<!-- $MDX skip -->
+```
+(library
+ (name server)
+ (libraries hermetic hermetic.unix))
+```
+
+`hermetic` itself depends on the standard library only, so a program that
+uses neither links neither unix nor threads, even with `-linkall`. The
+prelude names `Unix` all the same: in a file that opens it, without
+`hermetic.unix`, `Unix.getpid` fails with `The module Unix is an alias for
+module Hermetic__Unix, which is missing` and never reaches the unix
+library's own `Unix`.
 
 ## Escaping the prelude
 
@@ -158,7 +176,9 @@ let get b i = Unsafe.Bytes.unsafe_get b i
 ## What it refuses
 
 The prelude refuses values by the capability they reach, and keeps
-everything that works on what the code is handed.
+everything that works on what the code is handed. The `Unix` and `Thread`
+values below are kept or refused in a library that names `hermetic.unix` or
+`hermetic.threads`; without it, none of them is reachable.
 
 - **File system.** Opening a file by name (`open_in`, `open_out` and the
   openers of `In_channel` and `Out_channel`), the file functions of `Sys`

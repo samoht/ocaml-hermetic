@@ -13,7 +13,7 @@ build stopped on, or "(builds)" when the module compiles.
   > EOF
   $ mkdir lib
   $ cat > lib/dune <<EOF
-  > (library (name m) (libraries hermetic))
+  > (library (name m) (libraries hermetic hermetic.unix))
   > EOF
   $ put () { printf 'open! Hermetic\n%s\n' "$2" > "lib/$1.ml"; }
   $ refusals () {
@@ -106,8 +106,9 @@ Entropy from the system, which would seed a generator.
   $ put random_self_init 'let () = Random.self_init ()'
   $ put random_state_self 'let s = Random.State.make_self_init ()'
 
-Unix, which the prelude restates as it restates the standard library: its
-types stay, and what reaches a capability is refused (see unix.t).
+Unix, which the prelude restates as it restates the standard library, in
+hermetic.unix, which the library names: its types stay, and what reaches a
+capability is refused (see unix.t).
 
   $ put unix_connect 'let connect fd addr = Unix.connect fd addr'
 

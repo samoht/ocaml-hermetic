@@ -1,4 +1,6 @@
-Unix's types reach nothing, so the prelude keeps them: a signature can name
+The restated Unix and UnixLabels are the library hermetic.unix, which a
+library that uses them names among its libraries. Unix's types reach
+nothing, so the prelude keeps them: a signature can name
 Unix.file_descr, Unix.sockaddr or a constructor of Unix.error, and a source
 file can match on Unix.Unix_error. The types are the originals, so an
 interface that does not open the prelude names the same types. I/O on a descriptor the code is handed stays, and so does accepting
@@ -9,7 +11,7 @@ a connection on a listening socket it is handed.
   > EOF
   $ mkdir lib
   $ cat > lib/dune <<EOF
-  > (library (name net) (libraries hermetic unix))
+  > (library (name net) (libraries hermetic hermetic.unix))
   > EOF
   $ cat > lib/net.mli <<'EOF'
   > val busy : Unix.error -> bool
@@ -49,7 +51,7 @@ close one. umask is refused for the reason chdir is: it changes the mode of
 every file the executable creates later.
 
   $ mkdir refused
-  $ echo '(library (name refused) (libraries hermetic))' > refused/dune
+  $ echo '(library (name refused) (libraries hermetic hermetic.unix))' > refused/dune
   $ printf 'open! Hermetic\nlet fd = Unix.openfile "f" [ Unix.O_RDONLY ] 0\n' > refused/openfile.ml
   $ printf 'open! Hermetic\nlet now = Unix.time ()\n' > refused/time.ml
   $ printf 'open! Hermetic\nlet connect fd = Unix.connect fd (Unix.ADDR_UNIX "s")\n' > refused/connect.ml
@@ -90,15 +92,13 @@ every file the executable creates later.
   $ dune build --root . --display quiet ./refused 2>&1 | sed 's/"//g; s/Hermetic__Refused\.//g' | grep -c '^Error: This expression has type ambient'
   12
 
-A program that names only Unix's types links no code of Unix: neither the
-unix library nor the prelude's restated Unix. The unix library forces its
-own link, so such a program does not name it among its libraries: -I +unix
-finds the interfaces its types are declared in.
+A program that names only Unix's types links no code of the prelude's
+restated Unix, although it names hermetic.unix, whose interfaces declare the
+types.
 
   $ mkdir types
   $ cat > types/dune <<EOF
-  > (executable (name main) (modes byte) (libraries hermetic)
-  >  (flags (:standard -I +unix)))
+  > (executable (name main) (modes byte) (libraries hermetic hermetic.unix))
   > EOF
   $ cat > types/main.ml <<'EOF'
   > open! Hermetic
@@ -107,6 +107,6 @@ finds the interfaces its types are declared in.
   > EOF
   $ dune build --root . --display quiet --profile release ./types/main.bc
   $ ocamlobjinfo _build/default/types/main.bc |
-  >   sed -n 's/.*compilation unit .\([A-Za-z_]*\).*/\1/p' | grep -c Unix
+  >   sed -n 's/.*compilation unit .\([A-Za-z_]*\).*/\1/p' | grep -c Hermetic__Unix
   0
   [1]
