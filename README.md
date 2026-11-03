@@ -198,7 +198,8 @@ refusal, one per line.
 
 ## Supported compilers
 
-`hermetic` supports OCaml 5.3, 5.4 and 5.5. The prelude is generated at
+`hermetic` supports OCaml 5.3, 5.4 and 5.5, and an older compiler fails the
+build. The prelude is generated at
 build time from the installed compiler's standard library and a policy that
 names every value it has reviewed. The upper bound moves only after a review
 of each new compiler, because until then its new values are refused as

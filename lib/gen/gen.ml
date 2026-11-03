@@ -35,7 +35,16 @@ let check_names (tree : Stdlib_tree.t) =
         fail "Stdlib declares the module %s, which the prelude declares" m)
     tree.modules
 
+(* The policy is reviewed on OCaml 5.3 and later. A newer compiler builds,
+   and its new names are refused as unreviewed; an older one is refused. *)
+let check_compiler () =
+  let v = Scanf.sscanf Sys.ocaml_version "%d.%d" (fun a b -> (a, b)) in
+  if v < (5, 3) then
+    fail "hermetic needs OCaml 5.3 or later, but this compiler is OCaml %s"
+      Sys.ocaml_version
+
 let write stdlib dir =
+  check_compiler ();
   let tree = Stdlib_tree.read stdlib in
   check_names tree;
   let plan, _ = Plan.v tree in
