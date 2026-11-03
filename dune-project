@@ -2,6 +2,8 @@
 
 (name hermetic)
 
+(using mdx 0.4)
+
 (generate_opam_files true)
 
 (implicit_transitive_deps false)
@@ -28,4 +30,5 @@ refused too. Everything else stays.")
  (depends
   (ocaml (and (>= 5.3) (< 5.6)))
   (alcotest (and :with-test (>= 1.7.0)))
+  (mdx (and :with-test (>= 2.3.0)))
   (ocamlfind :with-test)))

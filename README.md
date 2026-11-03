@@ -37,28 +37,17 @@ Add `hermetic` to the library's dependencies:
  (libraries hermetic))
 ```
 
-Then open the prelude on the first line of each source file. This file:
+Then open the prelude on the first line of each source file. A call to
+`open_in` no longer builds:
 
-<!-- $MDX skip -->
 ```ocaml
-open! Hermetic
-
-let load () = open_in "model.bin"
-```
-
-does not build:
-
-<!-- $MDX skip -->
-```
-File "lib/machine.ml", line 3, characters 14-21:
-3 | let load () = open_in "model.bin"
-                  ^^^^^^^
+# open! Hermetic;;
+# let load () = open_in "model.bin";;
+Line 1, characters 15-22:
 Alert ambient: Hermetic.open_in
 Opens a file by name: take Eio.Stdenv.fs or Eio.Stdenv.cwd (an Eio.Path) as an argument, or the file's contents.
 
-File "lib/machine.ml", line 3, characters 14-21:
-3 | let load () = open_in "model.bin"
-                  ^^^^^^^
+Line 1, characters 15-22:
 Error: This expression has type ambient
        This is not a function; it cannot be applied.
 ```
@@ -128,7 +117,6 @@ With `hermetic` first, the link fails with `Error: Wrong link order`.
 `Hermetic.Stdlib_original` is the standard library without refusals. Use it
 only where you have checked the call:
 
-<!-- $MDX skip -->
 ```ocaml
 open! Hermetic
 

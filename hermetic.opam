@@ -20,6 +20,7 @@ depends: [
   "dune" {>= "3.21"}
   "ocaml" {>= "5.3" & < "5.6"}
   "alcotest" {with-test & >= "1.7.0"}
+  "mdx" {with-test & >= "2.3.0"}
   "ocamlfind" {with-test}
   "odoc" {with-doc}
 ]
