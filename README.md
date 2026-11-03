@@ -19,9 +19,10 @@ says so, and the
 on the OCaml forum come back to it: without the compiler's help, passing
 capabilities is only a convention.
 
-`hermetic` adds that check. It replaces the standard library in each source
-file that starts with `open! Hermetic`. In that file, a call that reaches
-one of these resources without being given it no longer compiles:
+`hermetic` aims to solve this issue. It replaces the standard library in
+each source file that starts with `open! Hermetic`. In that file, a call
+that reaches one of these resources without being given it no longer
+compiles:
 
 - the file system, as with `open_in` or `Sys.remove`;
 - the clock, as with `Unix.gettimeofday`;
@@ -36,7 +37,10 @@ such as `Obj.magic` and the `Marshal` readers. Each error names the
 
 `hermetic` catches mistakes, such as an `open_in` written out of habit. It
 does not stop an author who wants to cheat: `Hermetic.Unsafe` and
-`external` declarations are still available.
+`external` declarations are still available. The protection is also still
+partial: code can reach around it through libraries other than the
+standard library, Eio included. See
+[eio#964](https://github.com/ocaml-multicore/eio/issues/964) for an example.
 
 ## Installation
 
