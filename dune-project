@@ -17,16 +17,15 @@
 (package
  (name hermetic)
  (synopsis
-  "A standard library prelude that makes code take Eio's capabilities as arguments")
- (tags (stdlib prelude capability))
+  "Enforce Eio's capabilities at compile time")
+ (tags (stdlib prelude capability eio))
  (description
-  "In a file that opens Hermetic, a use of a standard library, Unix or Thread
-value is a type error when it reaches, without being handed it, something
-Eio's env provides as a capability: the file system, a clock, the network,
-the standard input, output or error, the system's entropy, a domain or a
-child process. Its alert names the Eio.Stdenv capability to take instead. A
-value that can forge a capability, such as Obj.magic or a Marshal reader, is
-refused too. Everything else stays.")
+  "Hermetic is a prelude that restates OCaml's standard library. In a file
+that opens it, a standard library, Unix or Thread value that reaches the file
+system, a clock, the network, the standard streams, entropy, a domain or a
+child process on its own is a type error. Its alert names the Eio.Stdenv
+capability to take instead. Values that can forge a capability, such as
+Obj.magic, are refused too.")
  (depends
   (ocaml (and (>= 5.3) (< 5.6)))
   (alcotest (and :with-test (>= 1.7.0)))

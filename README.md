@@ -1,11 +1,10 @@
 # hermetic
 
-A standard library prelude that makes OCaml code take Eio's capabilities as
-arguments.
+Enforce Eio's capabilities at compile time.
 
-In a file that opens `Hermetic`, a standard library, `Unix` or `Thread`
-value that reaches the file system, a clock or the network on its own is a
-type error. So is one that reaches the standard streams, the system's
+`hermetic` is a prelude that restates OCaml's standard library. In a file
+that opens it, a standard library, `Unix` or `Thread` value that reaches the
+file system, a clock or the network on its own is a type error. So is one that reaches the standard streams, the system's
 entropy, a new domain or a child process. The error comes with an alert that
 names the `Eio.Stdenv` capability to take instead. A library written this
 way reaches these resources only through what it is handed. A test can hand
