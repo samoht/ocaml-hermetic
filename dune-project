@@ -23,8 +23,8 @@
   "Hermetic is a prelude that restates OCaml's standard library. In a file
 that opens it, a standard library, Unix or Thread value that reaches the file
 system, a clock, the network, the standard streams, entropy, a domain or a
-child process on its own is a type error, such as Sys.remove or Sys.command.
-Its alert names the Eio.Stdenv capability to take instead. The unsafe
+child process on its own is a type error. This covers Sys too, so Sys.remove
+and Sys.command are refused. Its alert names the Eio.Stdenv capability to take instead. The unsafe
 operations that could forge a capability, such as Obj.magic or a Marshal
 reader, are refused too.")
  (depends

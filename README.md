@@ -6,8 +6,9 @@ Enforce Eio's capabilities at compile time.
 that opens it, a standard library, `Unix` or `Thread` value that reaches the
 file system, a clock or the network on its own is a type error. So is one
 that reaches the standard streams, the system's entropy, a new domain or a
-child process, such as `Sys.remove` or `Sys.command`. The error comes with
-an alert that names the `Eio.Stdenv` capability to take instead. The unsafe
+child process. This covers `Sys` too, so `Sys.remove` and `Sys.command` are
+refused. The error comes with an alert that names the `Eio.Stdenv`
+capability to take instead. The unsafe
 operations that could forge a capability, such as `Obj.magic` or a
 `Marshal` reader, are refused too. A library written this way reaches these
 resources only through what it is handed. A test can hand
