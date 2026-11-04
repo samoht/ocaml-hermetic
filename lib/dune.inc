@@ -75,7 +75,7 @@
   hermetic__Thread
   hermetic__ThreadUnix
  )
- (libraries (re_export hermetic) (re_export threads))
+ (libraries (re_export hermetic) (re_export threads.posix))
  (flags
   (:standard -alert -deprecated)))
 

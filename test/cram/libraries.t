@@ -50,12 +50,13 @@ standard library's are.
 
 Without it, a file that opens the prelude does not fall back on the unix
 library's Unix, even when the library names unix: Unix is the prelude's,
-whose unit is missing, and the build fails.
+whose unit is missing, and the build fails. Compilers before 5.3 quote the
+module names, which the sed removes.
 
   $ mkdir missing
   $ echo '(library (name missing) (libraries hermetic unix threads))' > missing/dune
   $ printf 'open! Hermetic\nlet pid () = Unix.getpid ()\n' > missing/pid.ml
   $ printf 'open! Hermetic\nlet self () = Thread.self ()\n' > missing/self.ml
-  $ dune build --root . --display quiet ./missing 2>&1 | grep -oE 'Hermetic__[A-Za-z]+, which is missing' | sort
+  $ dune build --root . --display quiet ./missing 2>&1 | sed 's/"//g' | grep -oE 'Hermetic__[A-Za-z]+, which is missing' | sort
   Hermetic__Thread, which is missing
   Hermetic__Unix, which is missing

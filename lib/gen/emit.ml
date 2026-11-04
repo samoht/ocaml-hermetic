@@ -577,7 +577,9 @@ let library_stanza buf l =
     | Standard -> (prefix, prefix, [])
     | Unix -> (prefix ^ "_unix", prefix ^ ".unix", [ prefix; "unix" ])
     | Threads ->
-        (prefix ^ "_threads", prefix ^ ".threads", [ prefix; "threads" ])
+        (* On OCaml 4.14, a re-exported threads brings no include path, and
+           threads.posix does. *)
+        (prefix ^ "_threads", prefix ^ ".threads", [ prefix; "threads.posix" ])
   in
   line buf 0 "(library";
   line buf 0 " (name %s)" name;
